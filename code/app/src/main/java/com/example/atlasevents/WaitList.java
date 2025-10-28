@@ -14,6 +14,21 @@ public class WaitList {
     public WaitList(int slots) {
         this.slots = slots;
     }
+    /**
+     * This method returns item i from the waitlist.
+     * @param i: the item in the list you want
+     */
+    public Entrant getEntrant(int i){
+        return waitList.get(i);
+    }
+
+    /**
+     * This method removes item i from the waitlist.
+     * @param i: the item in the list you want to remove
+     */
+    public void removeEntrant(int i){
+        waitList.remove(i);
+    }
     public ArrayList<Entrant> getWaitList() {
         return waitList;
     }

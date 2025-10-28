@@ -71,10 +71,9 @@ public class Event {
 
 
     public void runLottery(){
-        ArrayList<Entrant> lotteryList = waitlist.getWaitList();
         while (slots > 0){
             int i = random.nextInt(slots);
-            acceptedList.addEntrant(lotteryList.get(i)); //for now i'll just add them to accepted list, but I do think we need a new list :)
+            acceptedList.addEntrant(waitlist.getEntrant(i)); //for now i'll just add them to accepted list, but I do think we need a new list :)
             slots--;
             waitlist.removeEntrant(i);
         }

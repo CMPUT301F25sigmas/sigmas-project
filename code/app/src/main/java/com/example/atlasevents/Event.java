@@ -6,6 +6,10 @@ package com.example.atlasevents;
  */
 
 public class Event {
+    /*
+        to do:
+        Method to select from Waitlist
+        */
     private int slots; //Number of slots available
     private Organizer organizer;
     private WaitList waitlist;

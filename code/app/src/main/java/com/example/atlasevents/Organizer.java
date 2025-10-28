@@ -5,8 +5,13 @@ package com.example.atlasevents;
  */
 
 public class Organizer extends User{
-    //To do:
-        //Method for creating Event
-
+    /*
+        To do:
+        Method for creating Event
+        Method for sending notifications to
+            waitlist
+            acceptedList
+            declinedList
+        */
 
 }

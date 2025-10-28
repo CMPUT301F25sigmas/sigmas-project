@@ -5,6 +5,7 @@ package com.example.atlasevents;
  */
 
 public class Lottery {
+    // Kind of thinking this doesn't need to be its own class and Event can just have a lottery Method
 
     /*
         To Do:
@@ -13,5 +14,6 @@ public class Lottery {
 
     public void Choose(WaitList waitList,int slots) {
         //to do
+        //what to return? maybe there should be another list that hold chosen entrants?
     }
 }

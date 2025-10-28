@@ -14,6 +14,8 @@ public class Lottery {
 
     public void Choose(WaitList waitList,int slots) {
         //to do
-        //what to return? maybe there should be another list that hold chosen entrants?
+        //nick: what to return? maybe there should be another list that hold chosen entrants?
+        //angad: chosen entrants should stay in waitlist, ones not chosen should be removed as they will not be important to the event.
+        // maybe rename waitlist to participantlist?
     }
 }

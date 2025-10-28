@@ -9,5 +9,16 @@ public class Entrant extends User{
         Join Waitlist Method
         Leave WaitList Method
         */
+    public Entrant(String name, String email, String password, String phoneNumber) {
+        super(name, email, password, phoneNumber);
+        }
+
+    public void joinWaitlist(Event event) {
+        //to do
+    }
+    public void leaveWaitlist(Event event) {
+        //to do
+    }
+
 
 }

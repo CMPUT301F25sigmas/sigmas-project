@@ -14,4 +14,17 @@ public class Organizer extends User{
             declinedList
         */
 
+
+    public Organizer(String name, String email, String password, String phoneNumber) {
+        super(name, email, password, phoneNumber);
+    }
+    public void createEvent(Event event) {
+        Event myevent = new Event(this);
+    }
+    public void sendNotification(String message, Event event) {
+        //to do
+    }
+
+
+
 }

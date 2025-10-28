@@ -13,7 +13,7 @@ public class Event {
     Random random = new Random();
     /*
         to do:
-        in runLottery it currently just adds to acceptedList, but I kind of want an invitedList,
+        in runLottery it currently just adds entrants to acceptedList, but I kind of want an invitedList,
         so we can remove people from the waitlist but still have access to the waitlist to invite others if someone declines
 
      */

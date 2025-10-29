@@ -6,20 +6,20 @@ import java.util.ArrayList;
  * This is a class that defines a waitlist for joining an event.
  */
 
-public class WaitList {
-    private int slots;
-    private ArrayList<Entrant> waitList = new ArrayList<Entrant>();
+public class UserList {
+  
+    private ArrayList<Entrant> userList = new ArrayList<Entrant>();
 
 
-    public WaitList(int slots) {
-        this.slots = slots;
+    public UserList() {
+        
     }
     /**
      * This method returns item i from the waitlist.
      * @param i: the item in the list you want
      */
     public Entrant getEntrant(int i){
-        return waitList.get(i);
+        return userList.get(i);
     }
 
     /**
@@ -27,21 +27,21 @@ public class WaitList {
      * @param i: the item in the list you want to remove
      */
     public void removeEntrant(int i){
-        waitList.remove(i);
+        userList.remove(i);
     }
     public ArrayList<Entrant> getWaitList() {
-        return waitList;
+        return userList;
     }
 
-    public void setWaitList(ArrayList<Entrant> waitList) {
-        this.waitList = waitList;
+    public void setWaitList(ArrayList<Entrant> userList) {
+        this.userList = userList;
     }
 
     public void addEntrant(Entrant entrant){
-        waitList.add(entrant);
+        userList.add(entrant);
     }
 
     public void removeEntrant(Entrant entrant){
-        waitList.remove(entrant);
+        userList.remove(entrant);
     }
 }

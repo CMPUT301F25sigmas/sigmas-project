@@ -19,9 +19,10 @@ public class Event {
      */
     private int slots; //Number of slots available
     private Organizer organizer;
-    private WaitList waitlist;
-    private AcceptedList acceptedList;
-    private  DeclinedList declinedList;
+    private UserList waitList;
+    private UserList inviteList;
+    private UserList acceptedList;
+    private UserList declinedList;
 
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -45,37 +46,39 @@ public class Event {
         this.organizer = organizer;
     }
 
-    public WaitList getWaitlist() {
-        return waitlist;
+    public UserList getWaitlist() {
+        return waitList;
     }
 
-    public void setWaitlist(WaitList waitlist) {
-        this.waitlist = waitlist;
+    public void setWaitlist(UserList waitList) {
+        this.waitList = waitList;
     }
 
-    public AcceptedList getAcceptedList() {
+    public UserList getAcceptedList() {
         return acceptedList;
     }
 
-    public void setAcceptedList(AcceptedList acceptedList) {
+    public void setAcceptedList(UserList acceptedList) {
         this.acceptedList = acceptedList;
     }
 
-    public DeclinedList getDeclinedList() {
+    public UserList getDeclinedList() {
         return declinedList;
     }
 
-    public void setDeclinedList(DeclinedList declinedList) {
+    public void setDeclinedList(UserList declinedList) {
         this.declinedList = declinedList;
     }
 
-
+    /**
+     * This method randomly selects entrants from the waitlist and moves them to the invited list.
+     */
     public void runLottery(){
         while (slots > 0){
-            int i = random.nextInt(slots);
-            acceptedList.addEntrant(waitlist.getEntrant(i)); //for now i'll just add them to accepted list, but I do think we need a new list :)
-            slots--;
-            waitlist.removeEntrant(i);
+            int i = random.nextInt(slots);  //random int
+            inviteList.addEntrant(waitList.getEntrant(i)); //add random user to invite list
+            waitList.removeEntrant(i);  //remove user from waitlist
+            slots--;    //decrement slots
         }
 
 

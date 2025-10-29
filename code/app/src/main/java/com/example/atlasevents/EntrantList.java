@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 public class EntrantList {
   
-    private ArrayList<Entrant> userList = new ArrayList<Entrant>();
+    private ArrayList<Entrant> userList;
 
 
     public EntrantList() {
-        
+        userList = new ArrayList<Entrant>();
     }
     /**
      * This method returns item i from the waitlist.

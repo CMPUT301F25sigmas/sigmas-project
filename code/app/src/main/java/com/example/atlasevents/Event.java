@@ -24,6 +24,10 @@ public class Event {
 
     public Event(Organizer organizer) {
         this.organizer = organizer;
+        waitList = new EntrantList();
+        inviteList = new EntrantList();
+        acceptedList = new EntrantList();
+        declinedList = new EntrantList();
     }
 
     //Getters

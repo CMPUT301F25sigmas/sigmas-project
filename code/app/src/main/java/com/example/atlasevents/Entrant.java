@@ -14,10 +14,10 @@ public class Entrant extends User{
         }
 
     public void joinWaitlist(Event event) {
-        //to do
+        event.addToWaitlist(this);
     }
     public void leaveWaitlist(Event event) {
-        //to do
+        event.removeFromWaitlist(this);
     }
 
 

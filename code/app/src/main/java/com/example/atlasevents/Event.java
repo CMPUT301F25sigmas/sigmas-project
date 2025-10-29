@@ -26,49 +26,50 @@ public class Event {
 
     public Event(Organizer organizer) {
         this.organizer = organizer;
-
-
     }
 
+    //Getters
     public int getSlots() {
         return slots;
     }
-
-    public void setSlots(int slots) {
-        this.slots = slots;
-    }
-
     public Organizer getOrganizer() {
         return organizer;
     }
-
-    public void setOrganizer(Organizer organizer) {
-        this.organizer = organizer;
-    }
-
     public UserList getWaitlist() {
         return waitList;
     }
-
-    public void setWaitlist(UserList waitList) {
-        this.waitList = waitList;
-    }
-
     public UserList getAcceptedList() {
         return acceptedList;
-    }
-
-    public void setAcceptedList(UserList acceptedList) {
-        this.acceptedList = acceptedList;
     }
 
     public UserList getDeclinedList() {
         return declinedList;
     }
+    public UserList getInviteList(){
+        return inviteList;
+    }
 
+    //Setters
+    public void setSlots(int slots) {
+        this.slots = slots;
+    }
     public void setDeclinedList(UserList declinedList) {
         this.declinedList = declinedList;
     }
+
+    public void setInviteList(UserList inviteList) {
+        this.inviteList = inviteList;
+    }
+    public void setAcceptedList(UserList acceptedList) {
+        this.acceptedList = acceptedList;
+    }
+    public void setWaitlist(UserList waitList) {
+        this.waitList = waitList;
+    }
+    public void setOrganizer(Organizer organizer) {
+        this.organizer = organizer;
+    }
+
 
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.
@@ -84,4 +85,28 @@ public class Event {
 
 
     }
+
+    /**
+     * This method adds an entrant to the waitlist
+     * @param entrant the entrant to be added to waitlist
+     */
+    public void addToWaitlist(Entrant entrant){
+        if (slots > 0) {
+            waitList.addEntrant(entrant);
+            slots--;
+        }else{
+            /* probably return an error message */
+        }
+    }
+
+    /**
+     * This method removes an entrant from the waitlist
+     * @param entrant the entrant to be removed from waitlist
+     */
+    public void removeFromWaitlist(Entrant entrant){
+        waitList.removeEntrant(entrant);
+
+    }
+
+
 }

@@ -44,4 +44,9 @@ public class UserList {
     public void removeEntrant(Entrant entrant){
         userList.remove(entrant);
     }
+
+    public boolean containsEntrant(Entrant entrant){
+        return userList.contains(entrant);
+
+    }
 }

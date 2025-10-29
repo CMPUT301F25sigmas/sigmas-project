@@ -10,11 +10,11 @@ import java.util.Random;
  */
 
 public class Event {
-    Random random = new Random();
     /*
         to do: error messages in add/removeFromWaitlist methods
 
      */
+    Random random = new Random();
     private int slots; //Number of slots available
     private Organizer organizer;
     private EntrantList waitList;

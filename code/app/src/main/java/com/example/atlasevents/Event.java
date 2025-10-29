@@ -19,10 +19,10 @@ public class Event {
      */
     private int slots; //Number of slots available
     private Organizer organizer;
-    private UserList waitList;
-    private UserList inviteList;
-    private UserList acceptedList;
-    private UserList declinedList;
+    private EntrantList waitList;
+    private EntrantList inviteList;
+    private EntrantList acceptedList;
+    private EntrantList declinedList;
 
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -35,17 +35,17 @@ public class Event {
     public Organizer getOrganizer() {
         return organizer;
     }
-    public UserList getWaitlist() {
+    public EntrantList getWaitlist() {
         return waitList;
     }
-    public UserList getAcceptedList() {
+    public EntrantList getAcceptedList() {
         return acceptedList;
     }
 
-    public UserList getDeclinedList() {
+    public EntrantList getDeclinedList() {
         return declinedList;
     }
-    public UserList getInviteList(){
+    public EntrantList getInviteList(){
         return inviteList;
     }
 
@@ -53,17 +53,17 @@ public class Event {
     public void setSlots(int slots) {
         this.slots = slots;
     }
-    public void setDeclinedList(UserList declinedList) {
+    public void setDeclinedList(EntrantList declinedList) {
         this.declinedList = declinedList;
     }
 
-    public void setInviteList(UserList inviteList) {
+    public void setInviteList(EntrantList inviteList) {
         this.inviteList = inviteList;
     }
-    public void setAcceptedList(UserList acceptedList) {
+    public void setAcceptedList(EntrantList acceptedList) {
         this.acceptedList = acceptedList;
     }
-    public void setWaitlist(UserList waitList) {
+    public void setWaitlist(EntrantList waitList) {
         this.waitList = waitList;
     }
     public void setOrganizer(Organizer organizer) {

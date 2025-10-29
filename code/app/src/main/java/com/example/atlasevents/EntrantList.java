@@ -6,12 +6,12 @@ import java.util.ArrayList;
  * This is a class that defines a waitlist for joining an event.
  */
 
-public class UserList {
+public class EntrantList {
   
     private ArrayList<Entrant> userList = new ArrayList<Entrant>();
 
 
-    public UserList() {
+    public EntrantList() {
         
     }
     /**

@@ -12,9 +12,7 @@ import java.util.Random;
 public class Event {
     Random random = new Random();
     /*
-        to do:
-        in runLottery it currently just adds entrants to acceptedList, but I kind of want an invitedList,
-        so we can remove people from the waitlist but still have access to the waitlist to invite others if someone declines
+        to do: error messages in add/removeFromWaitlist methods
 
      */
     private int slots; //Number of slots available
@@ -76,8 +74,8 @@ public class Event {
      */
     public void runLottery(){
         while (slots > 0){
-            int i = random.nextInt(slots);  //random int
-            inviteList.addEntrant(waitList.getEntrant(i)); //add random user to invite list
+            int i = random.nextInt(waitList.size());  //random int from 0 to size of waitlist
+            inviteList.addEntrant(waitList.getEntrant(i)); //add i'th user in waitlist to invite list
             waitList.removeEntrant(i);  //remove user from waitlist
             slots--;    //decrement slots
         }
@@ -95,7 +93,7 @@ public class Event {
             waitList.addEntrant(entrant);
             slots--;
         }else{
-            /* probably return an error message */
+            //to do: probably return an error message
         }
     }
 
@@ -104,7 +102,12 @@ public class Event {
      * @param entrant the entrant to be removed from waitlist
      */
     public void removeFromWaitlist(Entrant entrant){
-        waitList.removeEntrant(entrant);
+        if(waitList.containsEntrant(entrant)) {
+            waitList.removeEntrant(entrant);
+            slots++;
+        }else{
+            //to do: give an error message or something
+        }
 
     }
 

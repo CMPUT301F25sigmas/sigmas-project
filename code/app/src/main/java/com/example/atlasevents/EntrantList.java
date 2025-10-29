@@ -49,4 +49,7 @@ public class EntrantList {
         return userList.contains(entrant);
 
     }
+    public int size(){
+        return userList.size();
+    }
 }

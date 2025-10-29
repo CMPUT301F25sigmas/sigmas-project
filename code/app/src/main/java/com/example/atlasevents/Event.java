@@ -95,7 +95,7 @@ public class Event {
     public void addToWaitlist(Entrant entrant){
         if (slots > 0) {
             waitList.addEntrant(entrant);
-            slots++;
+            slots--;
         }else{
             //to do: probably return an error message
         }

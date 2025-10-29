@@ -10,10 +10,7 @@ import java.util.Random;
  */
 
 public class Event {
-    /*
-        to do: error messages in add/removeFromWaitlist methods
 
-     */
     Random random = new Random();
     private int slots; //Number of slots available
     private Organizer organizer;
@@ -93,12 +90,7 @@ public class Event {
      * @param entrant the entrant to be added to waitlist
      */
     public void addToWaitlist(Entrant entrant){
-        if (slots > 0) {
             waitList.addEntrant(entrant);
-            slots--;
-        }else{
-            //to do: probably return an error message
-        }
     }
 
     /**
@@ -108,9 +100,6 @@ public class Event {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
-            slots++;
-        }else{
-            //to do: give an error message or something
         }
 
     }

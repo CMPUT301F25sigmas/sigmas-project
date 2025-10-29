@@ -5,6 +5,9 @@ package com.example.atlasevents;
  * This is an abstract class that defines a generic User.
  */
 public abstract class User {
+    /*
+    * To do: implement database
+     */
     private String name;
     private String email;
     private String password;

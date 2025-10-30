@@ -12,6 +12,8 @@ import java.util.Random;
 public class Event {
 
     Random random = new Random();
+
+    private String id;
     private int slots; //Number of slots available
     private Organizer organizer;
     private EntrantList waitList;
@@ -48,6 +50,10 @@ public class Event {
         return inviteList;
     }
 
+    public String getId() {
+        return id;
+    }
+
     //Setters
     public void setSlots(int slots) {
         this.slots = slots;
@@ -69,6 +75,9 @@ public class Event {
         this.organizer = organizer;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
 
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.

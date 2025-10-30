@@ -14,6 +14,7 @@ public class Event {
     Random random = new Random();
     private int slots; //Number of slots available
     private Organizer organizer;
+    private String eventName;
     private EntrantList waitList;
     private EntrantList inviteList;
     private EntrantList acceptedList;
@@ -47,6 +48,8 @@ public class Event {
     public EntrantList getInviteList(){
         return inviteList;
     }
+    public String getEventName() { return eventName;}
+
 
     //Setters
     public void setSlots(int slots) {
@@ -68,6 +71,7 @@ public class Event {
     public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
     }
+    public void setEventName(String eventName) {this.eventName = eventName;}
 
 
     /**

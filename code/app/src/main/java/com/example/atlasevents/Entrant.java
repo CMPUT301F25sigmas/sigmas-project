@@ -19,6 +19,12 @@ public class Entrant extends User{
     public void leaveWaitlist(Event event) {
         event.removeFromWaitlist(this);
     }
-
+    public void getNotification(Event event, String message) {
+        String notificationMessage = message;
+        /*
+            This kinda needs a textview or something in
+            the XML, just holding it here
+         */
+    }
 
 }

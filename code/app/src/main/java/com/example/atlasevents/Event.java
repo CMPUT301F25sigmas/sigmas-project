@@ -91,10 +91,6 @@ public class Event {
      */
     public void addToWaitlist(Entrant entrant){
             waitList.addEntrant(entrant);
-            slots--;
-        }else{
-            //to do: probably return an error message
-        }
     }
 
     /**

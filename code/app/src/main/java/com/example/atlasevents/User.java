@@ -60,7 +60,6 @@ public abstract class User {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-
     /**
      * This method allows a user to edit their profile.
      * @param name this is the new name of the user

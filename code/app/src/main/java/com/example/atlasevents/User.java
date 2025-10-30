@@ -13,6 +13,8 @@ public abstract class User {
     private String password;
     private String phoneNumber;
 
+
+
     // No-arg constructor
     public User() {
     }
@@ -58,7 +60,6 @@ public abstract class User {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-
     /**
      * This method allows a user to edit their profile.
      * @param name this is the new name of the user

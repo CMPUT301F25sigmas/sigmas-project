@@ -24,6 +24,11 @@ public class Event {
     private EntrantList inviteList;
     private EntrantList acceptedList;
     private EntrantList declinedList;
+    private String Description;
+    private String address;
+
+
+
 
     public Event(Organizer organizer) {
         this.organizer = organizer;

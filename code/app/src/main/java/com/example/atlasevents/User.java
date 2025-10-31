@@ -2,7 +2,7 @@ package com.example.atlasevents;
 
 
 /**
- * This is an abstract class that defines a generic User.
+ * This is a class that defines a generic User.
  */
 public class User {
     /*

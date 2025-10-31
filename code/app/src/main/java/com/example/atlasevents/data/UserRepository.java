@@ -25,6 +25,13 @@ public class UserRepository {
     /**
      * This method gets a user from the database.
      * GIVES A USER CLASS: SHOULD ONLY BE USED TO CHECK USER INFO LIKE PASS OR USERTYPE
+     * to use:
+     * userRepo.getUser(username,
+     *                     user -> {
+     *                         if (user != null) {
+     *                         //do stuff with user here
+     *                         eg. String name = user.getName()
+     *                         }
      * @param listener: listener to check for successful database query
      * @param name: email address of the user
      */

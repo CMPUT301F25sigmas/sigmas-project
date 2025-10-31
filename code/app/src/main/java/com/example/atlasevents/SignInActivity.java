@@ -95,11 +95,15 @@ public class SignInActivity extends AppCompatActivity {
                                 }
 
 
+                            }else{
+                                //let user know username or password is incorrect
                             }
 
 
 
 
+                        }else{
+                            //let user know username or password is incorrect
                         }
                     });
         });

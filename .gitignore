@@ -1,0 +1,74 @@
+# Android/Gradle
+.gradle/
+**/.gradle/
+
+# Build outputs
+/build/
+**/build/
+
+# Keep Gradle wrapper binary tracked
+!gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+**/local.properties
+
+# IntelliJ / Android Studio
+.idea/
+**/.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Android NDK / CMake
+.cxx/
+**/.cxx/
+.externalNativeBuild/
+**/.externalNativeBuild/
+obj/
+
+# Captures & generated
+captures/
+**/captures/
+**/generated/
+
+# Lint
+lint/
+**/lint/
+
+# Keystores
+*.jks
+*.keystore
+*.jks.*
+*.keystore.*
+**/keystore/**
+**/.signing/**
+
+# Crashlytics / Firebase
+fabric.properties
+crashlytics.properties
+crashlytics-build.properties
+
+# Google services
+**/google-services.json
+
+# Build artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Logs
+*.log
+
+# Misc
+.idea_modules/
+/.navigation/
+.navigation/

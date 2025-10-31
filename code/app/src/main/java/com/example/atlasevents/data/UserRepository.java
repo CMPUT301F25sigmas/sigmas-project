@@ -2,6 +2,7 @@ package com.example.atlasevents.data;
 
 import androidx.annotation.NonNull;
 
+import com.example.atlasevents.Organizer;
 import com.example.atlasevents.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -15,9 +16,18 @@ public class UserRepository {
     public interface OnUserFetchedListener {
         void onUserFetched(User user);
     }
+    public interface OnOrganizerFetchedListener {
+        void onOrganizerFetched(Organizer user);
+    }
     public Task<Void> addUser(@NonNull User user) {
         return db.collection("users").document(user.getEmail()).set(user);
     }
+    /**
+     * This method gets a user from the database.
+     * GIVES A USER CLASS: SHOULD ONLY BE USED TO CHECK USER INFO LIKE PASS OR USERTYPE
+     * @param listener: listener to check for successful database query
+     * @param name: email address of the user
+     */
     public void getUser(String name, OnUserFetchedListener listener) {
         db.collection("users")
                 .whereEqualTo("email", name)
@@ -33,6 +43,27 @@ public class UserRepository {
                     }
                 })
                 .addOnFailureListener(e -> listener.onUserFetched(null));
+    }
+    /**
+     * This method gets an organizer from the database.
+     * @param listener: listener to check for successful database query
+     * @param name: email address of the user
+     */
+    public void getOrganizer(String name, OnOrganizerFetchedListener listener) {
+        db.collection("users")
+                .whereEqualTo("email", name)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        Organizer user = queryDocumentSnapshots.getDocuments()
+                                .get(0)
+                                .toObject(Organizer.class);
+                        listener.onOrganizerFetched(user);
+                    } else {
+                        listener.onOrganizerFetched(null); // user not found
+                    }
+                })
+                .addOnFailureListener(e -> listener.onOrganizerFetched(null));
     }
 }
 

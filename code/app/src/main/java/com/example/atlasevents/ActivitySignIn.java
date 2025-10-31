@@ -62,25 +62,26 @@ public class ActivitySignIn extends AppCompatActivity {
             String username = usernameField.getText().toString();
             String password = passwordField.getText().toString();
             //check email and pass in database
-            userRepo.getUser(username, user -> {
-                if (user != null) {
-                    if (password.equals(user.getPassword())) { //check pass matches
-                        //check if user is organizer
-                            //Intent intent = new Intent(ActivitySignUp.this, OrganizerDashboard.class);
-                            //startActivity(intent);
-                            //finish();
-                        //check if user is entrant
-                            //Intent intent = new Intent(ActivitySignUp.this, EntrantDashboard.class);
-                            //startActivity(intent);
-                            //finish();
+            userRepo.getUser(username,
+                    user -> {
+                        if (user != null) {
+                            if (password.equals(user.getPassword())) { //check pass matches
+                                //check if user is organizer
+                                //Intent intent = new Intent(ActivitySignUp.this, OrganizerDashboard.class);
+                                //startActivity(intent);
+                                //finish();
+                                //check if user is entrant
+                                //Intent intent = new Intent(ActivitySignUp.this, EntrantDashboard.class);
+                                //startActivity(intent);
+                                //finish();
 
-                    }
+                            }
 
 
 
 
-                }
-            });
+                        }
+                    });
         });
     }
 

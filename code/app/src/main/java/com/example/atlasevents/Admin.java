@@ -8,6 +8,7 @@ public class Admin extends User {
 
     public Admin(String name, String email, String password, String phoneNumber) {
         super(name, email, password, phoneNumber);
+        this.setUserType("Admin");
     }
 
     public void sendNotification(String message) {

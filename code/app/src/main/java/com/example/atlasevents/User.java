@@ -13,7 +13,15 @@ public class User {
     private String password;
     private String phoneNumber;
 
+    private String userType;
 
+    public String getUserType() {
+        return userType;
+    }
+
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
 
     // No-arg constructor
     public User() {

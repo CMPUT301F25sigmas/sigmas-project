@@ -19,6 +19,7 @@ public class Organizer extends User {
 
     public Organizer(String name, String email, String password, String phoneNumber) {
         super(name, email, password, phoneNumber);
+        this.setUserType("Organizer");
     }
 
     public void createEvent(Event event) {

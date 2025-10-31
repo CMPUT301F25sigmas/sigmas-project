@@ -2,6 +2,7 @@ package com.example.atlasevents;
 
 
 import com.example.atlasevents.data.EventRepository;
+import com.google.type.DateTime;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -26,6 +27,8 @@ public class Event {
     private EntrantList declinedList;
     private String Description;
     private String address;
+    private DateTime start;
+    private DateTime end;
 
 
 

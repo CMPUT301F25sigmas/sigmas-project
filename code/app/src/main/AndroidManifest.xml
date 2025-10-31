@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AtlasEvents">
         <activity
-            android:name=".MainActivity"
+            android:name=".ActivitySignIn"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

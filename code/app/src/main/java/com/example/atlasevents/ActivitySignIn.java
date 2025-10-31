@@ -2,29 +2,31 @@ package com.example.atlasevents;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.EditText;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.QuerySnapshot;
 
-public class MainActivity extends AppCompatActivity {
+public class ActivitySignIn extends AppCompatActivity {
     private UserRepository userRepo;
     private EventRepository eventRepo;
+    private Button signInbutton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_sign_in);
 
         userRepo = new UserRepository();
         eventRepo = new EventRepository();
+        signInbutton = findViewById(R.id.signInButton);
+        EditText usernameField = findViewById(R.id.emailOrPhone);
+        EditText passwordField = findViewById(R.id.password);
 
         Entrant newUser = new Entrant(
                 "Alice",
@@ -53,6 +55,16 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Firestore", "Event added successfully"))
                 .addOnFailureListener(e ->
                         Log.e("Firestore", "Failed to add event", e));
+
+        //listener for signInButton
+        signInbutton.setOnClickListener(view -> {
+            String username = usernameField.getText().toString();
+            String password = passwordField.getText().toString();
+            //check email and pass in database
+            User user = userRepo.getUser(username);
+            //check user type
+            //open home page activity
+        });
     }
 
 }

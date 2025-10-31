@@ -35,13 +35,19 @@ public class SignInActivity extends AppCompatActivity {
         );
 
         Organizer newOrg = new Organizer(
-                "Alice",
-                "alice@example1.com",
+                "Bob",
+                "bob@example1.com",
                 "mypassword",
                 "1234567890"
         );
 
         Event newEvent = new Event(newOrg);
+
+        userRepo.addUser(newOrg)
+                .addOnSuccessListener(aVoid ->
+                        Log.d("Firestore", "User added successfully"))
+                .addOnFailureListener(e ->
+                        Log.e("Firestore", "Failed to add user", e));
 
         userRepo.addUser(newUser)
                 .addOnSuccessListener(aVoid ->
@@ -60,27 +66,24 @@ public class SignInActivity extends AppCompatActivity {
             String username = usernameField.getText().toString();
             String password = passwordField.getText().toString();
             //check email and pass in database
-            Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
-            startActivity(intent);
-            // *** will implement sign in later, for now sign in button takes you to organizer dashboard ***
-            /*userRepo.getUser(username,
+            userRepo.getUser(username,
                     user -> {
                         if (user != null) {
                             if (password.equals(user.getPassword())) { //check pass matches
-                                if (user.getUserType() == "Organizer"){//check if user is organizer
-                                    Intent intent = new Intent(ActivitySignIn.this, OrganizerDashboardActivity.class);
+                                if (user.getUserType().equals("Organizer")){//check if user is organizer
+                                    Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
                                     startActivity(intent);
+                                    finish();
 
                                 }
                                 //finish();
-                                if (user.getUserType() == "Entrant"){//check if user is entrant
-                                    Intent intent = new Intent(ActivitySignIn.this, OrganizerDashboardActivity.class);
+                                if (user.getUserType().equals("Entrant")){//check if user is entrant
+                                    Intent intent = new Intent(SignInActivity.this, UserDashboardActivity.class);
                                     startActivity(intent);
+                                    finish();
 
                                 }
-                                //Intent intent = new Intent(ActivitySignUp.this, EntrantDashboard.class);
-                                //startActivity(intent);
-                                //finish();
+
 
                             }
 
@@ -88,7 +91,7 @@ public class SignInActivity extends AppCompatActivity {
 
 
                         }
-                    });*/
+                    });
         });
     }
 

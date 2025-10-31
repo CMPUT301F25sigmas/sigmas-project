@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AtlasEvents">
         <activity
+            android:name=".UserDashboardActivity"
+            android:exported="false" />
+        <activity
             android:name=".OrganizerDashboardActivity"
             android:exported="false" />
         <activity

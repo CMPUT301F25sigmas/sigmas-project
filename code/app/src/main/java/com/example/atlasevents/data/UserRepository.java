@@ -12,15 +12,28 @@ public class UserRepository {
     public UserRepository() {
         db = FirebaseFirestore.getInstance();
     }
+    public interface OnUserFetchedListener {
+        void onUserFetched(User user);
+    }
     public Task<Void> addUser(@NonNull User user) {
         return db.collection("users").document(user.getEmail()).set(user);
     }
-    public User getUser(String name){
-        //to do
-        Task<QuerySnapshot> task = db.collection("users").whereEqualTo("name", name).get();
-        //i think im supposed to use an onSuccessListener, but idk how to... will fix later
-        return task.getResult().getDocuments().get(0).toObject(User.class);
-
+    public void getUser(String name, OnUserFetchedListener listener) {
+        db.collection("users")
+                .whereEqualTo("name", name)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        User user = queryDocumentSnapshots.getDocuments()
+                                .get(0)
+                                .toObject(User.class);
+                        listener.onUserFetched(user);
+                    } else {
+                        listener.onUserFetched(null); // user not found
+                    }
+                })
+                .addOnFailureListener(e -> listener.onUserFetched(null));
     }
-
 }
+
+

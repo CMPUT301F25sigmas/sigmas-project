@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,6 +16,7 @@ public class SignInActivity extends AppCompatActivity {
     private UserRepository userRepo;
     private EventRepository eventRepo;
     private Button signInbutton;
+    private TextView signUpText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +26,8 @@ public class SignInActivity extends AppCompatActivity {
         userRepo = new UserRepository();
         eventRepo = new EventRepository();
         signInbutton = findViewById(R.id.signInButton);
+        signUpText = findViewById(R.id.joinNow);
+
         EditText usernameField = findViewById(R.id.emailOrPhone);
         EditText passwordField = findViewById(R.id.password);
 
@@ -60,6 +64,12 @@ public class SignInActivity extends AppCompatActivity {
                         Log.d("Firestore", "Event added successfully"))
                 .addOnFailureListener(e ->
                         Log.e("Firestore", "Failed to add event", e));
+
+        signUpText.setOnClickListener(view ->{
+            Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
+            startActivity(intent);
+            finish();
+        });
 
         //listener for signInButton
         signInbutton.setOnClickListener(view -> {

@@ -2,13 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/signUp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
     android:background="@android:color/white"
-    tools:context=".SignUpActivity">
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".SignUpActivity"
+    >
 
     <TextView
         android:layout_width="wrap_content"
@@ -23,37 +25,37 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/edit_text_background"
         android:hint="Name"
         android:inputType="textPersonName"
-        android:background="@drawable/edit_text_background"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:padding="16dp" />
 
     <EditText
         android:id="@+id/email"
         android:layout_width="match_parent"
         android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/edit_text_background"
         android:hint="Email"
         android:inputType="textEmailAddress"
-        android:background="@drawable/edit_text_background"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:padding="16dp" />
 
     <EditText
         android:id="@+id/phone"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:hint="Phone (Optional)"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/edit_text_background"
+        android:hint="Phone (Optional)"
         android:inputType="phone"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:padding="16dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/cancelButton"

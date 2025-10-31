@@ -10,10 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.QuerySnapshot;
 
-public class ActivitySignIn extends AppCompatActivity {
+public class SignInActivity extends AppCompatActivity {
     private UserRepository userRepo;
     private EventRepository eventRepo;
     private Button signInbutton;
@@ -62,15 +60,24 @@ public class ActivitySignIn extends AppCompatActivity {
             String username = usernameField.getText().toString();
             String password = passwordField.getText().toString();
             //check email and pass in database
-            userRepo.getUser(username,
+            Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
+            startActivity(intent);
+            // *** will implement sign in later, for now sign in button takes you to organizer dashboard ***
+            /*userRepo.getUser(username,
                     user -> {
                         if (user != null) {
                             if (password.equals(user.getPassword())) { //check pass matches
-                                //check if user is organizer
-                                //Intent intent = new Intent(ActivitySignUp.this, OrganizerDashboard.class);
-                                //startActivity(intent);
+                                if (user.getUserType() == "Organizer"){//check if user is organizer
+                                    Intent intent = new Intent(ActivitySignIn.this, OrganizerDashboardActivity.class);
+                                    startActivity(intent);
+
+                                }
                                 //finish();
-                                //check if user is entrant
+                                if (user.getUserType() == "Entrant"){//check if user is entrant
+                                    Intent intent = new Intent(ActivitySignIn.this, OrganizerDashboardActivity.class);
+                                    startActivity(intent);
+
+                                }
                                 //Intent intent = new Intent(ActivitySignUp.this, EntrantDashboard.class);
                                 //startActivity(intent);
                                 //finish();
@@ -81,7 +88,7 @@ public class ActivitySignIn extends AppCompatActivity {
 
 
                         }
-                    });
+                    });*/
         });
     }
 

@@ -30,7 +30,7 @@ public class SignInActivity extends AppCompatActivity {
 
         EditText usernameField = findViewById(R.id.emailOrPhone);
         EditText passwordField = findViewById(R.id.password);
-
+/* commented out (for testing)
         Entrant newUser = new Entrant(
                 "Alice",
                 "alice@example1.com",
@@ -64,7 +64,7 @@ public class SignInActivity extends AppCompatActivity {
                         Log.d("Firestore", "Event added successfully"))
                 .addOnFailureListener(e ->
                         Log.e("Firestore", "Failed to add event", e));
-
+*/
         signUpText.setOnClickListener(view ->{
             Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
             startActivity(intent);

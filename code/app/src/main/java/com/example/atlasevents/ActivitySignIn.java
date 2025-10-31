@@ -68,10 +68,14 @@ public class ActivitySignIn extends AppCompatActivity {
                         //check if user is organizer
                             //Intent intent = new Intent(ActivitySignUp.this, OrganizerDashboard.class);
                             //startActivity(intent);
+                            //finish();
                         //check if user is entrant
                             //Intent intent = new Intent(ActivitySignUp.this, EntrantDashboard.class);
                             //startActivity(intent);
+                            //finish();
+
                     }
+
 
 
 

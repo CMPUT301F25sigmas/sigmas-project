@@ -20,7 +20,7 @@ public class UserRepository {
     }
     public void getUser(String name, OnUserFetchedListener listener) {
         db.collection("users")
-                .whereEqualTo("name", name)
+                .whereEqualTo("email", name)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {

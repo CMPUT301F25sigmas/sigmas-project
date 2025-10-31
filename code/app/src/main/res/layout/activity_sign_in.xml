@@ -8,7 +8,8 @@
     android:gravity="center"
     android:padding="16dp"
     android:background="@android:color/white"
-    tools:context=".SignInActivity">
+    tools:context=".SignInActivity"
+    android:id="@+id/main">
 
     <TextView
         android:layout_width="wrap_content"
@@ -65,19 +66,19 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/joinNow"
+            android:id="@+id/newToSigmas"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:text="New to Sigmas?" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/joinNow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Join Now"
-            android:textColor="#2196F3"/>
+            android:textColor="#2196F3" />
     </LinearLayout>
 
     <LinearLayout

@@ -1,6 +1,8 @@
 package com.example.atlasevents;
 
 
+import com.example.atlasevents.data.EventRepository;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -12,6 +14,7 @@ import java.util.Random;
 public class Event {
 
     Random random = new Random();
+    EventRepository db = new EventRepository();
 
     private String id;
     private int slots; //Number of slots available
@@ -28,6 +31,7 @@ public class Event {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        db.addEvent(this); //add event to database
     }
 
     //Getters

@@ -12,7 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AtlasEvents">
         <activity
-            android:name=".MainActivity"
+            android:name=".SignUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OrganizerDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SignInActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

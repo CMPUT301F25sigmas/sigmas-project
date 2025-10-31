@@ -11,8 +11,11 @@ public class Entrant extends User{
         */
     public Entrant(String name, String email, String password, String phoneNumber) {
         super(name, email, password, phoneNumber);
+        this.setUserType("Entrant");
         }
+    public Entrant(){
 
+    }
     public void joinWaitlist(Event event) {
         event.addToWaitlist(this);
     }

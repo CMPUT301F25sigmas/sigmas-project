@@ -14,7 +14,7 @@ public class Entrant extends User{
         this.setUserType("Entrant");
         }
     public Entrant(){
-
+        this.setUserType("Entrant");
     }
     public void joinWaitlist(Event event) {
         event.addToWaitlist(this);

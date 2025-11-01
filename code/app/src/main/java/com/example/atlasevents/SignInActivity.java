@@ -67,8 +67,7 @@ public class SignInActivity extends AppCompatActivity {
 */
         signUpText.setOnClickListener(view ->{
             Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
-            startActivity(intent);
-            finish();
+            startActivity(intent); //don't close Sign in Activity, will be coming back
         });
 
         //listener for signInButton

@@ -51,6 +51,16 @@
         android:inputType="phone"
         android:padding="16dp" />
 
+    <EditText
+        android:id="@+id/newPassword"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/edit_text_background"
+        android:hint="Password"
+        android:inputType="text|textPassword"
+        android:padding="16dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -106,6 +116,7 @@
                 android:id="@+id/entrantCheckBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:checked="true"
                 android:text="Entrant" />
         </LinearLayout>
     </LinearLayout>

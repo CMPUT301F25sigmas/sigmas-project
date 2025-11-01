@@ -24,7 +24,7 @@ public class UserRepository {
     }
     /**
      * This method gets a user from the database.
-     * GIVES A USER CLASS: SHOULD ONLY BE USED TO CHECK USER INFO LIKE PASS OR USERTYPE
+     * GIVES A USER CLASS: SHOULD ONLY BE USED TO CHECK USER INFO LIKE PASS OR USERTYPE ON SIGN-IN
      * to use:
      * userRepo.getUser(username,
      *                     user -> {

@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AtlasEvents">
         <activity
+            android:name=".CreateEventActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignUpActivity"
             android:exported="false" />
         <activity

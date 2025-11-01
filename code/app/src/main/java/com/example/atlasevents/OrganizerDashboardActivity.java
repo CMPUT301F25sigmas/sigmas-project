@@ -1,5 +1,6 @@
 package com.example.atlasevents;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 
@@ -25,12 +26,19 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        Organizer user;
+        Bundle bundle = getIntent().getExtras();
+        assert bundle != null;
+        String username = bundle.getString("email");
 
         Button createEventButton = findViewById(R.id.create_event_button);
 
         createEventButton.setOnClickListener(view -> {
-            //prompt organizer to enter details
-            //create event
+            Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
+            Bundle bundle2 = new Bundle();
+            bundle2.putString("email",username); //using a bundle to pass user id to new activity
+            intent.putExtras(bundle2);
+            startActivity(intent);
                 });
     }
 }

@@ -82,6 +82,9 @@ public class SignInActivity extends AppCompatActivity {
                             if (password.equals(user.getPassword())) { //check pass matches
                                 if (user.getUserType().equals("Organizer")){//check if user is organizer
                                     Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("email",user.getEmail()); //using a bundle to pass user id to new activity
+                                    intent.putExtras(bundle);
                                     startActivity(intent);
                                     finish();
 
@@ -89,6 +92,9 @@ public class SignInActivity extends AppCompatActivity {
                                 //finish();
                                 if (user.getUserType().equals("Entrant")){//check if user is entrant
                                     Intent intent = new Intent(SignInActivity.this, UserDashboardActivity.class);
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("email",user.getEmail()); //using a bundle to pass user id to new activity
+                                    intent.putExtras(bundle);
                                     startActivity(intent);
                                     finish();
 

@@ -20,6 +20,23 @@ public class Event {
     private String id;
     private int slots; //Number of slots available
     private Organizer organizer;
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getDescription() {
+        return Description;
+    }
+
+    public void setDescription(String description) {
+        Description = description;
+    }
+
     private String eventName;
     private EntrantList waitList;
     private EntrantList inviteList;
@@ -27,11 +44,24 @@ public class Event {
     private EntrantList declinedList;
     private String Description;
     private String address;
-    private DateTime start;
-    private DateTime end;
+    private String start;
+    private String end;
 
+    public String getStart() {
+        return start;
+    }
 
+    public void setStart(String start) {
+        this.start = start;
+    }
 
+    public String getEnd() {
+        return end;
+    }
+
+    public void setEnd(String end) {
+        this.end = end;
+    }
 
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -39,7 +69,6 @@ public class Event {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
-        db.addEvent(this); //add event to database
     }
 
     //Getters

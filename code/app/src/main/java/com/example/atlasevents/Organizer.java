@@ -21,6 +21,9 @@ public class Organizer extends User {
         super(name, email, password, phoneNumber);
         this.setUserType("Organizer");
     }
+    public Organizer(){
+        this.setUserType("Organizer");
+    }
 
     public void createEvent(Event event) {
         Event myevent = new Event(this);

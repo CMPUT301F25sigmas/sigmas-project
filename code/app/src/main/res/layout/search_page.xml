@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    tools:context=".EntrantDashboardActivity"
+    tools:context=".SearchPageActivity"
     android:id="@+id/main"  >
 
 
@@ -43,29 +43,22 @@
             android:layout_marginBottom="16dp"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/activeEvents"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/light_purple"
-                android:text="Current"
-                android:textColor="@color/text_color"
-                android:padding="0dp"
-                />
-
-            <Button
-                android:id="@+id/pastEvents"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/background_grey"
-                android:text="Past"
-                android:textColor="@color/text_color"
-                android:padding="0dp"/>
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="272dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/search_view_background"
+                app:iconifiedByDefault="false"
+                app:queryHint="Search for events" />
 
 
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upcoming Events" />
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -102,20 +95,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="24dp"
-                        android:text="No Active Events to
-display right now. 
-Join Now!"
+                        android:text="No events matching the \nsearch criteria."
                         android:textAlignment="center"
                         android:textColor="#494949"
                         android:textSize="16sp" />
 
-                    <Button
-                        android:id="@+id/join_event_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Search for Events"
-                        app:backgroundTint="@color/light_purple"
-                        app:cornerRadius="16dp" />
+
                 </LinearLayout>
             </FrameLayout>
 

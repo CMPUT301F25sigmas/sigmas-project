@@ -1,6 +1,8 @@
 package com.example.atlasevents;
 
 
+import android.widget.ImageView;
+
 import com.example.atlasevents.data.EventRepository;
 import com.google.type.DateTime;
 
@@ -46,23 +48,10 @@ public class Event {
     private String address;
     private String start;
     private String end;
+    private String imageUrl; // Firebase Storage path or URL
 
-    public String getStart() {
-        return start;
-    }
 
-    public void setStart(String start) {
-        this.start = start;
-    }
-
-    public String getEnd() {
-        return end;
-    }
-
-    public void setEnd(String end) {
-        this.end = end;
-    }
-
+    public Event(){}
     public Event(Organizer organizer) {
         this.organizer = organizer;
         waitList = new EntrantList();
@@ -72,6 +61,12 @@ public class Event {
     }
 
     //Getters
+    public String getStart() {
+        return start;
+    }
+    public String getEnd() {
+        return end;
+    }
     public int getSlots() {
         return slots;
     }
@@ -99,6 +94,12 @@ public class Event {
     }
 
     //Setters
+    public void setStart(String start) {
+        this.start = start;
+    }
+    public void setEnd(String end) {
+        this.end = end;
+    }
     public void setSlots(int slots) {
         this.slots = slots;
     }
@@ -134,9 +135,6 @@ public class Event {
             waitList.removeEntrant(i);  //remove user from waitlist
             slots--;    //decrement slots
         }
-
-
-
     }
 
     /**

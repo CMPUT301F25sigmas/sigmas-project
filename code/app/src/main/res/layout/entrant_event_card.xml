@@ -29,7 +29,7 @@
             android:background="#B3FFFFFF"
             android:gravity="center"
             android:padding="8dp"
-            android:text="Kids' Pottery Classes"
+            android:text="Event Name"
             android:textColor="@android:color/black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

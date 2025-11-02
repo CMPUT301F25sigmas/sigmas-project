@@ -237,17 +237,30 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     android:text="Event Settings"
                     android:textColor="@color/black"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="16dp"/>
+                    android:textStyle="bold" />
 
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/limitEntrantsSwitch"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Limit Number of Entrants"/>
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/limitEntrantsSwitch"
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:text="Limit Number of Entrants" />
+
+                    <EditText
+                        android:id="@+id/maxEntrantsEditText"
+                        android:layout_width="30dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:inputType="number" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"

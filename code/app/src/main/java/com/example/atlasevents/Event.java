@@ -1,6 +1,8 @@
 package com.example.atlasevents;
 
 
+import android.widget.ImageView;
+
 import com.example.atlasevents.data.EventRepository;
 import com.google.type.DateTime;
 
@@ -46,23 +48,12 @@ public class Event {
     private String address;
     private String start;
     private String end;
+    private String imageUrl; // Firebase Storage path or URL
+    private boolean requireGeolocation;
+    private int entrantLimit = -1;
 
-    public String getStart() {
-        return start;
-    }
 
-    public void setStart(String start) {
-        this.start = start;
-    }
-
-    public String getEnd() {
-        return end;
-    }
-
-    public void setEnd(String end) {
-        this.end = end;
-    }
-
+    public Event(){}
     public Event(Organizer organizer) {
         this.organizer = organizer;
         waitList = new EntrantList();
@@ -72,6 +63,12 @@ public class Event {
     }
 
     //Getters
+    public String getStart() {
+        return start;
+    }
+    public String getEnd() {
+        return end;
+    }
     public int getSlots() {
         return slots;
     }
@@ -98,7 +95,18 @@ public class Event {
         return id;
     }
 
+    public boolean getRequireGeolocation(){return requireGeolocation;}
+
+    public int getEntrantLimit(){return entrantLimit;}
+
+
     //Setters
+    public void setStart(String start) {
+        this.start = start;
+    }
+    public void setEnd(String end) {
+        this.end = end;
+    }
     public void setSlots(int slots) {
         this.slots = slots;
     }
@@ -124,6 +132,9 @@ public class Event {
         this.id = id;
     }
 
+    public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
+    public void setEntrantLimit(int max){this.entrantLimit = max;}
+
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.
      */
@@ -134,9 +145,6 @@ public class Event {
             waitList.removeEntrant(i);  //remove user from waitlist
             slots--;    //decrement slots
         }
-
-
-
     }
 
     /**
@@ -144,7 +152,10 @@ public class Event {
      * @param entrant the entrant to be added to waitlist
      */
     public void addToWaitlist(Entrant entrant){
+        if (entrantLimit > 0) {
             waitList.addEntrant(entrant);
+            entrantLimit --;
+        }
     }
 
     /**
@@ -154,6 +165,7 @@ public class Event {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
+            entrantLimit++;
         }
 
     }

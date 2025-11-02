@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    tools:context="EventDetailActivity"
+    tools:context="EventDashboardActivity"
     android:id="@+id/main"  >
 
 
@@ -100,7 +100,7 @@
 
     <include
         android:id="@+id/entrant_tab"
-        layout="@layout/entrant_tab"
+        layout="@layout/entrant_dashboard"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

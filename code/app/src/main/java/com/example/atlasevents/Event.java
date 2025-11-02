@@ -49,6 +49,8 @@ public class Event {
     private String start;
     private String end;
     private String imageUrl; // Firebase Storage path or URL
+    private boolean requireGeolocation;
+    private int entrantLimit = -1;
 
 
     public Event(){}
@@ -93,6 +95,11 @@ public class Event {
         return id;
     }
 
+    public boolean getRequireGeolocation(){return requireGeolocation;}
+
+    public int getEntrantLimit(){return entrantLimit;}
+
+
     //Setters
     public void setStart(String start) {
         this.start = start;
@@ -125,6 +132,9 @@ public class Event {
         this.id = id;
     }
 
+    public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
+    public void setEntrantLimit(int max){this.entrantLimit = max;}
+
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.
      */
@@ -142,7 +152,10 @@ public class Event {
      * @param entrant the entrant to be added to waitlist
      */
     public void addToWaitlist(Entrant entrant){
+        if (entrantLimit > 0) {
             waitList.addEntrant(entrant);
+            entrantLimit --;
+        }
     }
 
     /**
@@ -152,6 +165,7 @@ public class Event {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
+            entrantLimit++;
         }
 
     }

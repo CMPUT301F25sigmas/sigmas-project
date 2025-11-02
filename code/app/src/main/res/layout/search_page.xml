@@ -18,7 +18,7 @@
 
     <include
         android:id="@+id/entrant_tab"
-        layout="@layout/entrant_tab"
+        layout="@layout/entrant_event_details"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -79,7 +79,7 @@
                     android:padding="8dp"
                     android:clipToPadding="false"
                     android:visibility="gone"
-                    tools:listitem="@layout/entrant_event_card"
+                    tools:listitem="@layout/event_card_item"
                     tools:itemCount="3"
                     tools:visibility="visible" />
 

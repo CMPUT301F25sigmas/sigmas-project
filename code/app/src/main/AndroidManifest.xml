@@ -18,7 +18,7 @@
             android:name=".SignUpActivity"
             android:exported="false" />
         <activity
-            android:name=".UserDashboardActivity"
+            android:name=".EntrantDashboardActivity"
             android:exported="false" />
         <activity
             android:name=".OrganizerDashboardActivity"

@@ -83,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="104st Jasper Ave, Edmonton, Canada (placeholder)"
-                android:textAlignment="right" />
+                />
         </LinearLayout>
 
         <GridLayout

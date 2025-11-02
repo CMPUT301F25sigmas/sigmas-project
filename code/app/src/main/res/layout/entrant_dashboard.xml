@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    tools:context=".OrganizerDashboardActivity"
-    android:id="@+id/main"  >
+    tools:context=".EntrantDashboardActivity"
+    android:id="@+id/main">
 
 
     <androidx.constraintlayout.widget.Guideline
@@ -26,6 +26,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Main Content Area -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -33,9 +34,10 @@
         android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@id/page_selector"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/entrant_tab"
+        app:layout_constraintStart_toEndOf="@id/guideline"
         app:layout_constraintTop_toTopOf="parent">
 
+        <!-- Filter Buttons -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -44,29 +46,38 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/activeEvents"
+                android:id="@+id/button_available"
                 android:layout_width="0dp"
                 android:layout_height="38dp"
                 android:layout_weight="1"
                 android:backgroundTint="@color/light_purple"
-                android:text="Current"
+                android:text="Available"
                 android:textColor="@color/text_color"
-                android:padding="0dp"
-                />
+                android:padding="0dp" />
 
             <Button
-                android:id="@+id/pastEvents"
+                android:id="@+id/button_joined"
                 android:layout_width="0dp"
                 android:layout_height="38dp"
                 android:layout_weight="1"
                 android:backgroundTint="@color/background_grey"
-                android:text="Past"
+                android:text="Joined"
                 android:textColor="@color/text_color"
-                android:padding="0dp"/>
+                android:padding="0dp" />
 
+            <Button
+                android:id="@+id/button_waitlist"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/background_grey"
+                android:text="Waitlist"
+                android:textColor="@color/text_color"
+                android:padding="0dp" />
 
         </LinearLayout>
 
+        <!-- Events CardView -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -75,54 +86,27 @@
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp">
 
-            <FrameLayout
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/events_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="8dp"
-                    android:clipToPadding="false"
-                    android:visibility="gone"
-                    tools:listitem="@layout/entrant_event_card"
-                    tools:itemCount="3"
-                    tools:visibility="visible" />
+                android:layout_height="match_parent"
+                android:padding="16dp">
 
                 <LinearLayout
-                    android:id="@+id/empty_view_entrant"
+                    android:id="@+id/events_container"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:visibility="visible">
+                    android:gravity="center_horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        android:text="No Active Events to
-display right now. 
-Join Now!"
-                        android:textAlignment="center"
-                        android:textColor="#494949"
-                        android:textSize="16sp" />
-
-                    <Button
-                        android:id="@+id/join_event_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Search for Events"
-                        app:backgroundTint="@color/light_purple"
-                        app:cornerRadius="16dp" />
                 </LinearLayout>
-            </FrameLayout>
+
+            </ScrollView>
 
         </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 
+    <!-- Page Selector at Bottom -->
     <include
         android:id="@+id/page_selector"
         layout="@layout/page_selector"
@@ -130,6 +114,6 @@ Join Now!"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/entrant_tab" />
+        app:layout_constraintStart_toEndOf="@id/guideline" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:background="@android:color/white"
+    tools:context=".SearchPageActivity"
+    android:id="@+id/main"  >
+
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
         android:layout_width="wrap_content"
@@ -12,8 +17,8 @@
         app:layout_constraintGuide_begin="100dp" />
 
     <include
-        android:id="@+id/organizer_tab"
-        layout="@layout/organizer_tab"
+        android:id="@+id/entrant_tab"
+        layout="@layout/entrant_event_details"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -26,28 +31,34 @@
         android:layout_height="0dp"
         android:orientation="vertical"
         android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/page_selector"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintStart_toEndOf="@id/entrant_tab"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Notifications Center"
-            android:textAlignment="center"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="272dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/search_view_background"
+                app:iconifiedByDefault="false"
+                app:queryHint="Search for events" />
+
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/textView5"
+            android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:text="Click on desired Active Event\nto compose notification"
-            android:textAlignment="center" />
+            android:text="Upcoming Events" />
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -62,18 +73,18 @@
                 android:layout_height="match_parent">
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/notification_events_recycler_view"
+                    android:id="@+id/events_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:padding="8dp"
                     android:clipToPadding="false"
                     android:visibility="gone"
                     tools:listitem="@layout/event_card_item"
-                    tools:itemCount="5"
+                    tools:itemCount="3"
                     tools:visibility="visible" />
 
                 <LinearLayout
-                    android:id="@+id/empty_view_notification"
+                    android:id="@+id/empty_view_entrant"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -83,22 +94,27 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="No Active Events\n to send notifications for."
+                        android:layout_marginBottom="24dp"
+                        android:text="No events matching the \nsearch criteria."
                         android:textAlignment="center"
                         android:textColor="#494949"
                         android:textSize="16sp" />
+
+
                 </LinearLayout>
             </FrameLayout>
+
         </androidx.cardview.widget.CardView>
 
-        <Button
-            android:id="@+id/notificationHistory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:drawableLeft="@drawable/history"
-            android:text="Notification History" />
-
     </LinearLayout>
+
+    <include
+        android:id="@+id/page_selector"
+        layout="@layout/page_selector"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/entrant_tab" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

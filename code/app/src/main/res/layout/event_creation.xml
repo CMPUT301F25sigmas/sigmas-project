@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".EventCreationActivity">
+    tools:context=".CreateEventActivity"
+    android:id="@+id/main">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -93,7 +94,7 @@
                     android:id="@+id/locEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_location"
+                    android:drawableStart="@drawable/location"
                     android:drawablePadding="8dp"
                     android:hint="Enter event location"
                     android:layout_marginBottom="8dp"/>
@@ -107,7 +108,7 @@
                     android:id="@+id/dateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_calendar"
+                    android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
                     android:layout_marginBottom="8dp"/>
 
@@ -120,7 +121,7 @@
                     android:id="@+id/timeEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_clock"
+                    android:drawableStart="@drawable/clock"
                     android:drawablePadding="8dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -156,7 +157,7 @@
                     android:id="@+id/startDateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_calendar"
+                    android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
                     android:layout_marginBottom="8dp"/>
 
@@ -169,7 +170,7 @@
                     android:id="@+id/endDateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_calendar"
+                    android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -207,13 +208,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Upload Poster"
-                    app:icon="@drawable/ic_upload"/>
+                    app:icon="@drawable/qr_reader_icon"/>
 
                 <ImageView
                     android:id="@+id/posterImageView"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
-                    android:src="@drawable/ic_no_poster"
+                    android:src="@drawable/poster"
                     android:scaleType="centerInside"
                     android:layout_marginTop="8dp"/>
 
@@ -273,7 +274,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Generate QR Code"
-            app:icon="@drawable/ic_qr_code"
+            app:icon="@drawable/qr_code"
             android:layout_marginTop="16dp"/>
 
         <Button

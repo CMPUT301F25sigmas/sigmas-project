@@ -2,7 +2,6 @@ package com.example.atlasevents;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -90,7 +89,7 @@ public class SignInActivity extends AppCompatActivity {
                                 }
                                 //finish();
                                 if (user.getUserType().equals("Entrant")){//check if user is entrant
-                                    Intent intent = new Intent(SignInActivity.this, UserDashboardActivity.class);
+                                    Intent intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
                                     Bundle bundle = new Bundle();
                                     bundle.putString("email",user.getEmail()); //using a bundle to pass user id to new activity
                                     intent.putExtras(bundle);

@@ -68,7 +68,7 @@
                     android:padding="8dp"
                     android:clipToPadding="false"
                     android:visibility="gone"
-                    tools:listitem="@layout/entrant_event_card"
+                    tools:listitem="@layout/event_card_item"
                     tools:itemCount="5"
                     tools:visibility="visible" />
 

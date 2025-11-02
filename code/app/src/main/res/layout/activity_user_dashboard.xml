@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".UserDashboardActivity">
+    tools:context=".EntrantDashboardActivity">
 
     <TextView
         android:id="@+id/textView"
@@ -14,5 +14,6 @@
         android:text="This Activity does not have a layout file yet"
         android:textSize="50sp"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="206dp" />
+        tools:layout_editor_absoluteY="206dp"
+        />
 </androidx.constraintlayout.widget.ConstraintLayout>

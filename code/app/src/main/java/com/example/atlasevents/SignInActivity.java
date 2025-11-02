@@ -17,6 +17,8 @@ public class SignInActivity extends AppCompatActivity {
     private Button signInbutton;
     private TextView signUpText;
 
+    private Session session;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,6 +26,7 @@ public class SignInActivity extends AppCompatActivity {
 
         userRepo = new UserRepository();
         eventRepo = new EventRepository();
+        session = new Session(this);
         signInbutton = findViewById(R.id.signInButton);
         signUpText = findViewById(R.id.joinNow);
 
@@ -80,8 +83,8 @@ public class SignInActivity extends AppCompatActivity {
                             if (password.equals(user.getPassword())) { //check pass matches
                                 if (user.getUserType().equals("Organizer")){//check if user is organizer
                                     Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
+                                    session.setUserEmail(user.getEmail());
                                     Bundle bundle = new Bundle();
-                                    bundle.putString("email",user.getEmail()); //using a bundle to pass user id to new activity
                                     intent.putExtras(bundle);
                                     startActivity(intent);
                                     finish();
@@ -90,12 +93,11 @@ public class SignInActivity extends AppCompatActivity {
                                 //finish();
                                 if (user.getUserType().equals("Entrant")){//check if user is entrant
                                     Intent intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
+                                    session.setUserEmail(user.getEmail());
                                     Bundle bundle = new Bundle();
-                                    bundle.putString("email",user.getEmail()); //using a bundle to pass user id to new activity
                                     intent.putExtras(bundle);
                                     startActivity(intent);
                                     finish();
-
                                 }
 
 

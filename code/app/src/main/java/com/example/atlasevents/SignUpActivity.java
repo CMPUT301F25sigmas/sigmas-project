@@ -50,16 +50,27 @@ public class SignUpActivity extends AppCompatActivity {
 
         createButton.setOnClickListener(view ->{
             //to do: assert that name,email,and password are not blank
-            Entrant entrant = new Entrant(name.getText().toString(),email.getText().toString(), password.getText().toString(),phone.getText().toString());
-            userRepo.addUser(entrant)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d("Firestore", "User added successfully");
-                        finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Log.e("Firestore", "Failed to add user", e)
-                    );
-
+            if(entrantCheck.isChecked()) {
+                Entrant newUser = new Entrant(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
+                userRepo.addUser(newUser)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Firestore", "User added successfully");
+                            finish();
+                        })
+                        .addOnFailureListener(e ->
+                                Log.e("Firestore", "Failed to add user", e)
+                        );
+            } else {
+                Organizer newUser = new Organizer(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
+                userRepo.addUser(newUser)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Firestore", "User added successfully");
+                            finish();
+                        })
+                        .addOnFailureListener(e ->
+                                Log.e("Firestore", "Failed to add user", e)
+                        );
+            }
         });
 
     }

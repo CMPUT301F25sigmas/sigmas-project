@@ -19,6 +19,7 @@ public class EntrantDashboardActivity extends AppCompatActivity {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
+    private Session session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,11 +31,11 @@ public class EntrantDashboardActivity extends AppCompatActivity {
             return insets;
         });
 
+        session = new Session(this);
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
 
         loadEventsFromFirebase();
-
     }
 
     private void loadEventsFromFirebase() {

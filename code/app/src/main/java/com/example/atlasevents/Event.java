@@ -99,7 +99,6 @@ public class Event {
 
     public int getEntrantLimit(){return entrantLimit;}
 
-
     //Setters
     public void setStart(String start) {
         this.start = start;

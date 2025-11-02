@@ -50,6 +50,7 @@ public class CreateEventActivity extends AppCompatActivity {
         SwitchCompat limitEntrants = findViewById(R.id.limitEntrantsSwitch);
         SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
         EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
+        EditText slots = findViewById(R.id.slotsEditText);
 
         entrantLimit.setEnabled(false);
         limitEntrants.setOnClickListener(view ->{
@@ -75,6 +76,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                 String limit = entrantLimit.getText().toString();
                                 event.setEntrantLimit(Integer.parseInt(limit));
                             }
+                            event.setSlots(Integer.parseInt(slots.getText().toString()));
                             eventRepo.addEvent(event);
 
                             finish();

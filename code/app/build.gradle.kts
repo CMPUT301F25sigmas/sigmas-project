@@ -47,9 +47,13 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.firebase.inappmessaging.display)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
     implementation("com.google.firebase:firebase-firestore")
+    // Corrected line in build.gradle.kts
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+
 }

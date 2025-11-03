@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.NotificationListener;
 
 import java.util.ArrayList;
 
@@ -19,6 +20,9 @@ public class EntrantDashboardActivity extends AppCompatActivity {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
+
+    private NotificationListener notificationListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +36,25 @@ public class EntrantDashboardActivity extends AppCompatActivity {
 
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
+        notificationListener = new NotificationListener(this);
 
         loadEventsFromFirebase();
 
+    }
+
+    /***
+     * listener for notifications added to event dashboard as this is the foreground/ main activity
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        notificationListener.start();
+    }
+
+    @Override
+    protected void onStop() {
+        notificationListener.stop();
+        super.onStop();
     }
 
     private void loadEventsFromFirebase() {

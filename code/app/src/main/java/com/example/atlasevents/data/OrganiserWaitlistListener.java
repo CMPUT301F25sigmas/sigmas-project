@@ -26,14 +26,14 @@ import java.util.Map;
 
 public class OrganiserWaitlistListener {
     private static final String TAG = "OrganiserWLListener";
-    private final FirebaseFirestore.getInstance();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ListenerRegistration registration;
     private final String eventId;
-    private final String organiseremail // current logged in-user
+    private final String organiseremail; // current logged in-user
 
-    public OrganiserWaitlistListener(@NonNull String event.Id){
+    public OrganiserWaitlistListener(@NonNull String eventId){
         this.eventId = eventId;
-        this.organiseremail = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        this.organiseremail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
     }
     public void start() {

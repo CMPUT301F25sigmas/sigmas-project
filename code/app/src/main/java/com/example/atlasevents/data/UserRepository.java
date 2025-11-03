@@ -7,6 +7,10 @@ import com.example.atlasevents.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class UserRepository {
     private FirebaseFirestore db;
@@ -71,6 +75,31 @@ public class UserRepository {
                     }
                 })
                 .addOnFailureListener(e -> listener.onOrganizerFetched(null));
+    }
+    public interface NotificationsPrefCallback {
+        void onResult(Boolean enabled);
+    }
+
+    public void isNotificationsEnabled(String email, NotificationsPrefCallback callback) {
+        db.collection("users").document(email)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc == null || !doc.exists()) {
+                        callback.onResult(null);
+                    } else {
+                        Boolean enabled = doc.getBoolean("notificationsEnabled");
+                        // default true if null
+                        if (enabled == null) enabled = true;
+                        callback.onResult(enabled);
+                    }
+                })
+                .addOnFailureListener(e -> callback.onResult(null));
+    }
+
+    public Task<Void> setNotificationsEnabled(String email, boolean enabled) {
+        Map<String, Object> update = new HashMap<>();
+        update.put("notificationsEnabled", enabled);
+        return db.collection("users").document(email).set(update, SetOptions.merge());
     }
 }
 

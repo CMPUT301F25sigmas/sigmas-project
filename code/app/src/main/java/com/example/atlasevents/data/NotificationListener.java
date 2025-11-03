@@ -7,6 +7,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.*;
 import com.example.atlasevents.utils.NotificationHelper;
@@ -14,12 +16,21 @@ public class NotificationListener {
 
     private static final String TAG = "NotificationListener";
     private final FirebaseFirestore db;
-    private ListenerRegistration registration;
+    private ListenerRegistration notifsRegistration;
+    private ListenerRegistration prefRegistration;
     private final Activity activity;
+
+    private final String email;
+    private final AtomicBoolean enabled = new AtomicBoolean(true);
 
     public NotificationListener(@NonNull Activity activity) {
         this.activity = activity;
         this.db = FirebaseFirestore.getInstance();
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            email = null;
+        } else {
+            email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        }
     }
 
     /**
@@ -27,31 +38,48 @@ public class NotificationListener {
      * Displays each new notification via NotificationHelper and marks it read.
      */
     public void start() {
-        //String email = FirebaseAuth.getInstance().getCurrentUser().getemail();
-        if (registration != null) return;
-        String email = getCurrentUserEmail();
         if (email == null) return;
-        CollectionReference notifsRef = db.collection("users").document(email).collection("notifications");
+        // Listen to user doc for notificationsEnabled changes
+        DocumentReference userRef = db.collection("users").document(email);
+        prefRegistration = userRef.addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.w(TAG, "pref listener failed", e);
+                return;
+            }
+            if (snapshot == null) return;
+            Boolean b = snapshot.getBoolean("notificationsEnabled");
+            if (b == null) b = true;
+            enabled.set(b);
+            if (b) attachNotificationsListener();
+            else detachNotificationsListener();
+        });
+    }
 
-        registration = notifsRef.whereEqualTo("read", false)
+    private void attachNotificationsListener() {
+        if (notifsRegistration != null) return;
+        CollectionReference notifsRef = db.collection("users").document(email).collection("notifications");
+        // Query unread notifications
+        notifsRegistration = notifsRef.whereEqualTo("read", false)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
-                        Log.w(TAG, "Listener error", e);
+                        Log.w(TAG, "notification snapshot error", e);
                         return;
                     }
                     if (snapshots == null) return;
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == DocumentChange.Type.ADDED) {
                             DocumentSnapshot doc = dc.getDocument();
                             Notification notif = doc.toObject(Notification.class);
                             if (notif == null) continue;
+                            // Double-check enabled
+                            if (!enabled.get()) {
+                                // skip (but not delete)
+                                continue;
+                            }
                             String title = notif.getTitle() != null ? notif.getTitle() : "Notification";
                             String message = notif.getMessage() != null ? notif.getMessage() : "";
-                            // Show UI on main thread
                             NotificationHelper.showInAppDialog(activity, title, message);
-                            // Mark as read (recipient can also mark manually in UI)
                             doc.getReference().update("read", true)
                                     .addOnFailureListener(err -> Log.w(TAG, "Unable to mark notif read", err));
                         }
@@ -59,18 +87,21 @@ public class NotificationListener {
                 });
     }
 
-    public void stop() {
-        if (registration != null) {
-            registration.remove();
-            registration = null;
+    private void detachNotificationsListener() {
+        if (notifsRegistration != null) {
+            notifsRegistration.remove();
+            notifsRegistration = null;
         }
     }
 
-    private String getCurrentUserEmail() {
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) return null;
-        // Your auth may use email or uid. Your existing UserRepository uses email as doc id
-        return FirebaseAuth.getInstance().getCurrentUser().getEmail();
+    public void stop() {
+        if (prefRegistration != null) {
+            prefRegistration.remove();
+            prefRegistration = null;
+        }
+        detachNotificationsListener();
     }
+
 
 }
 

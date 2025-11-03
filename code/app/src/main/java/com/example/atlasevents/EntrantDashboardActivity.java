@@ -15,7 +15,7 @@ import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
 
-public class EntrantDashboardActivity extends AppCompatActivity {
+public class EntrantDashboardActivity extends EntrantBase {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
@@ -23,18 +23,12 @@ public class EntrantDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.entrant_dashboard);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        setContentLayout(R.layout.entrant_dashboard);
 
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
 
         loadEventsFromFirebase();
-
     }
 
     private void loadEventsFromFirebase() {

@@ -6,17 +6,14 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:gravity="center"
-    android:orientation="vertical"
-    android:padding="16dp"
-    tools:context=".SignUpActivity"
-    android:id="@+id/signUp">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="32dp"
-        android:text="Join"
+        android:text="Entrant Profile"
         android:textColor="@color/black"
         android:textSize="34sp"
         android:textStyle="bold" />
@@ -26,8 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:textColor="@color/black"
         android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
@@ -40,8 +35,6 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:textColor="@color/black"
         android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
@@ -54,8 +47,6 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:textColor="@color/black"
         android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
@@ -68,8 +59,6 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:textColor="@color/black"
         android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
@@ -80,63 +69,25 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:orientation="horizontal">
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/createButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#1E2324"
+            android:text="Save"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/cancelButton"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:backgroundTint="@color/background_grey"
             android:text="Cancel"
             android:textColor="@android:color/black" />
-
-        <Button
-            android:id="@+id/createButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:backgroundTint="#1E2324"
-            android:text="Sign Up"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:orientation="horizontal"
-        android:layout_gravity="center" >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Use as "
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:textStyle="bold" />
-
-        <CheckBox
-            android:id="@+id/organizerCheckBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:text="Organizer" />
-
-        <CheckBox
-            android:id="@+id/entrantCheckBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:textColor="@color/black"
-            android:text="Entrant" />
     </LinearLayout>
 
     <RelativeLayout

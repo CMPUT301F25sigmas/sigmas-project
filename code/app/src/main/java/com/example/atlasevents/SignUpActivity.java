@@ -50,9 +50,9 @@ public class SignUpActivity extends AppCompatActivity {
 
         createButton.setOnClickListener(view ->{
             //to do: assert that name,email,and password are not blank
-            if (orgCheck.isChecked()) {
-                Entrant entrant = new Entrant(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
-                userRepo.addUser(entrant)
+            if(entrantCheck.isChecked()) {
+                Entrant newUser = new Entrant(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
+                userRepo.addUser(newUser)
                         .addOnSuccessListener(aVoid -> {
                             Log.d("Firestore", "User added successfully");
                             finish();
@@ -60,9 +60,9 @@ public class SignUpActivity extends AppCompatActivity {
                         .addOnFailureListener(e ->
                                 Log.e("Firestore", "Failed to add user", e)
                         );
-            }else if(entrantCheck.isChecked()){
-                Organizer organizer = new Organizer(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
-                userRepo.addUser(organizer)
+            } else {
+                Organizer newUser = new Organizer(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
+                userRepo.addUser(newUser)
                         .addOnSuccessListener(aVoid -> {
                             Log.d("Firestore", "User added successfully");
                             finish();
@@ -71,7 +71,6 @@ public class SignUpActivity extends AppCompatActivity {
                                 Log.e("Firestore", "Failed to add user", e)
                         );
             }
-
         });
 
     }

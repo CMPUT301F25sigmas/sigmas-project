@@ -5,6 +5,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,30 +49,44 @@ public class SignUpActivity extends AppCompatActivity {
             finish();
         });
 
-        createButton.setOnClickListener(view ->{
-            //to do: assert that name,email,and password are not blank
-            if(entrantCheck.isChecked()) {
-                Entrant newUser = new Entrant(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
-                userRepo.addUser(newUser)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("Firestore", "User added successfully");
-                            finish();
-                        })
-                        .addOnFailureListener(e ->
-                                Log.e("Firestore", "Failed to add user", e)
-                        );
+        createButton.setOnClickListener(view -> {
+            String userName = name.getText().toString();
+            String userEmail = email.getText().toString();
+            String userPassword = password.getText().toString();
+            String userPhone = phone.getText().toString();
+
+            if (entrantCheck.isChecked()) {
+                Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);
+                userRepo.addUser(newUser, status -> {
+                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
+                        Log.d("Firestore", "User added successfully");
+                        finish();
+                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                        Log.e("Firestore", "Email already exists");
+                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("Firestore", "Failed to add user");
+                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
             } else {
-                Organizer newUser = new Organizer(name.getText().toString(), email.getText().toString(), password.getText().toString(), phone.getText().toString());
-                userRepo.addUser(newUser)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("Firestore", "User added successfully");
-                            finish();
-                        })
-                        .addOnFailureListener(e ->
-                                Log.e("Firestore", "Failed to add user", e)
-                        );
+                Organizer newUser = new Organizer(userName, userEmail, userPassword, userPhone);
+                userRepo.addUser(newUser, status -> {
+                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
+                        Log.d("Firestore", "User added successfully");
+                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                        Log.e("Firestore", "Email already exists");
+                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("Firestore", "Failed to add user");
+                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
+
 
     }
 }

@@ -11,17 +11,16 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
 
-public abstract class EntrantBase extends AppCompatActivity {
+public abstract class OrganizerBase extends AppCompatActivity {
 
     protected LinearLayout contentContainer;
     protected Session session;
-
     protected UserRepository userRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.entrant_base);
+        setContentView(R.layout.organizer_base);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -40,28 +39,29 @@ public abstract class EntrantBase extends AppCompatActivity {
         findViewById(R.id.settings_icon).setOnClickListener(v -> openSettings());
         findViewById(R.id.profile_icon).setOnClickListener(v -> openProfile());
         findViewById(R.id.my_events_icon).setOnClickListener(v -> openMyEvents());
-        findViewById(R.id.search_icon).setOnClickListener(v -> openSearch());
+        findViewById(R.id.create_events_icon).setOnClickListener(v -> openCreateEvents());
         findViewById(R.id.notifications_icon).setOnClickListener(v -> openNotifications());
-        findViewById(R.id.qr_reader_icon).setOnClickListener(v -> openQrReader());
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
 
     protected void openSettings() {}
     protected void openProfile() {
-        Intent intent = new Intent(this, EntrantProfileActivity.class);
+        Intent intent = new Intent(this, OrganizerProfileActivity.class);
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);
     }
     protected void openMyEvents() {
-        Intent intent = new Intent(this, EntrantDashboardActivity.class);
+        Intent intent = new Intent(this, OrganizerDashboardActivity.class);
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);
     }
-    protected void openSearch() {}
+    protected void openCreateEvents() {
+        Intent intent = new Intent(this, CreateEventActivity.class);
+        startActivity(intent);
+    }
     protected void openNotifications() {}
-    protected void openQrReader() {}
 
     protected void setContentLayout(int layoutResId) {
         getLayoutInflater().inflate(layoutResId, contentContainer, true);

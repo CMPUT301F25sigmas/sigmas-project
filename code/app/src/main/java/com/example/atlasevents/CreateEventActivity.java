@@ -29,8 +29,7 @@ public class CreateEventActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        Bundle bundle = getIntent().getExtras();
-        assert bundle != null;
+        
         Session session = new Session(this);
         String username = session.getUserEmail();
 

@@ -3,6 +3,7 @@ package com.example.atlasevents;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +33,15 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
         String username = bundle.getString("email");
 
         Button createEventButton = findViewById(R.id.create_event_button);
+        LinearLayout createEventTabButton = findViewById(R.id.create_event_icon);
+
+        createEventTabButton.setOnClickListener(view -> {
+            Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
+            Bundle bundle2 = new Bundle();
+            bundle2.putString("email",username); //using a bundle to pass user id to new activity
+            intent.putExtras(bundle2);
+            startActivity(intent);
+        });
 
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);

@@ -28,7 +28,7 @@ public class CreateEventActivity extends AppCompatActivity {
      *     previously being shut down then this Bundle contains the data it most
      *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
      *
-     *     todo: make limit waitlist just a editText instead of a switch and editText
+     *     todo: make "limit number of entrants" just a editText instead of a switch and editText
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {

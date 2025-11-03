@@ -27,6 +27,8 @@ public class SignUpActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        PasswordHasher passwordHasher = new PasswordHasher();
+
         UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
@@ -52,7 +54,7 @@ public class SignUpActivity extends AppCompatActivity {
         createButton.setOnClickListener(view -> {
             String userName = name.getText().toString();
             String userEmail = email.getText().toString();
-            String userPassword = password.getText().toString();
+            String userPassword = passwordHasher.passHash(password.getText().toString());
             String userPhone = phone.getText().toString();
 
             if (entrantCheck.isChecked()) {

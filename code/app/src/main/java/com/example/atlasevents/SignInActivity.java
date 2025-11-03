@@ -56,6 +56,8 @@ public class SignInActivity extends AppCompatActivity {
     private void signIn() {
         signInbutton = findViewById(R.id.signInButton);
         signUpText = findViewById(R.id.joinNow);
+        PasswordHasher passwordHasher = new PasswordHasher();
+
 
         EditText usernameField = findViewById(R.id.emailOrPhone);
         EditText passwordField = findViewById(R.id.password);
@@ -67,7 +69,7 @@ public class SignInActivity extends AppCompatActivity {
         //listener for signInButton
         signInbutton.setOnClickListener(view -> {
             String username = usernameField.getText().toString();
-            String password = passwordField.getText().toString();
+            String password = passwordHasher.passHash(passwordField.getText().toString());
             //check email and pass in database
             userRepo.getUser(username,
                     user -> {

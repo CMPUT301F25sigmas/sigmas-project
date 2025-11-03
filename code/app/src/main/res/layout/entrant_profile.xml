@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        android:text="Entrant Profile"
+        android:textColor="@color/black"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:background="@drawable/edit_text_background"
+        android:hint="Name"
+        android:inputType="textPersonName"
+        android:padding="16dp" />
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:background="@drawable/edit_text_background"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:padding="16dp" />
+
+    <EditText
+        android:id="@+id/phone"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:background="@drawable/edit_text_background"
+        android:hint="Phone (Optional)"
+        android:inputType="phone"
+        android:padding="16dp" />
+
+    <EditText
+        android:id="@+id/newPassword"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:background="@drawable/edit_text_background"
+        android:hint="Password"
+        android:inputType="text|textPassword"
+        android:padding="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/createButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#1E2324"
+            android:text="Save"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/background_grey"
+            android:text="Cancel"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="179dp">
+
+    </RelativeLayout>
+
+</LinearLayout>

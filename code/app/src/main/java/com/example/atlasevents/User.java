@@ -2,9 +2,9 @@ package com.example.atlasevents;
 
 
 /**
- * This is an abstract class that defines a generic User.
+ * This is a class that defines a generic User.
  */
-public abstract class User {
+public class User {
     /*
     * To do: implement database
      */
@@ -13,7 +13,15 @@ public abstract class User {
     private String password;
     private String phoneNumber;
 
+    private String userType;
 
+    public String getUserType() {
+        return userType;
+    }
+
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
 
     // No-arg constructor
     public User() {
@@ -60,7 +68,6 @@ public abstract class User {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-
     /**
      * This method allows a user to edit their profile.
      * @param name this is the new name of the user

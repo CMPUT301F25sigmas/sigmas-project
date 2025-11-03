@@ -1,12 +1,14 @@
 package com.example.atlasevents;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -45,6 +47,17 @@ public class CreateEventActivity extends AppCompatActivity {
         EditText end = findViewById(R.id.endDateEditText);
         EditText description = findViewById(R.id.descrEditText);
         EditText location = findViewById(R.id.locEditText);
+        SwitchCompat limitEntrants = findViewById(R.id.limitEntrantsSwitch);
+        SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
+        EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
+        EditText slots = findViewById(R.id.slotsEditText);
+
+        entrantLimit.setEnabled(false);
+        limitEntrants.setOnClickListener(view ->{
+            entrantLimit.setEnabled(true);
+                });
+
+
 
         Button publishButton = findViewById(R.id.publishEventButton);
         publishButton.setOnClickListener(view ->{
@@ -58,7 +71,14 @@ public class CreateEventActivity extends AppCompatActivity {
                             event.setEnd(end.getText().toString());
                             event.setAddress(location.getText().toString());
                             event.setDescription(description.getText().toString());
+                            event.setRequireGeolocation(requireGeoLocation.isChecked());
+                            if (limitEntrants.isChecked()){
+                                String limit = entrantLimit.getText().toString();
+                                event.setEntrantLimit(Integer.parseInt(limit));
+                            }
+                            event.setSlots(Integer.parseInt(slots.getText().toString()));
                             eventRepo.addEvent(event);
+
                             finish();
                         }
                     });

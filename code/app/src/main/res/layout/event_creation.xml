@@ -123,6 +123,21 @@
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/clock"
                     android:drawablePadding="8dp"/>
+
+                <TextView
+                    android:id="@+id/textView6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Number of Participants" />
+
+                <EditText
+                    android:id="@+id/slotsEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/group"
+                    android:drawablePadding="8dp"
+                    android:inputType="number"
+                    android:paddingBottom="5dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -237,17 +252,30 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     android:text="Event Settings"
                     android:textColor="@color/black"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="16dp"/>
+                    android:textStyle="bold" />
 
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/limitEntrantsSwitch"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Limit Number of Entrants"/>
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/limitEntrantsSwitch"
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:text="Limit Number of Entrants" />
+
+                    <EditText
+                        android:id="@+id/maxEntrantsEditText"
+                        android:layout_width="30dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:inputType="number" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"

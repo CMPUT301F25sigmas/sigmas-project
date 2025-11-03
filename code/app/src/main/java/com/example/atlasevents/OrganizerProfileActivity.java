@@ -6,11 +6,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.atlasevents.EntrantBase;
-import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
-public class EntrantProfileActivity extends EntrantBase {
+public class OrganizerProfileActivity extends OrganizerBase {
 
     private EditText nameEdit, emailEdit, phoneEdit, passwordEdit;
     private ImageView nameEditIcon, emailEditIcon, phoneEditIcon, passwordEditIcon;
@@ -21,7 +19,7 @@ public class EntrantProfileActivity extends EntrantBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentLayout(R.layout.entrant_profile);
+        setContentLayout(R.layout.organizer_profile);
 
         nameEdit = findViewById(R.id.name);
         emailEdit = findViewById(R.id.email);
@@ -72,7 +70,7 @@ public class EntrantProfileActivity extends EntrantBase {
 //    }
 
     private void saveChanges() {
-        Entrant newUser = new Entrant(
+        Organizer newUser = new Organizer(
                 nameEdit.getText().toString(),
                 emailEdit.getText().toString(),
                 passwordEdit.getText().toString(),

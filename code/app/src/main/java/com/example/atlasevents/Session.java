@@ -1,6 +1,8 @@
 package com.example.atlasevents;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 
 public class Session {
@@ -9,16 +11,16 @@ public class Session {
     private static final String emailKey = "loggedInEmail";
 
     private final SharedPreferences sharedPreferences;
-    private final SharedPreferences.Editor editor;
+    private final SharedPreferences.Editor sharedPreferencesEditor;
 
     public Session(Context context) {
         sharedPreferences = context.getSharedPreferences(prefs, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
+        sharedPreferencesEditor = sharedPreferences.edit();
     }
 
     public void setUserEmail(String email) {
-        editor.putString(Session.emailKey, email);
-        editor.apply();
+        sharedPreferencesEditor.putString(Session.emailKey, email);
+        sharedPreferencesEditor.apply();
     }
 
     public String getUserEmail() {
@@ -30,7 +32,15 @@ public class Session {
     }
 
     public void logout() {
-        editor.remove(emailKey);
-        editor.apply();
+        sharedPreferencesEditor.remove(emailKey);
+        sharedPreferencesEditor.apply();
+    }
+
+    public void logoutAndRedirect(Activity activity) {
+        logout();
+        Intent intent = new Intent(activity, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        activity.startActivity(intent);
+        activity.finish();
     }
 }

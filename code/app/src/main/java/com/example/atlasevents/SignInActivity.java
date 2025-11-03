@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,51 +23,42 @@ public class SignInActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_in);
+        setContentView(R.layout.splash_screen);
 
         userRepo = new UserRepository();
         eventRepo = new EventRepository();
         session = new Session(this);
+
+        if (session.isLoggedIn()) {
+            String email = session.getUserEmail();
+            userRepo.getUser(email, user -> {
+                if (user != null) {
+                    Intent intent;
+                    if (user.getUserType().equals("Organizer")) {
+                        intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
+                    } else {
+                        intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
+                    }
+                    startActivity(intent);
+                    finish();
+                } else {
+                    session.logout();
+                    setContentView(R.layout.activity_sign_in);
+                    signIn();
+                }
+            });
+        } else {
+            setContentView(R.layout.activity_sign_in);
+            signIn();
+        }
+    }
+
+    private void signIn() {
         signInbutton = findViewById(R.id.signInButton);
         signUpText = findViewById(R.id.joinNow);
 
         EditText usernameField = findViewById(R.id.emailOrPhone);
         EditText passwordField = findViewById(R.id.password);
-/* commented out (for testing)
-        Entrant newUser = new Entrant(
-                "Alice",
-                "alice@example1.com",
-                "mypassword",
-                "1234567890"
-        );
-
-        Organizer newOrg = new Organizer(
-                "Bob",
-                "bob@example1.com",
-                "mypassword",
-                "1234567890"
-        );
-
-        Event newEvent = new Event(newOrg);
-
-        userRepo.addUser(newOrg)
-                .addOnSuccessListener(aVoid ->
-                        Log.d("Firestore", "User added successfully"))
-                .addOnFailureListener(e ->
-                        Log.e("Firestore", "Failed to add user", e));
-
-        userRepo.addUser(newUser)
-                .addOnSuccessListener(aVoid ->
-                        Log.d("Firestore", "User added successfully"))
-                .addOnFailureListener(e ->
-                        Log.e("Firestore", "Failed to add user", e));
-
-        eventRepo.addEvent(newEvent)
-                .addOnSuccessListener(aVoid ->
-                        Log.d("Firestore", "Event added successfully"))
-                .addOnFailureListener(e ->
-                        Log.e("Firestore", "Failed to add event", e));
-*/
         signUpText.setOnClickListener(view ->{
             Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
             startActivity(intent); //don't close Sign in Activity, will be coming back
@@ -102,14 +94,14 @@ public class SignInActivity extends AppCompatActivity {
 
 
                             }else{
-                                //let user know username or password is incorrect
+                                Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
                             }
 
 
 
 
                         }else{
-                            //let user know username or password is incorrect
+                            Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
                         }
                     });
         });

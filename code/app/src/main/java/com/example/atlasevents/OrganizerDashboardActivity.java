@@ -11,44 +11,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class OrganizerDashboardActivity extends AppCompatActivity {
+public class OrganizerDashboardActivity extends OrganizerBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /*
-    to do:  -allow organizer to make a new Event
-
-     */
-
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.organizer_dashboard_empty);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-        Organizer user;
-        Bundle bundle = getIntent().getExtras();
-        assert bundle != null;
-        String username = bundle.getString("email");
-
+        setContentLayout(R.layout.organizer_dashboard_empty);
         Button createEventButton = findViewById(R.id.create_event_button);
-        LinearLayout createEventTabButton = findViewById(R.id.create_event_icon);
-
-        createEventTabButton.setOnClickListener(view -> {
-            Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
-            Bundle bundle2 = new Bundle();
-            bundle2.putString("email",username); //using a bundle to pass user id to new activity
-            intent.putExtras(bundle2);
-            startActivity(intent);
-        });
-
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
-            Bundle bundle2 = new Bundle();
-            bundle2.putString("email",username); //using a bundle to pass user id to new activity
-            intent.putExtras(bundle2);
             startActivity(intent);
-                });
+        });
     }
 }

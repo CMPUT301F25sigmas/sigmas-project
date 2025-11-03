@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -61,22 +62,25 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            Organizer organizer = user;
-                            Event event = new Event(organizer);
-                            event.setEventName(name.getText().toString());
-                            event.setStart(start.getText().toString());
-                            event.setEnd(end.getText().toString());
-                            event.setAddress(location.getText().toString());
-                            event.setDescription(description.getText().toString());
-                            event.setRequireGeolocation(requireGeoLocation.isChecked());
-                            if (limitEntrants.isChecked()){
-                                String limit = entrantLimit.getText().toString();
-                                event.setEntrantLimit(Integer.parseInt(limit));
-                            }
-                            event.setSlots(Integer.parseInt(slots.getText().toString()));
-                            eventRepo.addEvent(event);
+                            if(inputsValid(name.getText().toString(),slots.getText().toString())) {
+                                Organizer organizer = user;
+                                Event event = new Event(organizer);
+                                event.setEventName(name.getText().toString());
+                                event.setStart(start.getText().toString());
+                                event.setEnd(end.getText().toString());
+                                event.setAddress(location.getText().toString());
+                                event.setDescription(description.getText().toString());
+                                event.setRequireGeolocation(requireGeoLocation.isChecked());
+                                if (limitEntrants.isChecked()) {
+                                    String limit = entrantLimit.getText().toString();
+                                    event.setEntrantLimit(Integer.parseInt(limit));
+                                }
+                                event.setSlots(Integer.parseInt(slots.getText().toString()));
 
-                            finish();
+
+                                eventRepo.addEvent(event);
+                                finish();
+                            }
                         }
                     });
 
@@ -85,7 +89,29 @@ public class CreateEventActivity extends AppCompatActivity {
         });
 
     }
+    /**
+     *  Checks inputs and makes toasts to tell user what is missing or invalid
+     * @param name name of event
+     * @param slots number of slots event has open
+     * todo : check rest of inputs
+       */
+    public boolean inputsValid(String name, String slots) {
+        boolean valid = true;
+        if (name.isEmpty()) { //check if name is empty
+            Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }
+        if (slots.isEmpty()) { //check that slots is non negative
+            Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }
 
+        return valid;
+    }
 
 
 }
+
+
+
+

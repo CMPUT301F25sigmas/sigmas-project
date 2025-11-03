@@ -19,8 +19,31 @@ public class UserRepository {
     public interface OnOrganizerFetchedListener {
         void onOrganizerFetched(Organizer user);
     }
-    public Task<Void> addUser(@NonNull User user) {
-        return db.collection("users").document(user.getEmail()).set(user);
+    public interface OnUserUpdatedListener {
+        enum UpdateStatus {
+            SUCCESS,
+            EMAIL_ALREADY_USED,
+            FAILURE
+        }
+        void onUserUpdated(UpdateStatus status);
+    }
+    public void addUser(@NonNull User user, @NonNull OnUserUpdatedListener listener) {
+        String email = user.getEmail();
+        
+        db.collection("users").document(email)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Email already exists
+                        listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED);
+                    } else {
+                        db.collection("users").document(email)
+                                .set(user)
+                                .addOnSuccessListener(aVoid -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS))
+                                .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE));
+                    }
+                })
+                .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE));
     }
     /**
      * This method gets a user from the database.
@@ -51,6 +74,41 @@ public class UserRepository {
                 })
                 .addOnFailureListener(e -> listener.onUserFetched(null));
     }
+
+    public void setUser(@NonNull String email, @NonNull User newUser, @NonNull OnUserUpdatedListener listener) {
+        String newEmail = newUser.getEmail();
+
+        // If the email hasn't changed, just update the existing document
+        if (email.equals(newEmail)) {
+            db.collection("users").document(email)
+                    .set(newUser)
+                    .addOnSuccessListener(aVoid -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS))
+                    .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE));
+        } else {
+            db.collection("users")
+                    .document(newEmail)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            // New email is already used
+                            listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED);
+                        } else {
+                            db.collection("users").document(newEmail)
+                                    .set(newUser)
+                                    .addOnSuccessListener(aVoid ->
+                                            db.collection("users").document(email)
+                                                    .delete()
+                                                    .addOnSuccessListener(aVoid2 -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS))
+                                                    .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE))
+                                    )
+                                    .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE));
+                        }
+                    })
+                    .addOnFailureListener(e -> listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.FAILURE));
+        }
+    }
+
+
     /**
      * This method gets an organizer from the database.
      * @param listener: listener to check for successful database query

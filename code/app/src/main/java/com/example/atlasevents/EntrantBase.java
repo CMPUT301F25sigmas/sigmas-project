@@ -9,10 +9,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.atlasevents.data.UserRepository;
+
 public abstract class EntrantBase extends AppCompatActivity {
 
     protected LinearLayout contentContainer;
     protected Session session;
+
+    protected UserRepository userRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +31,7 @@ public abstract class EntrantBase extends AppCompatActivity {
 
         contentContainer = findViewById(R.id.content_container);
         session = new Session(this);
+        userRepository = new UserRepository();
 
         SidebarNavigation();
     }
@@ -38,6 +43,7 @@ public abstract class EntrantBase extends AppCompatActivity {
         findViewById(R.id.search_icon).setOnClickListener(v -> openSearch());
         findViewById(R.id.notifications_icon).setOnClickListener(v -> openNotifications());
         findViewById(R.id.qr_reader_icon).setOnClickListener(v -> openQrReader());
+        findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
 
     protected void openSettings() {}

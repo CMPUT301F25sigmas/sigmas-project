@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -18,53 +19,210 @@
         android:textSize="34sp"
         android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/name"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
-        android:background="@drawable/edit_text_background"
-        android:hint="Name"
-        android:inputType="textPersonName"
-        android:padding="16dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/edit_profile_field_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:layout_marginBottom="16dp">
 
-    <EditText
-        android:id="@+id/email"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
-        android:background="@drawable/edit_text_background"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:padding="16dp" />
+        <!-- Label for the EditText -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/phone"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
-        android:background="@drawable/edit_text_background"
-        android:hint="Phone (Optional)"
-        android:inputType="phone"
-        android:padding="16dp" />
+        <!-- Horizontal container for EditText + Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
-    <EditText
-        android:id="@+id/newPassword"
+            <!-- Name input field -->
+            <EditText
+                android:id="@+id/name"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                android:background="@drawable/edit_profile_text_background"
+                android:inputType="textPersonName"
+                android:paddingHorizontal="8dp" />
+
+            <!-- Edit icon -->
+            <ImageView
+                android:id="@+id/nameEditIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_edit"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/black"
-        android:background="@drawable/edit_text_background"
-        android:hint="Password"
-        android:inputType="text|textPassword"
-        android:padding="16dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/edit_profile_field_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- Label for the EditText -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Horizontal container for EditText + Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <!-- Name input field -->
+            <EditText
+                android:id="@+id/email"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                android:background="@drawable/edit_profile_text_background"
+                android:inputType="textPersonName"
+                android:paddingHorizontal="8dp" />
+
+            <!-- Edit icon -->
+            <ImageView
+                android:id="@+id/emailEditIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_edit"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/edit_profile_field_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- Label for the EditText -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone (Optional)"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Horizontal container for EditText + Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <!-- Name input field -->
+            <EditText
+                android:id="@+id/phone"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                android:background="@drawable/edit_profile_text_background"
+                android:inputType="textPersonName"
+                android:paddingHorizontal="8dp" />
+
+            <!-- Edit icon -->
+            <ImageView
+                android:id="@+id/phoneEditIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_edit"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/edit_profile_field_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- Label for the EditText -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Password"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Horizontal container for EditText + Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <!-- Name input field -->
+            <EditText
+                android:id="@+id/password"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                android:background="@drawable/edit_profile_text_background"
+                android:inputType="textPersonName"
+                android:paddingHorizontal="8dp" />
+
+            <!-- Edit icon -->
+            <ImageView
+                android:id="@+id/passwordEditIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_edit"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:clickable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -92,7 +250,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="179dp">
+        android:layout_height="0dp">
 
     </RelativeLayout>
 

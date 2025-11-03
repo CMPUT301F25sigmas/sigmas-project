@@ -108,9 +108,10 @@
                     android:id="@+id/dateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:layout_marginBottom="8dp"/>
+                    android:hint="yyyy-mm-dd" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -122,7 +123,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/clock"
-                    android:drawablePadding="8dp"/>
+                    android:drawablePadding="8dp"
+                    android:hint="hh:mm am/pm" />
 
                 <TextView
                     android:id="@+id/textView6"
@@ -172,9 +174,10 @@
                     android:id="@+id/startDateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:layout_marginBottom="8dp"/>
+                    android:hint="yyyy-mm-dd" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -186,7 +189,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/calender_icon"
-                    android:drawablePadding="8dp"/>
+                    android:drawablePadding="8dp"
+                    android:hint="yyyy-mm-dd" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

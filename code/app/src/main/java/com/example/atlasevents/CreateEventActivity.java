@@ -21,6 +21,15 @@ public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
     Session session;
+
+    /**
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
+     *
+     *     todo: make "limit number of entrants" just a editText instead of a switch and editText
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +41,7 @@ public class CreateEventActivity extends AppCompatActivity {
             return insets;
         });
 
+        //get email to access organizer
         session = new Session(this);
         String username = session.getUserEmail();
 
@@ -40,6 +50,8 @@ public class CreateEventActivity extends AppCompatActivity {
         backButton.setOnClickListener(view ->{
             finish();
         });
+
+        //edit texts and switches
         EditText name = findViewById(R.id.nameEditText);
         EditText start = findViewById(R.id.startDateEditText);
         EditText end = findViewById(R.id.endDateEditText);
@@ -62,10 +74,10 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            if(inputsValid(name.getText().toString(),slots.getText().toString())) {
+                            if(inputsValid(name.getText().toString(),slots.getText().toString())) { //validate inputs before making event
                                 Organizer organizer = user;
                                 Event event = new Event(organizer);
-                                event.setEventName(name.getText().toString());
+                                event.setEventName(name.getText().toString()); //get text from edit texts
                                 event.setStart(start.getText().toString());
                                 event.setEnd(end.getText().toString());
                                 event.setAddress(location.getText().toString());
@@ -73,7 +85,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                 event.setRequireGeolocation(requireGeoLocation.isChecked());
                                 if (limitEntrants.isChecked()) {
                                     String limit = entrantLimit.getText().toString();
-                                    event.setEntrantLimit(Integer.parseInt(limit));
+                                    event.setEntrantLimit(Integer.parseInt(limit)); //make int
                                 }
                                 event.setSlots(Integer.parseInt(slots.getText().toString()));
 
@@ -93,15 +105,14 @@ public class CreateEventActivity extends AppCompatActivity {
      *  Checks inputs and makes toasts to tell user what is missing or invalid
      * @param name name of event
      * @param slots number of slots event has open
-     * todo : check rest of inputs
+     * todo : check rest of mandatory inputs
        */
     public boolean inputsValid(String name, String slots) {
         boolean valid = true;
         if (name.isEmpty()) { //check if name is empty
             Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
             valid = false;
-        }
-        if (slots.isEmpty()) { //check that slots is non negative
+        }else if (slots.isEmpty()) { //check that slots is non negative (else if so it doesn't try to display all toasts at once)
             Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
             valid = false;
         }

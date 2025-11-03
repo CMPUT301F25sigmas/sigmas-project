@@ -154,6 +154,8 @@ public class Event {
         if (entrantLimit > 0) {
             waitList.addEntrant(entrant);
             entrantLimit --;
+        }else if(entrantLimit == -1){
+            waitList.addEntrant(entrant);
         }
     }
 

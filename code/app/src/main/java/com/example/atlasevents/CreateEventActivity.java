@@ -31,7 +31,8 @@ public class CreateEventActivity extends AppCompatActivity {
         });
         Bundle bundle = getIntent().getExtras();
         assert bundle != null;
-        String username = bundle.getString("email");
+        Session session = new Session(this);
+        String username = session.getUserEmail();
 
 
 

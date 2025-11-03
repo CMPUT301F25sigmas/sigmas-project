@@ -20,6 +20,7 @@
         app:srcCompat="@drawable/settings_icon" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/profile_icon"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:layout_marginBottom="24dp"
@@ -38,6 +39,7 @@
 
     <!-- My Events Item -->
     <LinearLayout
+        android:id="@+id/my_events_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -71,6 +73,7 @@
 
     <!-- Create Events Item -->
     <LinearLayout
+        android:id="@+id/create_events_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -93,6 +96,7 @@
 
     <!-- Notifications Center Item -->
     <LinearLayout
+        android:id="@+id/notifications_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
@@ -109,6 +113,35 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="Notifications\nCenter"
+            android:textColor="#494949"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- Logout -->
+    <LinearLayout
+        android:id="@+id/logout_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginBottom="4dp"
+            android:src="@drawable/logout_icon" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Logout"
             android:textColor="#494949"
             android:textSize="12sp" />
     </LinearLayout>

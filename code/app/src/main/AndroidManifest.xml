@@ -27,6 +27,9 @@
             android:name=".OrganizerDashboardActivity"
             android:exported="false" />
         <activity
+            android:name=".OrganizerProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignInActivity"
             android:exported="true">
             <intent-filter>

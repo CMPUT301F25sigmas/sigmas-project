@@ -19,6 +19,7 @@ import com.example.atlasevents.data.UserRepository;
 public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
+    Session session;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,15 +30,11 @@ public class CreateEventActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        Bundle bundle = getIntent().getExtras();
-        assert bundle != null;
-        String username = bundle.getString("email");
 
-
-
+        session = new Session(this);
+        String username = session.getUserEmail();
 
         ImageButton backButton = findViewById(R.id.createBackButton);
-
 
         backButton.setOnClickListener(view ->{
             finish();

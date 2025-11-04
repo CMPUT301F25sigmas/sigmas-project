@@ -1,5 +1,8 @@
 package com.example.atlasevents;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 public class PasswordHasherTest {
@@ -7,7 +10,7 @@ public class PasswordHasherTest {
     public void hashPass() {
         String password = "mypassword";
         PasswordHasher passwordHasher = new PasswordHasher();
-        assert(passwordHasher.passHash(password).equals("nzqbttxpse"));
+        assertEquals("nzqbttxpse", passwordHasher.passHash(password));
     }
 
 }

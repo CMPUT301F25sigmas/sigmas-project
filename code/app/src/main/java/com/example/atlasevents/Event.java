@@ -53,7 +53,12 @@ public class Event {
     private int entrantLimit = -1;
 
 
-    public Event(){}
+    public Event(){
+        waitList = new EntrantList();
+        inviteList = new EntrantList();
+        acceptedList = new EntrantList();
+        declinedList = new EntrantList();
+    }
     public Event(Organizer organizer) {
         this.organizer = organizer;
         waitList = new EntrantList();
@@ -166,7 +171,9 @@ public class Event {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
-            entrantLimit++;
+            if(entrantLimit >= 0) { //makes sure if entrantLimit is -1 (no limit) it doesnt inc
+                entrantLimit++;
+            }
         }
 
     }

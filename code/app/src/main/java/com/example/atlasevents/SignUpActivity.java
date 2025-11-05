@@ -5,6 +5,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +27,8 @@ public class SignUpActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        PasswordHasher passwordHasher = new PasswordHasher();
+
         UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
@@ -48,19 +51,44 @@ public class SignUpActivity extends AppCompatActivity {
             finish();
         });
 
-        createButton.setOnClickListener(view ->{
-            //to do: assert that name,email,and password are not blank
-            Entrant entrant = new Entrant(name.getText().toString(),email.getText().toString(), password.getText().toString(),phone.getText().toString());
-            userRepo.addUser(entrant)
-                    .addOnSuccessListener(aVoid -> {
+        createButton.setOnClickListener(view -> {
+            String userName = name.getText().toString();
+            String userEmail = email.getText().toString();
+            String userPassword = passwordHasher.passHash(password.getText().toString());
+            String userPhone = phone.getText().toString();
+
+            if (entrantCheck.isChecked()) {
+                Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);
+                userRepo.addUser(newUser, status -> {
+                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
                         Log.d("Firestore", "User added successfully");
                         finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Log.e("Firestore", "Failed to add user", e)
-                    );
-
+                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                        Log.e("Firestore", "Email already exists");
+                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("Firestore", "Failed to add user");
+                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                Organizer newUser = new Organizer(userName, userEmail, userPassword, userPhone);
+                userRepo.addUser(newUser, status -> {
+                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
+                        Log.d("Firestore", "User added successfully");
+                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                        Log.e("Firestore", "Email already exists");
+                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("Firestore", "Failed to add user");
+                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         });
+
 
     }
 }

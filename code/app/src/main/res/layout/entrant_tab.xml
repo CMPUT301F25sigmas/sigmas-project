@@ -4,12 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="100dp"
     android:layout_height="match_parent"
-    android:background="#E8E8E8"
+    android:background="@color/background_grey"
     android:gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingTop="16dp"
-    android:paddingBottom="16dp"
-    tools:context=".MainActivity">
+    android:paddingBottom="16dp">
 
     <ImageView
         android:id="@+id/settings_icon"
@@ -20,6 +19,7 @@
 
     <!-- Profile Item -->
     <androidx.cardview.widget.CardView
+        android:id="@+id/profile_icon"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:layout_marginBottom="24dp"
@@ -35,9 +35,9 @@
             app:tint="@android:color/white" />
     </androidx.cardview.widget.CardView>
 
-
     <!-- My Events Item -->
     <LinearLayout
+        android:id="@+id/my_events_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -71,6 +71,7 @@
 
     <!-- Search for events Item -->
     <LinearLayout
+        android:id="@+id/search_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
@@ -118,6 +119,7 @@
 
     <!-- QR Reader Item -->
     <LinearLayout
+        android:id="@+id/qr_reader_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
@@ -134,6 +136,35 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="QR Reader"
+            android:textColor="#494949"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- Logout -->
+    <LinearLayout
+        android:id="@+id/logout_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginBottom="4dp"
+            android:src="@drawable/logout_icon" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Logout"
             android:textColor="#494949"
             android:textSize="12sp" />
     </LinearLayout>

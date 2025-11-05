@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/signUp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
@@ -10,14 +9,15 @@
     android:orientation="vertical"
     android:padding="16dp"
     tools:context=".SignUpActivity"
-    >
+    android:id="@+id/signUp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="32dp"
-        android:text="Sign-up page"
+        android:text="Join"
+        android:textColor="@color/black"
         android:textSize="34sp"
         android:textStyle="bold" />
 
@@ -26,6 +26,10 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
         android:hint="Name"
         android:inputType="textPersonName"
@@ -36,6 +40,10 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
         android:hint="Email"
         android:inputType="textEmailAddress"
@@ -46,6 +54,10 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
         android:hint="Phone (Optional)"
         android:inputType="phone"
@@ -56,6 +68,10 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         android:background="@drawable/edit_text_background"
         android:hint="Password"
         android:inputType="text|textPassword"
@@ -65,6 +81,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:orientation="horizontal">
 
         <Button
@@ -84,41 +102,41 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:backgroundTint="#1E2324"
-            android:text="Create"
+            android:text="Sign Up"
             android:textColor="@android:color/white" />
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="223dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center" >
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="Use as a      "
+            android:text="Use as "
             android:textSize="18sp"
+            android:textColor="@color/black"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:layout_width="126dp"
+        <CheckBox
+            android:id="@+id/organizerCheckBox"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:textColor="@color/black"
+            android:text="Organizer" />
 
-            <CheckBox
-                android:id="@+id/organizerCheckBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Organizer" />
-
-            <CheckBox
-                android:id="@+id/entrantCheckBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="Entrant" />
-        </LinearLayout>
+        <CheckBox
+            android:id="@+id/entrantCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:textColor="@color/black"
+            android:text="Entrant" />
     </LinearLayout>
 
     <RelativeLayout

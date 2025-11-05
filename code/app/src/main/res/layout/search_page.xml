@@ -18,7 +18,7 @@
 
     <include
         android:id="@+id/entrant_tab"
-        layout="@layout/entrant_event_details"
+        layout="@layout/entrant_tab"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

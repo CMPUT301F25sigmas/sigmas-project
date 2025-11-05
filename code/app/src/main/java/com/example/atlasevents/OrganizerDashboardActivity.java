@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,7 +16,7 @@ import com.example.atlasevents.utils.NotificationManager;
 import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.DebugNotificationActivity;
 
-public class OrganizerDashboardActivity extends AppCompatActivity {
+public class OrganizerDashboardActivity extends OrganizerBase {
     private Session session;
 
     /***
@@ -24,11 +25,6 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /*
-    to do:  -allow organizer to make a new Event
-
-     */
-
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.organizer_dashboard_empty);
@@ -60,9 +56,6 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
 
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
-            Bundle bundle2 = new Bundle();
-            bundle2.putString("email",username); //using a bundle to pass user id to new activity
-            intent.putExtras(bundle2);
             startActivity(intent);
                 });
 

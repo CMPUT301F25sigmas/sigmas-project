@@ -7,17 +7,13 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.NotificationManager;
 
 import java.util.ArrayList;
 
-public class EntrantDashboardActivity extends AppCompatActivity {
+public class EntrantDashboardActivity extends EntrantBase {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
@@ -27,12 +23,7 @@ public class EntrantDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.entrant_dashboard);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        setContentLayout(R.layout.entrant_dashboard);
 
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
@@ -45,7 +36,6 @@ public class EntrantDashboardActivity extends AppCompatActivity {
         });
 
         loadEventsFromFirebase();
-
     }
 
     /***

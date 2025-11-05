@@ -46,15 +46,15 @@ public class EntrantDashboardActivity extends AppCompatActivity {
      * listener for notifications added to event dashboard as this is the foreground/ main activity
      */
     @Override
-    protected void onStart() {
-        super.onStart();
-        notificationListener.start();
+    protected void onResume() {
+        super.onResume();
+        if (notificationListener != null) notificationListener.start();
     }
 
     @Override
-    protected void onStop() {
-        notificationListener.stop();
-        super.onStop();
+    protected void onPause() {
+        if (notificationListener != null) notificationListener.stop();
+        super.onPause();
     }
 
     private void loadEventsFromFirebase() {

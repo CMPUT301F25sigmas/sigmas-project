@@ -206,8 +206,9 @@
                 android:layout_weight="1"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
+                android:hint="Enter new pass"
                 android:background="@drawable/edit_profile_text_background"
-                android:inputType="textPersonName"
+                android:inputType="textPassword"
                 android:paddingHorizontal="8dp" />
 
             <!-- Edit icon -->

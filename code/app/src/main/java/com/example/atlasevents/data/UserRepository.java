@@ -3,15 +3,18 @@ package com.example.atlasevents.data;
 import androidx.annotation.NonNull;
 
 import com.example.atlasevents.Organizer;
+import com.example.atlasevents.PasswordHasher;
 import com.example.atlasevents.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
 public class UserRepository {
-    private FirebaseFirestore db;
+    private final FirebaseFirestore db;
+    private final PasswordHasher passwordHasher;
     public UserRepository() {
         db = FirebaseFirestore.getInstance();
+        passwordHasher = new PasswordHasher();
     }
     public interface OnUserFetchedListener {
         void onUserFetched(User user);
@@ -29,6 +32,7 @@ public class UserRepository {
     }
     public void addUser(@NonNull User user, @NonNull OnUserUpdatedListener listener) {
         String email = user.getEmail();
+        user.setPassword(passwordHasher.passHash(user.getPassword()));
         
         db.collection("users").document(email)
                 .get()
@@ -77,6 +81,7 @@ public class UserRepository {
 
     public void setUser(@NonNull String email, @NonNull User newUser, @NonNull OnUserUpdatedListener listener) {
         String newEmail = newUser.getEmail();
+        newUser.setPassword(passwordHasher.passHash(newUser.getPassword()));
 
         // If the email hasn't changed, just update the existing document
         if (email.equals(newEmail)) {

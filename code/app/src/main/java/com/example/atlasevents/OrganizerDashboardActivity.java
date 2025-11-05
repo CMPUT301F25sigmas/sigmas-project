@@ -11,15 +11,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.atlasevents.data.NotificationListener;
+import com.example.atlasevents.utils.NotificationManager;
 import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.DebugNotificationActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
 public class OrganizerDashboardActivity extends AppCompatActivity {
-    private NotificationListener notificationListener;
+    private Session session;
 
     /***
      * listener for notifications added to organiser dashboard as this is anopther foreground/ main activity
@@ -41,6 +38,7 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
             return insets;
         });
         Organizer user;
+        session = new Session(this);
         Bundle bundle = getIntent().getExtras();
         assert bundle != null;
         String username = bundle.getString("email");
@@ -67,23 +65,16 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (notificationListener != null){
-        notificationListener.start();
+        NotificationManager.startListening(this, session.getUserEmail());
     }
-    }
-
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (notificationListener != null) {
-            notificationListener.stop();
-        }
+        NotificationManager.stopListening();
     }
 
-        NotificationRepository notifRepo = new NotificationRepository();
-
-// 1) When organizer runs lottery and moves users to inviteList -> notify chosen entrants
+    NotificationRepository notifRepo = new NotificationRepository();// 1) When organizer runs lottery and moves users to inviteList -> notify chosen entrants
         public void notifyChosenEntrants(Event event) {
             String title = "You've been selected!";
             String message = "You are invited to sign up for " + event.getEventName() + ". Please confirm your spot.";
@@ -106,9 +97,4 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
             notifRepo.sendToCancelled(event, title, message)
                     .addOnFailureListener(e -> Log.e("Organizer", "Failed sending to cancelled list", e));
         }
-
-
-   // FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
-   //     Log.d("SMOKE", "Current user: " + (u != null ? u.getEmail() : "null"));
-
 }

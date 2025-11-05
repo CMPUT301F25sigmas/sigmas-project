@@ -5,13 +5,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
-import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.*;
 import com.example.atlasevents.utils.NotificationHelper;
+
 public class NotificationListener {
 
     private static final String TAG = "NotificationListener";
@@ -23,14 +24,10 @@ public class NotificationListener {
     private final String email;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
 
-    public NotificationListener(@NonNull Activity activity) {
+    public NotificationListener(@NonNull Activity activity, @NonNull String userEmail) {
         this.activity = activity;
         this.db = FirebaseFirestore.getInstance();
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            email = null;
-        } else {
-            email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        }
+        this.email = userEmail;
     }
 
     /**

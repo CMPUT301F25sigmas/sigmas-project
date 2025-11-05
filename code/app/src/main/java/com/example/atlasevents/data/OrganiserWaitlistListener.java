@@ -2,7 +2,7 @@ package com.example.atlasevents.data;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
-import com.google.firebase.auth.FirebaseAuth;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.*;
 import com.example.atlasevents.data.model.Notification;
@@ -11,17 +11,15 @@ import java.util.Map;
 
 /**
  * OrganiserWaitlistListener:
- * - constructed with eventId
+ * - constructed with eventId and organizer email
  * - when started, listens to events/{eventId}/waitlist
- * - on ADDED => create a notification for the organizer under users/{organiserUid}/notifications
+ * - on ADDED => create a notification for the organizer under users/{organiserEmail}/notifications
  * - on REMOVED => create a "left" notification
  *
  * This is the "client-side" mechanism to create notifications — organizer app must run this listener.
  *
  * This implementation writes notifications for the organiser themself
- * Givbing the organiser a historical log and multiple organizer devices can read the same notifications.
- * If you also want organizer to notify other users, adapt createNotificationForOrganizer to write under the recipient's UID
- * — but remember rules must allow that
+ * Giving the organiser a historical log and multiple organizer devices can read the same notifications.
  */
 
 public class OrganiserWaitlistListener {
@@ -29,12 +27,11 @@ public class OrganiserWaitlistListener {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ListenerRegistration registration;
     private final String eventId;
-    private final String organiseremail; // current logged in-user
+    private final String organiseremail; // organizer's email
 
-    public OrganiserWaitlistListener(@NonNull String eventId){
+    public OrganiserWaitlistListener(@NonNull String eventId, @NonNull String organizerEmail){
         this.eventId = eventId;
-        this.organiseremail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-
+        this.organiseremail = organizerEmail;
     }
     public void start() {
         DocumentReference eventRef = db.collection("events").document(eventId);
@@ -82,7 +79,7 @@ public class OrganiserWaitlistListener {
             payload.put("title", title);
             payload.put("message", message);
             payload.put("eventId", eventId);
-            payload.put("fromOrganizerUid", organiseremail); // the writer
+            payload.put("fromOrganizeremail", organiseremail); // the writer
             payload.put("read", false);
             payload.put("createdAt", FieldValue.serverTimestamp());
 

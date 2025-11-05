@@ -12,7 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.EventRepository;
-import com.example.atlasevents.data.NotificationListener;
+import com.example.atlasevents.utils.NotificationManager;
 
 import java.util.ArrayList;
 
@@ -20,8 +20,7 @@ public class EntrantDashboardActivity extends AppCompatActivity {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
-
-    private NotificationListener notificationListener;
+    private Session session;
 
 
     @Override
@@ -36,7 +35,7 @@ public class EntrantDashboardActivity extends AppCompatActivity {
 
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
-        notificationListener = new NotificationListener(this);
+        session = new Session(this);
 
         loadEventsFromFirebase();
 
@@ -48,12 +47,12 @@ public class EntrantDashboardActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (notificationListener != null) notificationListener.start();
+        NotificationManager.startListening(this, session.getUserEmail());
     }
 
     @Override
     protected void onPause() {
-        if (notificationListener != null) notificationListener.stop();
+        NotificationManager.stopListening();
         super.onPause();
     }
 

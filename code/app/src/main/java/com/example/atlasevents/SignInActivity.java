@@ -12,10 +12,12 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
 public class SignInActivity extends AppCompatActivity {
+    private static final String TAG = "SignInActivity";
     private UserRepository userRepo;
     private EventRepository eventRepo;
     private Button signInbutton;
     private TextView signUpText;
+    private Session session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +26,7 @@ public class SignInActivity extends AppCompatActivity {
 
         userRepo = new UserRepository();
         eventRepo = new EventRepository();
+        session = new Session(this);
         signInbutton = findViewById(R.id.signInButton);
         signUpText = findViewById(R.id.joinNow);
 
@@ -78,6 +81,9 @@ public class SignInActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             if (password.equals(user.getPassword())) { //check pass matches
+                                // Save user email to session
+                                session.setUserEmail(user.getEmail());
+                                
                                 if (user.getUserType().equals("Organizer")){//check if user is organizer
                                     Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
                                     Bundle bundle = new Bundle();

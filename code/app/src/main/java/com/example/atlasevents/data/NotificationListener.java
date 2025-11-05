@@ -55,9 +55,8 @@ public class NotificationListener {
     private void attachNotificationsListener() {
         if (notifsRegistration != null) return;
         CollectionReference notifsRef = db.collection("users").document(email).collection("notifications");
-        // Query unread notifications
-        notifsRegistration = notifsRef.whereEqualTo("read", false)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+        // Listen to all notifications ordered by createdAt (no index needed)
+        notifsRegistration = notifsRef.orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
                         Log.w(TAG, "notification snapshot error", e);
@@ -68,7 +67,18 @@ public class NotificationListener {
                         if (dc.getType() == DocumentChange.Type.ADDED) {
                             DocumentSnapshot doc = dc.getDocument();
                             Notification notif = doc.toObject(Notification.class);
-                            if (notif == null) continue;
+                            if (notif == null) {
+                                Log.w(TAG, "Failed to parse notification");
+                                continue;
+                            }
+                            
+                            // Only process unread notifications
+                            Boolean isRead = doc.getBoolean("read");
+                            if (isRead != null && isRead) {
+                                Log.d(TAG, "Skipping already read notification: " + doc.getId());
+                                continue; // Skip already read notifications
+                            }
+                            
                             // Double-check enabled
                             if (!enabled.get()) {
                                 // skip (but not delete)

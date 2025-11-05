@@ -1,5 +1,6 @@
 package com.example.atlasevents;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -17,6 +18,8 @@ import com.example.atlasevents.data.UserRepository;
 
 public class SignUpActivity extends AppCompatActivity {
 
+    private Session session;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,6 +31,7 @@ public class SignUpActivity extends AppCompatActivity {
             return insets;
         });
 
+        session = new Session(this);
         UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
@@ -61,6 +65,12 @@ public class SignUpActivity extends AppCompatActivity {
                 userRepo.addUser(newUser, status -> {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
                         Log.d("Firestore", "User added successfully");
+                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(SignUpActivity.this, EntrantDashboardActivity.class);
+                        session.setUserEmail(newUser.getEmail());
+                        Bundle bundle = new Bundle();
+                        intent.putExtras(bundle);
+                        startActivity(intent);
                         finish();
                     } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
                         Log.e("Firestore", "Email already exists");
@@ -76,6 +86,11 @@ public class SignUpActivity extends AppCompatActivity {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
                         Log.d("Firestore", "User added successfully");
                         Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(SignUpActivity.this, EntrantDashboardActivity.class);
+                        session.setUserEmail(newUser.getEmail());
+                        Bundle bundle = new Bundle();
+                        intent.putExtras(bundle);
+                        startActivity(intent);
                         finish();
                     } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
                         Log.e("Firestore", "Email already exists");

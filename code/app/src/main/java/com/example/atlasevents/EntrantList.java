@@ -1,12 +1,13 @@
 package com.example.atlasevents;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * This is a class that defines a waitlist for joining an event.
  */
 
-public class EntrantList {
+public class EntrantList implements Serializable {
   
     private ArrayList<Entrant> userList;
 

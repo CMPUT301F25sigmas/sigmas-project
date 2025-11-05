@@ -78,6 +78,7 @@
             android:background="#15151A">
 
             <TextView
+                android:id="@+id/eventName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="60dp"
@@ -214,7 +215,7 @@
             android:text="From the Organizer's:" />
 
         <TextView
-            android:id="@+id/eventDiscription"
+            android:id="@+id/eventDescription"
             android:layout_width="match_parent"
             android:layout_height="226dp"
             android:layout_marginLeft="15dp"

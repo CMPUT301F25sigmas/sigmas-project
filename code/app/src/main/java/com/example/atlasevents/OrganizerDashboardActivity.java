@@ -13,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.NotificationListener;
 import com.example.atlasevents.data.NotificationRepository;
+import com.example.atlasevents.DebugNotificationActivity;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -44,6 +46,13 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
         String username = bundle.getString("email");
 
         Button createEventButton = findViewById(R.id.create_event_button);
+        // inside onCreate() after setContentView(...)
+        Button debugButton = findViewById(R.id.notification_debug_button);
+        debugButton.setOnClickListener(v -> {
+            Intent intent = new Intent(OrganizerDashboardActivity.this, DebugNotificationActivity.class);
+            startActivity(intent);
+        });
+
 
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);

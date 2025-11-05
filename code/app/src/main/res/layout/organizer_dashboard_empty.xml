@@ -108,6 +108,13 @@
                     android:text="Create Event"
                     app:backgroundTint="@color/light_purple"
                     app:cornerRadius="16dp" />
+                <Button
+                    android:id="@+id/notification_debug_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Notification test"
+                    app:backgroundTint="@color/light_purple"
+                    app:cornerRadius="16dp" />
 
             </LinearLayout>
 

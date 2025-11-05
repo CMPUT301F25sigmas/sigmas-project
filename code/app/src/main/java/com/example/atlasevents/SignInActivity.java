@@ -6,6 +6,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.mindrot.jbcrypt.BCrypt;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,6 +21,7 @@ public class SignInActivity extends AppCompatActivity {
     private TextView signUpText;
 
     private Session session;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,12 +72,12 @@ public class SignInActivity extends AppCompatActivity {
         //listener for signInButton
         signInbutton.setOnClickListener(view -> {
             String username = usernameField.getText().toString();
-            String password = passwordHasher.passHash(passwordField.getText().toString());
+            String password = passwordField.getText().toString();
             //check email and pass in database
             userRepo.getUser(username,
                     user -> {
                         if (user != null) {
-                            if (password.equals(user.getPassword())) { //check pass matches
+                            if (passwordHasher.checkPass(password,user.getPassword())) { //check pass matches
                                 if (user.getUserType().equals("Organizer")){//check if user is organizer
                                     Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
                                     session.setUserEmail(user.getEmail());

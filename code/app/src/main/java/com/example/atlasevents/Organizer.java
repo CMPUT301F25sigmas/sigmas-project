@@ -1,10 +1,13 @@
 package com.example.atlasevents;
+
+import java.io.Serializable;
+
 /**
  * This is a class that defines an Organizer which can create and host events
  * and send notifications to other Entrants.
  */
 
-public class Organizer extends User {
+public class Organizer extends User implements Serializable {
     /*
         To do:
         Method for sending notifications to

@@ -1,5 +1,6 @@
 package com.example.atlasevents;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,5 +70,8 @@ public class EntrantDashboardActivity extends EntrantBase {
 
     private void openEventDetails(Event event) {
         // TODO: Navigate to event details page
+        Intent intent = new Intent(this, EventDetailsActivity.class);
+        intent.putExtra(EventDetailsActivity.EventKey, event);
+        startActivity(intent);
     }
 }

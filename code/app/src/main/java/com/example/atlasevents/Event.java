@@ -6,6 +6,7 @@ import android.widget.ImageView;
 import com.example.atlasevents.data.EventRepository;
 import com.google.type.DateTime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -14,10 +15,10 @@ import java.util.Random;
  * This is a class that defines an Event.
  */
 
-public class Event {
+public class Event implements Serializable {
 
     Random random = new Random();
-    EventRepository db = new EventRepository();
+    transient EventRepository db = new EventRepository();
 
     private String id;
     private int slots; //Number of slots available

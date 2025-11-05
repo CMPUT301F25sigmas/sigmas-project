@@ -43,6 +43,12 @@ public class OrganizerDashboardActivity extends AppCompatActivity {
         assert bundle != null;
         String username = bundle.getString("email");
 
+        // Set up notification icon click listener
+        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
+            Intent intent = new Intent(this, NotificationCenterActivity.class);
+            startActivity(intent);
+        });
+
         Button createEventButton = findViewById(R.id.create_event_button);
         // inside onCreate() after setContentView(...)
         Button debugButton = findViewById(R.id.notification_debug_button);

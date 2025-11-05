@@ -1,5 +1,6 @@
 package com.example.atlasevents;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,6 +37,12 @@ public class EntrantDashboardActivity extends AppCompatActivity {
         eventsContainer = findViewById(R.id.events_container);
         eventRepository = new EventRepository();
         session = new Session(this);
+
+        // Set up notification icon click listener
+        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
+            Intent intent = new Intent(this, NotificationHistoryActivity.class);
+            startActivity(intent);
+        });
 
         loadEventsFromFirebase();
 

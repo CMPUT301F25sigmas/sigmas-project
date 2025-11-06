@@ -59,7 +59,12 @@ public abstract class EntrantBase extends AppCompatActivity {
         finish();
         overridePendingTransition(0, 0);
     }
-    protected void openSearch() {}
+    protected void openSearch() {
+        Intent intent = new Intent(this, EntrantSearchActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
     protected void openNotifications() {}
     protected void openQrReader() {}
 

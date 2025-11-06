@@ -13,7 +13,7 @@ import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
 
-public class EntrantDashboardActivity extends EntrantBase {
+public class EntrantSearchActivity extends EntrantBase {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
@@ -23,7 +23,7 @@ public class EntrantDashboardActivity extends EntrantBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentLayout(R.layout.entrant_dashboard);
+        setContentLayout(R.layout.entrant_search);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
@@ -39,7 +39,7 @@ public class EntrantDashboardActivity extends EntrantBase {
 
     private void loadEventsFromFirebase() {
         // Fetch events from Firebase
-        eventRepository.getEventsByEntrant(session.getUserEmail(), new EventRepository.EventsCallback(){
+        eventRepository.getAllEvents(new EventRepository.EventsCallback(){
             @Override
             public void onSuccess(ArrayList<Event> events) {
                 if (events.isEmpty()) {

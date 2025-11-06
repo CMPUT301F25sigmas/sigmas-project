@@ -49,6 +49,16 @@ public class EntrantList implements Serializable {
     public boolean containsEntrant(Entrant entrant){
         return userList.contains(entrant);
     }
+
+    public boolean containsEntrant(String entrantEmail) {
+        for (User user : userList) {
+            if (user.getEmail().equals(entrantEmail)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public int size(){
         return userList.size();
     }

@@ -76,6 +76,7 @@ public class EventDetailsActivity extends AppCompatActivity {
             public void onFailure(Exception e) {
                 Log.e("EventDetailsActivity", "Failed to fetch event", e);
                 Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
     }

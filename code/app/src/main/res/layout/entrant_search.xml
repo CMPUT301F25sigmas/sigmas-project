@@ -7,35 +7,35 @@
     android:background="@color/white">
 
     <!-- Filter Buttons -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp"
-        android:background="@color/white">
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        android:background="@color/white">-->
 
-        <Button
-            android:id="@+id/button_available"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="6dp"
-            android:backgroundTint="@color/light_purple"
-            android:text="Current"
-            android:textColor="@color/text_color"
-            app:cornerRadius="8dp"/>
+<!--        <Button-->
+<!--            android:id="@+id/button_available"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="50dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:layout_marginHorizontal="6dp"-->
+<!--            android:backgroundTint="@color/light_purple"-->
+<!--            android:text="Current"-->
+<!--            android:textColor="@color/text_color"-->
+<!--            app:cornerRadius="8dp"/>-->
 
-        <Button
-            android:id="@+id/button_joined"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginHorizontal="6dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/background_grey"
-            android:text="Past"
-            android:textColor="@color/text_color"
-            app:cornerRadius="8dp" />
-    </LinearLayout>
+<!--        <Button-->
+<!--            android:id="@+id/button_joined"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="50dp"-->
+<!--            android:layout_marginHorizontal="6dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:backgroundTint="@color/background_grey"-->
+<!--            android:text="Past"-->
+<!--            android:textColor="@color/text_color"-->
+<!--            app:cornerRadius="8dp" />-->
+<!--    </LinearLayout>-->
 
     <!-- Events CardView -->
     <androidx.cardview.widget.CardView
@@ -83,7 +83,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:text="No Current Events to\ndisplay right now."
+                    android:text="No Events to\ndisplay right now."
                     android:textAlignment="center"
                     android:textColor="#494949"
                     android:textSize="16sp" />

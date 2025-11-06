@@ -149,6 +149,31 @@ public class EventRepository {
                 })
                 .addOnFailureListener(callback::onFailure);
     }
+
+    public void getEventsByEntrant(String entrantEmail, EventsCallback callback) {
+        Log.d("EventRepository", "Looking for events by entrant: " + entrantEmail);
+
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d("EventRepository", "Total events in Firebase: " + queryDocumentSnapshots.size());
+
+                    ArrayList<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        Event event = document.toObject(Event.class);
+                        if (event != null) {
+                            if (event.getWaitlist().containsEntrant(entrantEmail)) {
+                                events.add(event);
+                                Log.d("EventRepository", "Added event: " + event.getEventName());
+                            }
+                        }
+                    }
+                    Log.d("EventRepository", "Filtered events count: " + events.size());
+                    callback.onSuccess(events);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     /**
      * Update an existing event
      */

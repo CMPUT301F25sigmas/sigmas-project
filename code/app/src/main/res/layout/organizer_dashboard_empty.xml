@@ -5,12 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
     android:background="@android:color/white"
     tools:context=".OrganizerDashboardActivity">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
@@ -19,32 +18,38 @@
         <Button
             android:id="@+id/button"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
             android:layout_weight="1"
             android:backgroundTint="@color/light_purple"
             android:text="Active"
             android:textColor="@color/text_color"
-            android:padding="0dp" />
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
         <Button
             android:id="@+id/button5"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
             android:layout_weight="1"
             android:backgroundTint="@color/background_grey"
             android:text="Closed"
             android:textColor="@color/text_color"
-            android:padding="0dp"/>
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
         <Button
             android:id="@+id/button6"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
             android:layout_weight="1"
             android:backgroundTint="@color/background_grey"
             android:text="Ongoing"
             android:textColor="@color/text_color"
-            android:padding="0dp"/>
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
     </LinearLayout>
 
@@ -87,7 +92,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:visibility="visible">
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"

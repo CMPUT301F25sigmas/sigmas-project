@@ -37,6 +37,10 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         eventRepository = new EventRepository();
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);
+
+        emptyState.setVisibility(View.GONE);
+        eventsScrollView.setVisibility(View.GONE);
+
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
             startActivity(intent);
@@ -87,15 +91,17 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (Event event : events) {
-            View eventCard = inflater.inflate(R.layout.event_card_item, eventsContainer, false);
+            View eventCard = inflater.inflate(R.layout.organizer_event_cards, eventsContainer, false);
 
             ImageView eventImage = eventCard.findViewById(R.id.event_image);
             TextView eventName = eventCard.findViewById(R.id.event_name);
+            Button eventEditButton = eventCard.findViewById(R.id.edit_button);
 
             //event.loadImage(eventImage, R.drawable.event_placeholder1);
             eventName.setText(event.getEventName());
 
-            eventCard.setOnClickListener(v -> openEventDetails(event));
+            //eventCard.setOnClickListener(v -> openEventDetails(event));
+            eventEditButton.setOnClickListener(v -> openEventDetails(event));
             eventsContainer.addView(eventCard);
         }
     }
@@ -115,8 +121,15 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * @param event The Event object to view details for
      */
     private void openEventDetails(Event event) {
-        Intent intent = new Intent(this, EventDetailsActivity.class);
-        intent.putExtra(EventDetailsActivity.EventKey, event);
+        Intent intent = new Intent(this, EditEventActivity.class);
+        intent.putExtra(EventDetailsActivity.EventKey, event.getId());
+        System.out.println("I failed here");
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadOrganizerEvents();
     }
 }

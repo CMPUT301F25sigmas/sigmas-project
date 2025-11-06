@@ -5,9 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,35 +19,86 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
-import com.example.atlasevents.data.UserRepository;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 
 import java.util.ArrayList;
 
+/**
+ * Activity for organizers to manage an existing event.
+ * <p>
+ * This activity displays event information such as its name, date, location,
+ * image, and waitlist details. It also allows organizers to view a list of
+ * entrants currently on the event’s waitlist through a {@link RecyclerView}.
+ * </p>
+ *
+ * <p>
+ * The event is identified by an event ID passed through an {@link android.content.Intent}
+ * extra using the constant {@link #EventKey}. The event data is fetched from Firestore
+ * via the {@link EventRepository}.
+ * </p>
+ *
+ * @see Event
+ * @see EventRepository
+ * @see EntrantRecyclerAdapter
+ */
 public class EventManageActivity extends AppCompatActivity {
 
+    /**
+     * Key used for passing the event ID via an Intent extra.
+     * <p>
+     * Activities that need to open this screen should attach the event ID
+     * using {@code intent.putExtra(EventManageActivity.EventKey, event.getId())}.
+     * </p>
+     */
     public static final String EventKey = "com.example.atlasevents.EVENT";
 
+    /** Repository for accessing and managing event data in Firestore. */
     private EventRepository eventRepository;
 
-    TextView eventNameTextView;
-    TextView waitlistCountTextView;
-    TextView dateTextView;
-    TextView locationTextView;
-    ImageView eventImageView;
+    /** Text view displaying the name of the event. */
+    private TextView eventNameTextView;
 
-    RecyclerView entrantsRecyclerView;
-    EntrantRecyclerAdapter entrantAdapter;
-    CardView waitingListCard;
-    ArrayList<Entrant> entrantList;
+    /** Text view displaying the current number of entrants on the waitlist. */
+    private TextView waitlistCountTextView;
 
+    /** Text view showing the scheduled date of the event. */
+    private TextView dateTextView;
+
+    /** Text view showing the event's location or address. */
+    private TextView locationTextView;
+
+    /** Image view displaying the event poster or default image. */
+    private ImageView eventImageView;
+
+    /** Recycler view for listing all entrants currently on the event waitlist. */
+    private RecyclerView entrantsRecyclerView;
+
+    /** Adapter for populating the entrant list in the recycler view. */
+    private EntrantRecyclerAdapter entrantAdapter;
+
+    /** Card view container for the waitlist section (hidden if waitlist is empty). */
+    private CardView waitingListCard;
+
+    /** Local list holding entrants currently on the waitlist. */
+    private ArrayList<Entrant> entrantList;
+
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Sets up the layout, initializes UI elements, and prepares the
+     * {@link RecyclerView} for displaying entrants. It also triggers
+     * the initial load of event data from Firestore using {@link #loadData()}.
+     * </p>
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *                           previously being shut down, this Bundle contains
+     *                           the data it most recently supplied. Otherwise, it is {@code null}.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_event);
 
+        // Apply window insets for modern edge-to-edge layout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -71,36 +120,58 @@ public class EventManageActivity extends AppCompatActivity {
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
 
-//        backArrow = findViewById(R.id.back_arrow);
-
         loadData();
     }
 
-    private void loadData(){
-        eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                eventNameTextView.setText(event.getEventName());
-                waitlistCountTextView.setText(String.valueOf(event.getWaitlist() != null ? event.getWaitlist().size() : 0));
-                dateTextView.setText(event.getDate());
-                locationTextView.setText(event.getAddress());
-                if(!event.getImageUrl().isEmpty()){
-                    Glide.with(EventManageActivity.this).load(event.getImageUrl()).into(eventImageView);
-                } else {
-                    eventImageView.setImageResource(R.drawable.poster);
-                }
-                if (event.getWaitlist() != null && event.getWaitlist().getWaitList() != null && !event.getWaitlist().getWaitList().isEmpty()) {
-                    entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
-                    waitingListCard.setVisibility(View.VISIBLE);
-                }
-            }
+    /**
+     * Loads event data from Firestore using the provided event ID.
+     * <p>
+     * Retrieves the event details such as name, date, location, image,
+     * and waitlist. Once loaded, the method updates the UI elements and
+     * populates the entrant list if applicable.
+     * </p>
+     * <p>
+     * If the event retrieval fails, a toast message is displayed and the
+     * activity is closed.
+     * </p>
+     */
+    private void loadData() {
+        eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(),
+                new EventRepository.EventCallback() {
+                    @Override
+                    public void onSuccess(Event event) {
+                        // Populate event details
+                        eventNameTextView.setText(event.getEventName());
+                        waitlistCountTextView.setText(String.valueOf(
+                                event.getWaitlist() != null ? event.getWaitlist().size() : 0));
+                        dateTextView.setText(event.getDate());
+                        locationTextView.setText(event.getAddress());
 
-            @Override
-            public void onFailure(Exception e) {
-                Log.e("EventDetailsActivity", "Failed to fetch event", e);
-                Toast.makeText(EventManageActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+                        // Load event image using Glide
+                        if (!event.getImageUrl().isEmpty()) {
+                            Glide.with(EventManageActivity.this)
+                                    .load(event.getImageUrl())
+                                    .into(eventImageView);
+                        } else {
+                            eventImageView.setImageResource(R.drawable.poster);
+                        }
+
+                        // Display waitlist if available
+                        if (event.getWaitlist() != null &&
+                                event.getWaitlist().getWaitList() != null &&
+                                !event.getWaitlist().getWaitList().isEmpty()) {
+                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            waitingListCard.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e("EventManageActivity", "Failed to fetch event", e);
+                        Toast.makeText(EventManageActivity.this,
+                                "Failed to load event", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                });
     }
 }

@@ -16,6 +16,8 @@ import java.util.Date;
  *  * - createdAt: server timestamp when created
  */
 public class Notification {
+    private String groupType;
+    private String eventName;
     private String notificationId;
     private String title;
     private String message;
@@ -25,12 +27,14 @@ public class Notification {
     private Date createdAt;
 
     public Notification(){}
-    public Notification(String title, String message, String eventId, String fromOrganizerUid) {
+    public Notification(String title, String message, String eventId, String fromOrganizerUid, String eventName, String groupType) {
         this.title = title;
         this.message = message;
         this.eventId = eventId;
         this.fromOrganizeremail = fromOrganizerUid;
+        this.eventName = eventName;
         this.read = false;
+        this.groupType = groupType;
     }
 
     public String getNotificationId() { return notificationId; }
@@ -53,5 +57,11 @@ public class Notification {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public String getEventName() { return eventName; }
+    public void setEventName(String eventName) { this.eventName = eventName; }
+
+    public String getGroupType() { return groupType; }
+    public void setGroupType(String groupType) { this.groupType = groupType; }
 }
 

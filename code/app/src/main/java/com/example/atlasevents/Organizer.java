@@ -42,7 +42,7 @@ public class Organizer extends User {
      * Send notification to a single entrant
      */
     public void sendSingleNotification(String title, String message, Event event, Entrant entrant) {
-        Notification notification = new Notification(title, message, event.getId(), this.getEmail());
+        Notification notification = new Notification(title, message, event.getId(), this.getEmail(), event.getEventName(), "Direct message");
         notificationRepository.sendToUser(entrant.getEmail(), notification);
     }
 
@@ -84,7 +84,7 @@ public class Organizer extends User {
             }
         }
         
-        Notification notification = new Notification(title, message, event.getId(), this.getEmail());
+        Notification notification = new Notification(title, message, event.getId(), this.getEmail(), event.getEventName(), "Batch message");
         notificationRepository.sendToUsers(emails, notification);
     }
 

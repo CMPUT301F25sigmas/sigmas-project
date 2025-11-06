@@ -54,7 +54,7 @@ public class DebugNotificationActivity extends AppCompatActivity {
         String msg = etCustomMessage.getText().toString();
         if (msg.isEmpty()) msg = "Test notification (to self)";
 
-        Notification n = new Notification("Debug: You were selected", msg, "debug_event_001", getOrganizerEmailForDebug());
+        Notification n = new Notification("Debug: You were selected", msg, "debug_event_001", getOrganizerEmailForDebug(), "Debug Event", "Debug Group");
         tvStatus.setText("Status: sending to " + myEmail);
         notifRepo.sendToUser(myEmail, n)
                 .addOnSuccessListener(aVoid -> {
@@ -78,7 +78,7 @@ public class DebugNotificationActivity extends AppCompatActivity {
         String msg = etCustomMessage.getText().toString();
         if (msg.isEmpty()) msg = "Test notification (manual target)";
 
-        Notification n = new Notification("Debug: Organizer message", msg, "debug_event_002", getOrganizerEmailForDebug());
+        Notification n = new Notification("Debug: Organizer message", msg, "debug_event_002", getOrganizerEmailForDebug(), "Debug Event", "Debug Group");
         tvStatus.setText("Status: sending to " + target);
         notifRepo.sendToUser(target, n)
                 .addOnSuccessListener(aVoid -> {
@@ -103,7 +103,7 @@ public class DebugNotificationActivity extends AppCompatActivity {
         String msg = etCustomMessage.getText().toString();
         if (msg.isEmpty()) msg = "Batch test notification";
 
-        Notification n = new Notification("Batch test", msg, "debug_event_batch", getOrganizerEmailForDebug());
+        Notification n = new Notification("Batch test", msg, "debug_event_batch", getOrganizerEmailForDebug(), "Debug Event", "Debug Group");
 
         tvStatus.setText("Status: sending batch to " + emails.size() + " users");
         notifRepo.sendToUsers(emails, n)

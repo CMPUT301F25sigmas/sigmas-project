@@ -110,8 +110,12 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
         
         // Set notification data
-        String title = notification.getTitle() != null ? notification.getTitle() : "Notification";
-        tagTextView.setText(title);
+        String groupType = notification.getGroupType() != null ? notification.getGroupType() : "Notification";
+        tagTextView.setText(groupType);
+
+        // Set event name
+        String eventName = notification.getEventName() != null ? notification.getEventName() : "";
+        eventNameTextView.setText(eventName);
         
         // Format timestamp
         if (notification.getCreatedAt() != null) {

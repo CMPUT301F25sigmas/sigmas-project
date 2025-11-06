@@ -57,6 +57,9 @@ public class NotificationRepository {
             data.put("fromOrganizeremail", notification.getFromOrganizeremail());
             data.put("read", false);
             data.put("createdAt", FieldValue.serverTimestamp());
+            data.put("groupType", notification.getGroupType());
+            data.put("eventName", notification.getEventName());
+
 
             // perform write and then log
             return notifDoc.set(data).continueWithTask(setTask -> {
@@ -70,7 +73,7 @@ public class NotificationRepository {
     public Task<List<Task<Void>>> sendToUsers(@NonNull List<String> userEmails, @NonNull Notification notification) {
         List<Task<Void>> tasks = new ArrayList<>();
         for (String email : userEmails) {
-            Notification copy = new Notification(notification.getTitle(), notification.getMessage(), notification.getEventId(), notification.getFromOrganizeremail());
+            Notification copy = new Notification(notification.getTitle(), notification.getMessage(), notification.getEventId(), notification.getFromOrganizeremail(), notification.getEventName(), notification.getGroupType());
             tasks.add(sendToUser(email, copy));
         }
         // return wrapper task that completes when all children complete
@@ -94,19 +97,22 @@ public class NotificationRepository {
     // send to waitlist
     public Task<List<Task<Void>>> sendToWaitlist(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getWaitlist());
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail());
+        String groupType = "Waiting List";
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
         return sendToUsers(emails, notif);
     }
 
     public Task<List<Task<Void>>> sendToInvited(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getInviteList());
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail());
+        String groupType = "Chosen Entrants";
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
         return sendToUsers(emails, notif);
     }
 
     public Task<List<Task<Void>>> sendToCancelled(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getDeclinedList());
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail());
+        String groupType = "Cancelled Entrants";
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
         return sendToUsers(emails, notif);
     }
 

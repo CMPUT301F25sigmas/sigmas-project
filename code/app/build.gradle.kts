@@ -56,5 +56,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     // Corrected line in build.gradle.kts
     implementation("com.google.android.gms:play-services-auth:21.0.0")
-
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+// enables mocking finals + static
+    testImplementation("com.google.android.gms:play-services-tasks:18.2.0")
 }

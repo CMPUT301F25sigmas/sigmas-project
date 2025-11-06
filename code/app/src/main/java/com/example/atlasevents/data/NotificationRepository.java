@@ -119,7 +119,7 @@ public class NotificationRepository {
         return sendToUsers(emails, notif);
     }
 
-    // small utility to get emails out of your EntrantList (assuming EntrantList exposes entrant emails)
+    // small utility to get emails out of your EntrantList
     private List<String> extractEmailsFromEntrantList(EntrantList list) {
         List<String> out = new ArrayList<>();
         if (list == null || list.size() == 0) return out;

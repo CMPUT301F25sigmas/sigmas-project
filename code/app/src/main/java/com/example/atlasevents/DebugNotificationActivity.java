@@ -96,9 +96,9 @@ public class DebugNotificationActivity extends AppCompatActivity {
     private void sendBatchExample() {
         // change these test emails to match your test accounts
         List<String> emails = Arrays.asList(
-                "alice@example.com",
-                "bob@example.com",
-                "charlie@example.com"
+                "JohnDoe@gmail.com",
+                "bob2@example1.com",
+                "tt@t.com"
         );
         String msg = etCustomMessage.getText().toString();
         if (msg.isEmpty()) msg = "Batch test notification";

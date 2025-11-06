@@ -32,11 +32,11 @@ public class OrganizerDashboardActivity extends OrganizerBase {
 
         Button createEventButton = findViewById(R.id.create_event_button);
         // inside onCreate() after setContentView(...)
-        Button debugButton = findViewById(R.id.notification_debug_button);
-        debugButton.setOnClickListener(v -> {
-            Intent intent = new Intent(OrganizerDashboardActivity.this, DebugNotificationActivity.class);
-            startActivity(intent);
-        });
+        //Button debugButton = findViewById(R.id.notification_debug_button);
+        //debugButton.setOnClickListener(v -> {
+            //Intent intent = new Intent(OrganizerDashboardActivity.this, DebugNotificationActivity.class);
+            //startActivity(intent);
+        //});
 
 
         createEventButton.setOnClickListener(view -> {

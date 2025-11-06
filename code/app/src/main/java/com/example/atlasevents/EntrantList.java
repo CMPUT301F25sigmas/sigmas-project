@@ -51,8 +51,8 @@ public class EntrantList implements Serializable {
     }
 
     public boolean containsEntrant(String entrantEmail) {
-        for (User user : userList) {
-            if (user.getEmail().equals(entrantEmail)) {
+        for (Entrant entrant : userList) {
+            if (entrant.getEmail().equals(entrantEmail)) {
                 return true;
             }
         }

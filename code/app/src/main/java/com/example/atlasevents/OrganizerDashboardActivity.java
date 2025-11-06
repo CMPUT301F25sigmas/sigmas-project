@@ -105,8 +105,8 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             }
             eventName.setText(event.getEventName());
 
-            //eventCard.setOnClickListener(v -> openEventDetails(event));
-            eventEditButton.setOnClickListener(v -> openEventDetails(event));
+            eventCard.setOnClickListener(v -> openEventManage(event));
+            eventEditButton.setOnClickListener(v -> openEventEdit(event));
             eventsContainer.addView(eventCard);
         }
     }
@@ -125,10 +125,16 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      *
      * @param event The Event object to view details for
      */
-    private void openEventDetails(Event event) {
+    private void openEventEdit(Event event) {
         Intent intent = new Intent(this, EditEventActivity.class);
         intent.putExtra(EventDetailsActivity.EventKey, event.getId());
+        startActivity(intent);
+    }
+
+    private void openEventManage(Event event) {
         System.out.println("I failed here");
+        Intent intent = new Intent(this, EventManageActivity.class);
+        intent.putExtra(EventDetailsActivity.EventKey, event.getId());
         startActivity(intent);
     }
 

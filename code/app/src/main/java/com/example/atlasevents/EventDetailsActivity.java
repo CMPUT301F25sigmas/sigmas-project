@@ -117,10 +117,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
         eventImageView.setVisibility(View.VISIBLE);
 
-        if(1==1){
-            qrImageView.setImageBitmap(generateQRCode(event.getId()));
-            qrImageView.setVisibility(View.VISIBLE);
-        }
+        qrImageView.setImageBitmap(generateQRCode(event.getId()));
+        qrImageView.setVisibility(View.VISIBLE);
     }
 
     private Bitmap generateQRCode(String eventId) {

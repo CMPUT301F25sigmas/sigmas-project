@@ -43,6 +43,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
@@ -66,17 +67,20 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:text="Event Name"/>
 
                 <EditText
                     android:id="@+id/nameEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:layout_marginBottom="8dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:text="Description"/>
 
                 <EditText
@@ -84,12 +88,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
                     android:gravity="top"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="8dp"
+                    android:textColor="@color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Location"/>
+                    android:text="Location"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/locEditText"
@@ -98,12 +104,15 @@
                     android:drawableStart="@drawable/location"
                     android:drawablePadding="8dp"
                     android:hint="Enter event location"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="8dp"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Event Date"/>
+                    android:text="Event Date"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/dateEditText"
@@ -112,12 +121,15 @@
                     android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd" />
+                    android:hint="yyyy-mm-dd"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Event Time"/>
+                    android:text="Event Time"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/timeEditText"
@@ -125,13 +137,16 @@
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/clock"
                     android:drawablePadding="8dp"
-                    android:hint="hh:mm am/pm" />
+                    android:hint="hh:mm am/pm"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"/>
 
                 <TextView
                     android:id="@+id/textView6"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Number of Participants" />
+                    android:text="Number of Participants"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/slotsEditText"
@@ -140,13 +155,15 @@
                     android:drawableStart="@drawable/group"
                     android:drawablePadding="8dp"
                     android:inputType="number"
-                    android:paddingBottom="5dp" />
+                    android:paddingBottom="5dp"
+                    android:textColor="@color/black"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
@@ -170,7 +187,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Registration Start Date"/>
+                    android:text="Registration Start Date"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/startDateEditText"
@@ -179,12 +197,15 @@
                     android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd" />
+                    android:hint="yyyy-mm-dd"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Registration End Date"/>
+                    android:text="Registration End Date"
+                    android:textColor="@color/black"/>
 
                 <EditText
                     android:id="@+id/endDateEditText"
@@ -192,13 +213,16 @@
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd" />
+                    android:hint="yyyy-mm-dd"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/black"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
@@ -223,14 +247,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Upload a promotional poster for your event"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="8dp"
+                    android:textColor="@color/black"/>
 
                 <Button
                     android:id="@+id/uploadPosterButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Upload Poster"
-                    app:icon="@drawable/qr_reader_icon"/>
+                    app:icon="@drawable/qr_reader_icon"
+                    android:textColor="@color/black"/>
+                <Button
+                    android:id="@+id/removePosterButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Remove Poster"
+                    android:visibility="gone"
+                    app:icon="@drawable/delete_icon"
+                    android:textColor="@color/black"/>
 
                 <ImageView
                     android:id="@+id/posterImageView"
@@ -246,6 +280,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
@@ -269,13 +304,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/limitEntrantsSwitch"
-                        android:layout_width="289dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Limit Number of Entrants" />
+                        android:text="Limit Number of Entrants"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"/>
 
                     <EditText
                         android:id="@+id/maxEntrantsEditText"
@@ -283,6 +320,8 @@
                         android:layout_height="48dp"
                         android:layout_gravity="right"
                         android:inputType="number"
+                        android:visibility="gone"
+                        android:textColor="@color/black"
                         android:hint="0"/>
                 </LinearLayout>
 
@@ -290,18 +329,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Set a maximum number of people who can join the waiting list"
-                    android:layout_marginBottom="16dp"/>
+                    android:layout_marginBottom="16dp"
+                    android:textColor="@color/black"/>
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/requireGeoLocationSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Require Geolocation"/>
+                    android:text="Require Geolocation"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Require entrants to share their location when joining the waiting list"/>
+                    android:text="Require entrants to share their location when joining the waiting list"
+                    android:textColor="@color/black"/>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

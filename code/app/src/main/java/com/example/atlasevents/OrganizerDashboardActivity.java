@@ -3,12 +3,28 @@ package com.example.atlasevents;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.bumptech.glide.Glide;
+import com.example.atlasevents.data.EventRepository;
+
+import java.util.ArrayList;
+
+import com.bumptech.glide.Glide;
+import com.example.atlasevents.data.EventRepository;
+
+import java.util.ArrayList;
 
 import com.example.atlasevents.utils.NotificationManager;
 /**
@@ -39,6 +55,12 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * @see NotificationCenterActivity
      * @see CreateEventActivity
      */
+
+    private EventRepository eventRepository;
+    private LinearLayout eventsContainer;
+    private ScrollView eventsScrollView;
+    private LinearLayout emptyState;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +73,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             startActivity(intent);
         });
 
+        eventsContainer = findViewById(R.id.events_container_organizer);
         Button createEventButton = findViewById(R.id.create_event_button);
         // inside onCreate() after setContentView(...)
         //Button debugButton = findViewById(R.id.notification_debug_button);
@@ -60,11 +83,19 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         //});
 
 
+        eventRepository = new EventRepository();
+        eventsScrollView = findViewById(R.id.events_scroll_view);
+        emptyState = findViewById(R.id.empty_state);
+
+        emptyState.setVisibility(View.GONE);
+        eventsScrollView.setVisibility(View.GONE);
+
         createEventButton.setOnClickListener(view -> {
             Intent intent = new Intent(OrganizerDashboardActivity.this, CreateEventActivity.class);
             startActivity(intent);
                 });
 
+        loadOrganizerEvents();
     }
     /**
      * Called when the activity becomes visible to the user.
@@ -89,5 +120,102 @@ public class OrganizerDashboardActivity extends OrganizerBase {
     protected void onStop() {
         super.onStop();
         NotificationManager.stopListening();
+    }
+}
+
+    /**
+     * Loads all events created by the currently logged-in organizer from Firestore.
+     * Retrieves the organizer information using the session email, then queries for their events.
+     * Displays events if found, otherwise shows the empty state.
+     */
+    private void loadOrganizerEvents() {
+        userRepository.getOrganizer(session.getUserEmail(), organizer -> {
+            if (organizer != null) {
+                eventRepository.getEventsByOrganizer(organizer.getEmail(), new EventRepository.EventsCallback() {
+                    @Override
+                    public void onSuccess(ArrayList<Event> events) {
+                        if (events.isEmpty()) {
+                            showEmptyState();
+                        } else {
+                            displayEvents(events);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        showEmptyState();
+                    }
+                });
+            } else {
+                showEmptyState();
+            }
+        });
+    }
+
+    /**
+     * Displays a list of events as clickable cards in the events container.
+     * Hides the empty state and shows the scrollable events list.
+     * Each event card displays the event name and image, and navigates to event details when clicked.
+     *
+     * @param events ArrayList of Event objects to display
+     */
+    private void displayEvents(ArrayList<Event> events) {
+        emptyState.setVisibility(View.GONE);
+        eventsScrollView.setVisibility(View.VISIBLE);
+
+        eventsContainer.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        for (Event event : events) {
+            View eventCard = inflater.inflate(R.layout.organizer_event_cards, eventsContainer, false);
+
+            ImageView eventImage = eventCard.findViewById(R.id.event_image);
+            TextView eventName = eventCard.findViewById(R.id.event_name);
+            Button eventEditButton = eventCard.findViewById(R.id.edit_button);
+
+            if(!event.getImageUrl().isEmpty()){
+                Glide.with(this).load(event.getImageUrl()).into(eventImage);
+            } else {
+                eventImage.setImageResource(R.drawable.poster);
+            }
+            eventName.setText(event.getEventName());
+
+            eventCard.setOnClickListener(v -> openEventManage(event));
+            eventEditButton.setOnClickListener(v -> openEventEdit(event));
+            eventsContainer.addView(eventCard);
+        }
+    }
+
+    /**
+     * Shows the empty state layout with a message and create event button.
+     * Hides the events scroll view.
+     */
+    private void showEmptyState() {
+        emptyState.setVisibility(View.VISIBLE);
+        eventsScrollView.setVisibility(View.GONE);
+    }
+    /**
+     * Opens the EventDetailsActivity for a specific event.
+     * Passes the event object as an extra in the intent.
+     *
+     * @param event The Event object to view details for
+     */
+    private void openEventEdit(Event event) {
+        Intent intent = new Intent(this, EditEventActivity.class);
+        intent.putExtra(EventDetailsActivity.EventKey, event.getId());
+        startActivity(intent);
+    }
+
+    private void openEventManage(Event event) {
+        System.out.println("I failed here");
+        Intent intent = new Intent(this, EventManageActivity.class);
+        intent.putExtra(EventDetailsActivity.EventKey, event.getId());
+        startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadOrganizerEvents();
     }
 }

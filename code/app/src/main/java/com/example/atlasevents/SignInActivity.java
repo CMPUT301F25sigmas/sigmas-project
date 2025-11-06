@@ -105,10 +105,6 @@ public class SignInActivity extends AppCompatActivity {
                             }else{
                                 Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
                             }
-
-
-
-
                         }else{
                             Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
                         }

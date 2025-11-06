@@ -43,7 +43,6 @@ public class OrganizerProfileActivity extends OrganizerBase {
             originalEmail = user.getEmail();
             nameEdit.setText(user.getName());
             emailEdit.setText(user.getEmail());
-            passwordEdit.setText(user.getPassword());
             phoneEdit.setText(user.getPhoneNumber());
         });
     }
@@ -91,5 +90,6 @@ public class OrganizerProfileActivity extends OrganizerBase {
                 Toast.makeText(this, "Failed to save changes. Please try again.", Toast.LENGTH_SHORT).show();
             }
         });
+        passwordEdit.setText("");
     }
 }

@@ -2,7 +2,9 @@ package com.example.atlasevents.data;
 
 import androidx.annotation.NonNull;
 
+import com.example.atlasevents.Entrant;
 import com.example.atlasevents.Organizer;
+import com.example.atlasevents.PasswordHasher;
 import com.example.atlasevents.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -13,15 +15,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UserRepository {
-    private FirebaseFirestore db;
+    private final FirebaseFirestore db;
+    private final PasswordHasher passwordHasher;
     public UserRepository() {
         db = FirebaseFirestore.getInstance();
+        passwordHasher = new PasswordHasher();
     }
     public interface OnUserFetchedListener {
         void onUserFetched(User user);
     }
     public interface OnOrganizerFetchedListener {
         void onOrganizerFetched(Organizer user);
+    }
+    public interface OnEntrantFetchedListener {
+        void onEntrantFetched(Entrant user);
     }
     public interface OnUserUpdatedListener {
         enum UpdateStatus {
@@ -33,6 +40,7 @@ public class UserRepository {
     }
     public void addUser(@NonNull User user, @NonNull OnUserUpdatedListener listener) {
         String email = user.getEmail();
+        user.setPassword(passwordHasher.passHash(user.getPassword()));
         
         db.collection("users").document(email)
                 .get()
@@ -81,6 +89,7 @@ public class UserRepository {
 
     public void setUser(@NonNull String email, @NonNull User newUser, @NonNull OnUserUpdatedListener listener) {
         String newEmail = newUser.getEmail();
+        newUser.setPassword(passwordHasher.passHash(newUser.getPassword()));
 
         // If the email hasn't changed, just update the existing document
         if (email.equals(newEmail)) {
@@ -158,6 +167,28 @@ public class UserRepository {
         Map<String, Object> update = new HashMap<>();
         update.put("notificationsEnabled", enabled);
         return db.collection("users").document(email).set(update, SetOptions.merge());
+    }
+
+    /**
+     * This method gets an entrant from the database.
+     * @param listener: listener to check for successful database query
+     * @param name: email address of the entrant
+     */
+    public void getEntrant(String name, OnEntrantFetchedListener listener) {
+        db.collection("users")
+                .whereEqualTo("email", name)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        Entrant entrant = queryDocumentSnapshots.getDocuments()
+                                .get(0)
+                                .toObject(Entrant.class);
+                        listener.onEntrantFetched(entrant);
+                    } else {
+                        listener.onEntrantFetched(null); // user not found
+                    }
+                })
+                .addOnFailureListener(e -> listener.onEntrantFetched(null));
     }
 }
 

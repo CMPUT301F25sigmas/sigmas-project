@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.runtime)
     implementation(libs.room.external.antlr)
+    implementation("com.google.zxing:core:3.5.3")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -69,4 +70,8 @@ dependencies {
     androidTestImplementation ("com.google.firebase:firebase-firestore:24.9.1")
     androidTestImplementation ("androidx.test:core:1.5.0")
     testImplementation("com.google.android.gms:play-services-tasks:18.2.0")
+    implementation("com.google.firebase:firebase-storage:20.3.0")
+    implementation("androidx.activity:activity-ktx:1.7.0")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
 }

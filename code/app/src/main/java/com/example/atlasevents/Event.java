@@ -1,11 +1,13 @@
 package com.example.atlasevents;
 
 
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.example.atlasevents.data.EventRepository;
 import com.google.type.DateTime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -14,10 +16,10 @@ import java.util.Random;
  * This is a class that defines an Event.
  */
 
-public class Event {
+public class Event implements Serializable {
 
     Random random = new Random();
-    EventRepository db = new EventRepository();
+    transient EventRepository db = new EventRepository();
 
     private String id;
     private int slots; //Number of slots available
@@ -46,8 +48,10 @@ public class Event {
     private EntrantList declinedList;
     private String Description;
     private String address;
-    private String start;
-    private String end;
+    private String date;
+    private String regStartDate;
+    private String regEndDate;
+    private String time;
     private String imageUrl; // Firebase Storage path or URL
     private boolean requireGeolocation;
     private int entrantLimit = -1;
@@ -58,6 +62,7 @@ public class Event {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        imageUrl = "";
     }
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -65,15 +70,25 @@ public class Event {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        imageUrl = "";
     }
 
     //Getters
-    public String getStart() {
-        return start;
+    public String getDate() {
+        return date;
     }
-    public String getEnd() {
-        return end;
+    public String getTime() {
+        return time;
     }
+
+    public String getRegStartDate() {
+        return regStartDate;
+    }
+
+    public String getRegEndDate() {
+        return regEndDate;
+    }
+
     public int getSlots() {
         return slots;
     }
@@ -104,13 +119,24 @@ public class Event {
 
     public int getEntrantLimit(){return entrantLimit;}
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
     //Setters
-    public void setStart(String start) {
-        this.start = start;
+    public void setDate(String start) {
+        this.date = start;
     }
-    public void setEnd(String end) {
-        this.end = end;
+    public void setTime(String end) {
+        this.time = end;
     }
+    public void setRegStartDate(String regStartDate) {
+        this.regStartDate = regStartDate;
+    }
+    public void setRegEndDate(String regEndDate) {
+        this.regEndDate = regEndDate;
+    }
+
     public void setSlots(int slots) {
         this.slots = slots;
     }
@@ -139,6 +165,10 @@ public class Event {
     public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
     public void setEntrantLimit(int max){this.entrantLimit = max;}
 
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.
      */
@@ -155,12 +185,18 @@ public class Event {
      * This method adds an entrant to the waitlist
      * @param entrant the entrant to be added to waitlist
      */
-    public void addToWaitlist(Entrant entrant){
-        if (entrantLimit > 0) {
+    public int addToWaitlist(Entrant entrant) {
+        int currentSize = waitList.size();
+        if (entrantLimit == -1) {
             waitList.addEntrant(entrant);
-            entrantLimit --;
-        }else if(entrantLimit == -1){
+            return 1;
+        }
+        if (currentSize < entrantLimit) {
             waitList.addEntrant(entrant);
+            return 1;
+        } else {
+            Log.w("Waitlist", "Cannot add entrant: waitlist limit reached");
+            return 0;
         }
     }
 
@@ -171,11 +207,7 @@ public class Event {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
-            if(entrantLimit >= 0) { //makes sure if entrantLimit is -1 (no limit) it doesnt inc
-                entrantLimit++;
-            }
         }
-
     }
 
 

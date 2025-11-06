@@ -5,12 +5,15 @@ import com.example.atlasevents.data.model.Notification;
 import java.util.ArrayList;
 import java.util.List;
 
+
+import java.io.Serializable;
+
 /**
  * This is a class that defines an Organizer which can create and host events
  * and send notifications to other Entrants.
  */
 
-public class Organizer extends User {
+public class Organizer extends User implements Serializable {
     /*
     To do:
     Method for sending notifications to

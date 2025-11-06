@@ -1,61 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@android:color/white"
-    tools:context=".OrganizerDashboardActivity"
-    android:id="@+id/main"  >
-
+    tools:context=".OrganizerDashboardActivity">
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
+        <Button
+            android:id="@+id/button"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/light_purple"
+            android:text="Active"
+            android:textColor="@color/text_color"
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
-            <Button
-                android:id="@+id/button"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/light_purple"
-                android:padding="0dp"
-                android:text="Active"
-                android:textColor="@color/text_color" />
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/background_grey"
+            android:text="Closed"
+            android:textColor="@color/text_color"
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
-            <Button
-                android:id="@+id/button5"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/background_grey"
-                android:padding="0dp"
-                android:text="Closed"
-                android:textColor="@color/text_color" />
-
-            <Button
-                android:id="@+id/button6"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/background_grey"
-                android:padding="0dp"
-                android:text="Ongoing"
-                android:textColor="@color/text_color" />
-
+        <Button
+            android:id="@+id/button6"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/background_grey"
+            android:text="Ongoing"
+            android:textColor="@color/text_color"
+            android:padding="0dp"
+            app:cornerRadius="8dp"/>
 
         </LinearLayout>
 
@@ -67,12 +61,38 @@
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp">
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Events List (shown when there are events) -->
+            <ScrollView
+                android:id="@+id/events_scroll_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/events_container_organizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Events will be dynamically added here -->
+
+                </LinearLayout>
+
+            </ScrollView>
+
+            <!-- Empty State (shown when there are no events) -->
             <LinearLayout
-                android:id="@+id/event_card_section"
+                android:id="@+id/empty_state"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -90,19 +110,10 @@
                     android:text="Create Event"
                     app:backgroundTint="@color/light_purple"
                     app:cornerRadius="16dp" />
-
-                <Button
-                    android:id="@+id/notification_debug_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Notification test"
-                    app:backgroundTint="@color/light_purple"
-                    app:cornerRadius="16dp" />
-
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </FrameLayout>
 
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

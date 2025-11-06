@@ -45,7 +45,6 @@ public class EntrantProfileActivity extends EntrantBase {
             originalEmail = user.getEmail();
             nameEdit.setText(user.getName());
             emailEdit.setText(user.getEmail());
-            passwordEdit.setText(user.getPassword());
             phoneEdit.setText(user.getPhoneNumber());
         });
     }
@@ -93,5 +92,6 @@ public class EntrantProfileActivity extends EntrantBase {
                 Toast.makeText(this, "Failed to save changes. Please try again.", Toast.LENGTH_SHORT).show();
             }
         });
+        passwordEdit.setText("");
     }
 }

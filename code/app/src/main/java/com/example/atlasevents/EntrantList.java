@@ -1,12 +1,13 @@
 package com.example.atlasevents;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * This is a class that defines a waitlist for joining an event.
  */
 
-public class EntrantList {
+public class EntrantList implements Serializable {
   
     private ArrayList<Entrant> userList;
 
@@ -47,8 +48,17 @@ public class EntrantList {
 
     public boolean containsEntrant(Entrant entrant){
         return userList.contains(entrant);
-
     }
+
+    public boolean containsEntrant(String entrantEmail) {
+        for (Entrant entrant : userList) {
+            if (entrant.getEmail().equals(entrantEmail)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public int size(){
         return userList.size();
     }

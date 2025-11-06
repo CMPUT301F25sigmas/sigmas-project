@@ -1,7 +1,6 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
-
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,33 +11,23 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
-import com.example.atlasevents.utils.NotificationManager;
 
 import java.util.ArrayList;
 
-public class EntrantDashboardActivity extends EntrantBase {
+public class EntrantSearchActivity extends EntrantBase {
 
     private LinearLayout eventsContainer;
     private EventRepository eventRepository;
-    private Session session;
-
     private ScrollView eventsScrollView;
     private LinearLayout emptyState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentLayout(R.layout.entrant_dashboard);
+        setContentLayout(R.layout.entrant_search);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
-        session = new Session(this);
-
-        // Set up notification icon click listener
-        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
-            Intent intent = new Intent(this, NotificationHistoryActivity.class);
-            startActivity(intent);
-        });
 
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);
@@ -49,24 +38,9 @@ public class EntrantDashboardActivity extends EntrantBase {
         loadEventsFromFirebase();
     }
 
-    /***
-     * listener for notifications added to event dashboard as this is the foreground/ main activity
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        NotificationManager.startListening(this, session.getUserEmail());
-    }
-
-    @Override
-    protected void onPause() {
-        NotificationManager.stopListening();
-        super.onPause();
-    }
-
     private void loadEventsFromFirebase() {
         // Fetch events from Firebase
-        eventRepository.getEventsByEntrant(session.getUserEmail(), new EventRepository.EventsCallback(){
+        eventRepository.getAllEvents(new EventRepository.EventsCallback(){
             @Override
             public void onSuccess(ArrayList<Event> events) {
                 if (events.isEmpty()) {

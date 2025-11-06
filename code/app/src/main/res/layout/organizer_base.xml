@@ -17,7 +17,6 @@
         app:layout_constraintGuide_begin="100dp" />
 
     <include
-        android:id="@+id/organizer_tab"
         layout="@layout/organizer_tab"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -34,7 +33,7 @@
         android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@id/page_selector"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/organizer_tab"
+        app:layout_constraintStart_toEndOf="@id/guideline"
         app:layout_constraintTop_toTopOf="parent" />
 
     <include
@@ -44,6 +43,6 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/organizer_tab" />
+        app:layout_constraintStart_toEndOf="@id/guideline" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

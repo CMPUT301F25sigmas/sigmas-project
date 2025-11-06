@@ -17,19 +17,49 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
+/**
+ * Activity for creating new events in the Atlas Events system.
+ * <p>
+ * This activity provides a form interface for organizers to create events with
+ * various details including name, dates, location, description, participant limits,
+ * and geolocation requirements. The activity validates inputs before creating the
+ * event and saving it to the repository.
+ * </p>
+ *
+ * @see Event
+ * @see Organizer
+ * @see EventRepository
+ */
 public class CreateEventActivity extends AppCompatActivity {
+    /**
+     * Repository for user data operations.
+     */
     UserRepository userRepo = new UserRepository();
+
+    /**
+     * Repository for event data operations.
+     */
     EventRepository eventRepo = new EventRepository();
+
+    /**
+     * Current user session containing authentication information.
+     */
     Session session;
 
     /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the event creation form, sets up the UI components including
+     * input fields and switches, and configures button listeners for creating
+     * and publishing events. Enables edge-to-edge display and applies window insets.
+     * </p>
      *
      * @param savedInstanceState If the activity is being re-initialized after
-     *     previously being shut down then this Bundle contains the data it most
-     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
-     *
-     *     todo: make "limit number of entrants" just a editText instead of a switch and editText
+     *                           previously being shut down, this Bundle contains
+     *                           the data it most recently supplied in onSaveInstanceState.
+     *                           Otherwise it is null.
      */
+    //    todo: make "limit number of entrants" just a editText instead of a switch and editText
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,11 +132,17 @@ public class CreateEventActivity extends AppCompatActivity {
 
     }
     /**
-     *  Checks inputs and makes toasts to tell user what is missing or invalid
-     * @param name name of event
-     * @param slots number of slots event has open
-     * todo : check rest of mandatory inputs
-       */
+     * Validates the required inputs for event creation.
+     * <p>
+     * Checks that the event name is not empty and that the number of slots
+     * is provided. Displays appropriate Toast messages to inform the user
+     * of any missing or invalid inputs.
+     * </p>
+     *
+     * @param name The name of the event to validate
+     * @param slots The number of participant slots as a string
+     * @return {@code true} if all inputs are valid, {@code false} otherwise
+     */
     public boolean inputsValid(String name, String slots) {
         boolean valid = true;
         if (name.isEmpty()) { //check if name is empty

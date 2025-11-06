@@ -16,10 +16,37 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
 
+/**
+ * Activity for registering new users within the Atlas Events application.
+ * <p>
+ * This activity allows users to create either an {@link Entrant} or {@link Organizer}
+ * account by entering their personal details including name, email, password, and phone number.
+ * Once registration succeeds, a new session is created and the user is redirected
+ * to their respective dashboard.
+ * </p>
+ * <p>
+ * The activity also ensures that only one user type checkbox can be active at a time
+ * and provides input validation feedback through toast messages.
+ * </p>
+ *
+ * @see UserRepository
+ * @see Session
+ * @see EntrantDashboardActivity
+ * @see OrganizerDashboardActivity
+ */
 public class SignUpActivity extends AppCompatActivity {
 
     private Session session;
 
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the UI layout, configures edge-to-edge display, binds all input fields,
+     * and sets up event listeners for the create and cancel buttons.
+     * </p>
+     *
+     * @param savedInstanceState the saved state of the activity if it was previously created
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +60,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         session = new Session(this);
         UserRepository userRepo = new UserRepository();
+
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         EditText name = findViewById(R.id.name);
@@ -42,18 +70,14 @@ public class SignUpActivity extends AppCompatActivity {
         CheckBox orgCheck = findViewById(R.id.organizerCheckBox);
         CheckBox entrantCheck = findViewById(R.id.entrantCheckBox);
 
-        orgCheck.setOnClickListener(view ->{
-            entrantCheck.toggle();
-        });
-        entrantCheck.setOnClickListener(view ->{
-            orgCheck.toggle();
-        });
+        // Ensure only one checkbox (organizer or entrant) is active at a time
+        orgCheck.setOnClickListener(view -> entrantCheck.toggle());
+        entrantCheck.setOnClickListener(view -> orgCheck.toggle());
 
+        // Close the activity and return to the previous screen
+        cancelButton.setOnClickListener(view -> finish());
 
-        cancelButton.setOnClickListener(view ->{
-            finish();
-        });
-
+        // Handle user account creation
         createButton.setOnClickListener(view -> {
             String userName = name.getText().toString();
             String userEmail = email.getText().toString();
@@ -61,6 +85,7 @@ public class SignUpActivity extends AppCompatActivity {
             String userPhone = phone.getText().toString();
 
             if (entrantCheck.isChecked()) {
+                // Create Entrant account
                 Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);
                 userRepo.addUser(newUser, status -> {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
@@ -81,6 +106,7 @@ public class SignUpActivity extends AppCompatActivity {
                     }
                 });
             } else {
+                // Create Organizer account
                 Organizer newUser = new Organizer(userName, userEmail, userPassword, userPhone);
                 userRepo.addUser(newUser, status -> {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
@@ -102,7 +128,5 @@ public class SignUpActivity extends AppCompatActivity {
                 });
             }
         });
-
-
     }
 }

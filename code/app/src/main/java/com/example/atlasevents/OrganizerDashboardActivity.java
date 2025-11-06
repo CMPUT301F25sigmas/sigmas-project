@@ -21,6 +21,19 @@ import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
 
+/**
+ * Activity displaying the organizer's dashboard with all their created events.
+ * <p>
+ * This activity extends {@link OrganizerBase} and provides a view of all events
+ * created by the currently logged-in organizer. Events are displayed as clickable
+ * cards that navigate to detailed event information. If no events exist, an empty
+ * state with a create event button is shown.
+ * </p>
+ *
+ * @see OrganizerBase
+ * @see Event
+ * @see EventRepository
+ */
 public class OrganizerDashboardActivity extends OrganizerBase {
 
     private EventRepository eventRepository;

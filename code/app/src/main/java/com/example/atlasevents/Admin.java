@@ -1,7 +1,14 @@
 package com.example.atlasevents;
+
 /**
- * This is a class that defines an Admin which can send notifications to all Users
- * and remove events and Users.
+ * Represents an administrator user with elevated privileges in the Atlas Events system.
+ * <p>
+ * Admins have special capabilities including sending notifications to all users,
+ * removing events from the system, and removing user accounts. This class extends
+ * the base {@link User} class and sets the user type to "Admin".
+ * </p>
+ *
+ * @see User
  */
 
 public class Admin extends User {

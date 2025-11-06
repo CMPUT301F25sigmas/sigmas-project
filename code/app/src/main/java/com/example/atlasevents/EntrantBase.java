@@ -11,13 +11,55 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
 
+/**
+ * Abstract base activity for all entrant-related screens in the application.
+ * <p>
+ * This class provides common functionality for entrant activities including a shared
+ * navigation sidebar, session management, and user repository access. Child activities
+ * extend this class to inherit the navigation structure and can override navigation
+ * methods to customize behavior.
+ * </p>
+ * <p>
+ * The base layout includes a navigation sidebar with icons for settings, profile,
+ * events, search, notifications, QR reader, and logout functionality.
+ * </p>
+ *
+ * @see EntrantProfileActivity
+ * @see EntrantDashboardActivity
+ * @see Session
+ * @see UserRepository
+ */
 public abstract class EntrantBase extends AppCompatActivity {
 
+    /**
+     * Container for child activity content layouts.
+     * Child activities inflate their layouts into this container.
+     */
     protected LinearLayout contentContainer;
+
+    /**
+     * Current user session containing authentication and user information.
+     */
     protected Session session;
 
+    /**
+     * Repository for performing user data operations.
+     */
     protected UserRepository userRepository;
 
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the base layout with navigation sidebar, sets up window insets
+     * for edge-to-edge display, creates the session and user repository instances,
+     * and configures all navigation icon click listeners.
+     * </p>
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *                           previously being shut down, this Bundle contains
+     *                           the data it most recently supplied in onSaveInstanceState.
+     *                           Otherwise it is null.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +78,14 @@ public abstract class EntrantBase extends AppCompatActivity {
         SidebarNavigation();
     }
 
+    /**
+     * Sets up click listeners for all navigation sidebar icons.
+     * <p>
+     * Configures navigation to settings, profile, events, search, notifications,
+     * QR reader, and logout. Each icon triggers the corresponding navigation method
+     * when clicked.
+     * </p>
+     */
     private void SidebarNavigation() {
         findViewById(R.id.settings_icon).setOnClickListener(v -> openSettings());
         findViewById(R.id.profile_icon).setOnClickListener(v -> openProfile());
@@ -46,13 +96,32 @@ public abstract class EntrantBase extends AppCompatActivity {
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
 
+    /**
+     * opens the settings screen. yet to be implemented.
+     */
     protected void openSettings() {}
+
+    /**
+     * Opens the entrant profile screen.
+     * <p>
+     * Navigates to {@link EntrantProfileActivity}, finishes the current activity,
+     * and disables transition animations for a seamless navigation experience.
+     * </p>
+     */
     protected void openProfile() {
         Intent intent = new Intent(this, EntrantProfileActivity.class);
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);
     }
+
+    /**
+     * Opens the entrant events dashboard screen.
+     * <p>
+     * Navigates to {@link EntrantDashboardActivity}, finishes the current activity,
+     * and disables transition animations for a seamless navigation experience.
+     * </p>
+     */
     protected void openMyEvents() {
         Intent intent = new Intent(this, EntrantDashboardActivity.class);
         startActivity(intent);
@@ -63,6 +132,16 @@ public abstract class EntrantBase extends AppCompatActivity {
     protected void openNotifications() {}
     protected void openQrReader() {}
 
+    /**
+     * Inflates and adds a layout to the content container.
+     * <p>
+     * Child activities use this method to set their specific content layout
+     * within the base navigation structure. The layout is inflated into the
+     * {@link #contentContainer}.
+     * </p>
+     *
+     * @param layoutResId The resource ID of the layout to inflate
+     */
     protected void setContentLayout(int layoutResId) {
         getLayoutInflater().inflate(layoutResId, contentContainer, true);
     }

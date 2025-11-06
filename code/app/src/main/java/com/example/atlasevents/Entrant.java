@@ -1,6 +1,14 @@
 package com.example.atlasevents;
 /**
- * This is a class that defines an Entrant that can join events.
+ * Represents an entrant user who can join and participate in events.
+ * <p>
+ * Entrants have the ability to join event waitlists, leave waitlists, and receive
+ * notifications about events. This class extends the base {@link User} class and
+ * sets the user type to "Entrant".
+ * </p>
+ *
+ * @see User
+ * @see Event
  */
 
 public class Entrant extends User{

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="@color/white">
+    android:padding="16dp"
+    android:background="@android:color/white"
+    tools:context=".OrganizerDashboardActivity">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -21,8 +24,7 @@
             android:backgroundTint="@color/light_purple"
             android:text="Active"
             android:textColor="@color/text_color"
-            android:padding="0dp"
-            />
+            android:padding="0dp" />
 
         <Button
             android:id="@+id/button5"
@@ -54,30 +56,58 @@
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp">
 
-        <LinearLayout
-            android:id="@+id/event_card_section"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:text="No Active Events to\ndisplay right now."
-                android:textAlignment="center"
-                android:textColor="#494949"
-                android:textSize="16sp" />
+            <!-- Events List (shown when there are events) -->
+            <ScrollView
+                android:id="@+id/events_scroll_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp"
+                android:visibility="gone">
 
-            <Button
-                android:id="@+id/create_event_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Create Event"
-                app:backgroundTint="@color/light_purple"
-                app:cornerRadius="16dp" />
-        </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/events_container_organizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Events will be dynamically added here -->
+
+                </LinearLayout>
+
+            </ScrollView>
+
+            <!-- Empty State (shown when there are no events) -->
+            <LinearLayout
+                android:id="@+id/empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:text="No Active Events to\ndisplay right now."
+                    android:textAlignment="center"
+                    android:textColor="#494949"
+                    android:textSize="16sp" />
+
+                <Button
+                    android:id="@+id/create_event_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Create Event"
+                    app:backgroundTint="@color/light_purple"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
+
+        </FrameLayout>
 
     </androidx.cardview.widget.CardView>
 

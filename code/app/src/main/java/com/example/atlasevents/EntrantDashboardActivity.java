@@ -69,7 +69,6 @@ public class EntrantDashboardActivity extends EntrantBase {
     }
 
     private void openEventDetails(Event event) {
-        // TODO: Navigate to event details page
         Intent intent = new Intent(this, EventDetailsActivity.class);
         intent.putExtra(EventDetailsActivity.EventKey, event);
         startActivity(intent);

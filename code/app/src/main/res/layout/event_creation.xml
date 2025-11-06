@@ -254,6 +254,14 @@
                     android:text="Upload Poster"
                     app:icon="@drawable/qr_reader_icon"
                     android:textColor="@color/black"/>
+                <Button
+                    android:id="@+id/removePosterButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Remove Poster"
+                    android:visibility="gone"
+                    app:icon="@drawable/delete_icon"
+                    android:textColor="@color/black"/>
 
                 <ImageView
                     android:id="@+id/posterImageView"

@@ -62,6 +62,7 @@ public class Event implements Serializable {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        imageUrl = "";
     }
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -69,6 +70,7 @@ public class Event implements Serializable {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        imageUrl = "";
     }
 
     //Getters
@@ -117,6 +119,10 @@ public class Event implements Serializable {
 
     public int getEntrantLimit(){return entrantLimit;}
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
     //Setters
     public void setDate(String start) {
         this.date = start;
@@ -158,6 +164,10 @@ public class Event implements Serializable {
 
     public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
     public void setEntrantLimit(int max){this.entrantLimit = max;}
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.

@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
@@ -72,8 +73,9 @@ public class EntrantDashboardActivity extends EntrantBase {
             TextView eventName = eventCard.findViewById(R.id.event_name);
 
             // Set event data
-            // TODO: Implement loadImage to Load event image from Firebase Storage
-            //event.loadImage(eventImage);
+            if(!event.getImageUrl().isEmpty()){
+                Glide.with(this).load(event.getImageUrl()).into(eventImage);
+            }
             eventName.setText(event.getEventName());
 
 

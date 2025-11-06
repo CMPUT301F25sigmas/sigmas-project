@@ -17,6 +17,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
@@ -97,7 +98,9 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             TextView eventName = eventCard.findViewById(R.id.event_name);
             Button eventEditButton = eventCard.findViewById(R.id.edit_button);
 
-            //event.loadImage(eventImage, R.drawable.event_placeholder1);
+            if(!event.getImageUrl().isEmpty()){
+                Glide.with(this).load(event.getImageUrl()).into(eventImage);
+            }
             eventName.setText(event.getEventName());
 
             //eventCard.setOnClickListener(v -> openEventDetails(event));

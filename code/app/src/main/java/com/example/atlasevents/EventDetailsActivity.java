@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 import com.google.zxing.BarcodeFormat;
@@ -54,6 +55,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         backArrow = findViewById(R.id.back_arrow);
         joinWaitlistButton = findViewById(R.id.joinWaitlistButton);
         leaveWaitlistButton = findViewById(R.id.leaveWaitlistButton);
+        eventImageView = findViewById(R.id.eventImage);
 
         loadData();
         setupListeners();
@@ -98,7 +100,9 @@ public class EventDetailsActivity extends AppCompatActivity {
         waitlistCountTextView.setText(String.valueOf(
                 event.getWaitlist() != null ? event.getWaitlist().size() : 0));
 
-//        eventImageView.setImageBitmap(generateQRCode(event.getId()));
+        if(!event.getImageUrl().isEmpty()){
+            Glide.with(this).load(event.getImageUrl()).into(eventImageView);
+        }
     }
 
     private Bitmap generateQRCode(String eventId) {

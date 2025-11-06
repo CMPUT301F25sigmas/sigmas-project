@@ -1,20 +1,27 @@
 package com.example.atlasevents;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
@@ -22,6 +29,12 @@ public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
     Session session;
+    private boolean eventSaved = false;
+
+    ImageUploader uploader;
+
+    private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
+    private String imageURL = "";
 
     /**
      *
@@ -41,6 +54,40 @@ public class CreateEventActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        uploader = new ImageUploader();
+
+        pickMedia =
+                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                    if (uri != null) {
+                        uploader = new ImageUploader();
+                        uploader.uploadImage(uri, new ImageUploader.UploadCallback() {
+                            @Override
+                            public void onSuccess(String url) {
+                                if(!imageURL.isEmpty()){
+                                    uploader.deleteImage(imageURL, new ImageUploader.DeleteCallback() {
+                                        @Override
+                                        public void onSuccess() {
+                                        }
+                                        @Override
+                                        public void onFailure(String error) {
+                                        }
+                                    });
+                                }
+                                imageURL = url;
+                                loadImage();
+                                findViewById(R.id.removePosterButton).setVisibility(View.VISIBLE);
+                                Toast.makeText(CreateEventActivity.this, "Upload successful", Toast.LENGTH_LONG).show();
+                            }
+                            @Override
+                            public void onFailure(String errorMessage) {
+                                Toast.makeText(CreateEventActivity.this, "Upload failed", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         //get email to access organizer
         session = new Session(this);
@@ -66,6 +113,30 @@ public class CreateEventActivity extends AppCompatActivity {
         EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
         EditText slots = findViewById(R.id.slotsEditText);
 
+        Button imageUploadButton = findViewById(R.id.uploadPosterButton);
+        imageUploadButton.setOnClickListener(v -> pickMedia.launch(
+                new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build()
+        ));
+
+        findViewById(R.id.removePosterButton).setOnClickListener(v -> {
+            if(!imageURL.isEmpty()){
+                uploader.deleteImage(imageURL, new ImageUploader.DeleteCallback() {
+                    @Override
+                    public void onSuccess() {
+                        v.setVisibility(View.GONE);
+                        imageURL="";
+                        ImageView poster = findViewById(R.id.posterImageView);
+                        poster.setImageResource(R.drawable.poster);
+                    }
+                    @Override
+                    public void onFailure(String error) {
+                    }
+                });
+            }
+        });
+
         entrantLimit.setVisibility(View.GONE);
         limitEntrants.setOnClickListener(view -> {
             if (limitEntrants.isChecked()) {
@@ -74,9 +145,6 @@ public class CreateEventActivity extends AppCompatActivity {
                 entrantLimit.setVisibility(View.GONE);
             }
         });
-
-
-
 
         Button publishButton = findViewById(R.id.publishEventButton);
         publishButton.setOnClickListener(view ->{
@@ -97,10 +165,14 @@ public class CreateEventActivity extends AppCompatActivity {
                                     String limit = entrantLimit.getText().toString();
                                     event.setEntrantLimit(Integer.parseInt(limit)); //make int
                                 }
+                                if (!imageURL.isEmpty()){
+                                    event.setImageUrl(imageURL);
+                                }
                                 event.setSlots(Integer.parseInt(slots.getText().toString()));
 
 
                                 eventRepo.addEvent(event);
+                                eventSaved = true;
                                 finish();
                             }
                         }
@@ -110,6 +182,11 @@ public class CreateEventActivity extends AppCompatActivity {
 
         });
 
+    }
+
+    public void loadImage(){
+        ImageView poster = findViewById(R.id.posterImageView);
+        Glide.with(this).load(imageURL).into(poster);
     }
     /**
      *  Checks inputs and makes toasts to tell user what is missing or invalid
@@ -129,6 +206,27 @@ public class CreateEventActivity extends AppCompatActivity {
 
         return valid;
     }
+
+    @Override
+    public void finish() {
+        if (!imageURL.isEmpty() && !eventSaved) {
+            uploader.deleteImage(imageURL, new ImageUploader.DeleteCallback() {
+                @Override
+                public void onSuccess() {
+                    imageURL = "";
+                    CreateEventActivity.super.finish();
+                }
+                @Override
+                public void onFailure(String error) {
+                    Log.e("CreateEventActivity", "Failed to delete image: " + error);
+                    CreateEventActivity.super.finish();
+                }
+            });
+        } else {
+            super.finish();
+        }
+    }
+
 
 
 }

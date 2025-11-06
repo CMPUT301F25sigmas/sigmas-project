@@ -111,7 +111,7 @@ public class NotificationRepository {
      * @param notification The notification object to send (will be copied for each user)
      * @return A Task containing a list of individual send tasks that complete when all notifications are processed
      * @see #sendToUser(String, Notification)
-     * @see Tasks#whenAll(List)
+     * @see Tasks.whenAll(tasks)
      */
     public Task<List<Task<Void>>> sendToUsers(@NonNull List<String> userEmails, @NonNull Notification notification) {
         List<Task<Void>> tasks = new ArrayList<>();

@@ -1,7 +1,6 @@
 package com.example.atlasevents;
 import com.example.atlasevents.data.model.Notification;
 import org.junit.Before;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;

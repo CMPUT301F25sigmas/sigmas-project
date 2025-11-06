@@ -2,6 +2,7 @@ package com.example.atlasevents.data;
 
 import androidx.annotation.NonNull;
 
+import com.example.atlasevents.Entrant;
 import com.example.atlasevents.Organizer;
 import com.example.atlasevents.PasswordHasher;
 import com.example.atlasevents.User;
@@ -21,6 +22,9 @@ public class UserRepository {
     }
     public interface OnOrganizerFetchedListener {
         void onOrganizerFetched(Organizer user);
+    }
+    public interface OnEntrantFetchedListener {
+        void onEntrantFetched(Entrant user);
     }
     public interface OnUserUpdatedListener {
         enum UpdateStatus {
@@ -134,6 +138,28 @@ public class UserRepository {
                     }
                 })
                 .addOnFailureListener(e -> listener.onOrganizerFetched(null));
+    }
+
+    /**
+     * This method gets an entrant from the database.
+     * @param listener: listener to check for successful database query
+     * @param name: email address of the entrant
+     */
+    public void getEntrant(String name, OnEntrantFetchedListener listener) {
+        db.collection("users")
+                .whereEqualTo("email", name)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        Entrant entrant = queryDocumentSnapshots.getDocuments()
+                                .get(0)
+                                .toObject(Entrant.class);
+                        listener.onEntrantFetched(entrant);
+                    } else {
+                        listener.onEntrantFetched(null); // user not found
+                    }
+                })
+                .addOnFailureListener(e -> listener.onEntrantFetched(null));
     }
 }
 

@@ -22,6 +22,24 @@ public class Entrant extends User{
     public void leaveWaitlist(Event event) {
         event.removeFromWaitlist(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        System.out.println("equals() called: comparing " + this.hashCode() + " with "
+                + (obj instanceof Entrant ? ((Entrant)obj).hashCode() : "null/other class"));
+        if (this == obj) return true; // same reference
+        if (obj == null || getClass() != obj.getClass()) return false; // null or different class
+        Entrant other = (Entrant) obj;
+        if (this.getEmail() == null) {
+            return other.getEmail() == null;
+        }
+        return this.getEmail().equals(other.getEmail());
+    }
+
+    @Override
+    public int hashCode() {
+        return getEmail() != null ? getEmail().hashCode() : 0;
+    }
     public void getNotification(Event event, String message) {
         String notificationMessage = message;
         /*

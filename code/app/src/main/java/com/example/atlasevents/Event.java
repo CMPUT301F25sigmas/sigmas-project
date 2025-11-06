@@ -47,8 +47,10 @@ public class Event implements Serializable {
     private EntrantList declinedList;
     private String Description;
     private String address;
-    private String start;
-    private String end;
+    private String date;
+    private String regStartDate;
+    private String regEndDate;
+    private String time;
     private String imageUrl; // Firebase Storage path or URL
     private boolean requireGeolocation;
     private int entrantLimit = -1;
@@ -69,12 +71,21 @@ public class Event implements Serializable {
     }
 
     //Getters
-    public String getStart() {
-        return start;
+    public String getDate() {
+        return date;
     }
-    public String getEnd() {
-        return end;
+    public String getTime() {
+        return time;
     }
+
+    public String getRegStartDate() {
+        return regStartDate;
+    }
+
+    public String getRegEndDate() {
+        return regEndDate;
+    }
+
     public int getSlots() {
         return slots;
     }
@@ -106,12 +117,19 @@ public class Event implements Serializable {
     public int getEntrantLimit(){return entrantLimit;}
 
     //Setters
-    public void setStart(String start) {
-        this.start = start;
+    public void setDate(String start) {
+        this.date = start;
     }
-    public void setEnd(String end) {
-        this.end = end;
+    public void setTime(String end) {
+        this.time = end;
     }
+    public void setRegStartDate(String regStartDate) {
+        this.regStartDate = regStartDate;
+    }
+    public void setRegEndDate(String regEndDate) {
+        this.regEndDate = regEndDate;
+    }
+
     public void setSlots(int slots) {
         this.slots = slots;
     }

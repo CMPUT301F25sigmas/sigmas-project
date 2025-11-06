@@ -53,8 +53,10 @@ public class CreateEventActivity extends AppCompatActivity {
 
         //edit texts and switches
         EditText name = findViewById(R.id.nameEditText);
-        EditText start = findViewById(R.id.startDateEditText);
-        EditText end = findViewById(R.id.endDateEditText);
+        EditText date = findViewById(R.id.dateEditText);
+        EditText time = findViewById(R.id.timeEditText);
+        EditText regStartDate = findViewById(R.id.startDateEditText);
+        EditText regEndDate = findViewById(R.id.endDateEditText);
         EditText description = findViewById(R.id.descrEditText);
         EditText location = findViewById(R.id.locEditText);
         SwitchCompat limitEntrants = findViewById(R.id.limitEntrantsSwitch);
@@ -75,11 +77,12 @@ public class CreateEventActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             if(inputsValid(name.getText().toString(),slots.getText().toString())) { //validate inputs before making event
-                                Organizer organizer = user;
-                                Event event = new Event(organizer);
+                                Event event = new Event(user);
                                 event.setEventName(name.getText().toString()); //get text from edit texts
-                                event.setStart(start.getText().toString());
-                                event.setEnd(end.getText().toString());
+                                event.setDate(date.getText().toString());
+                                event.setTime(time.getText().toString());
+                                event.setRegStartDate(regStartDate.getText().toString());
+                                event.setRegEndDate(regEndDate.getText().toString());
                                 event.setAddress(location.getText().toString());
                                 event.setDescription(description.getText().toString());
                                 event.setRequireGeolocation(requireGeoLocation.isChecked());

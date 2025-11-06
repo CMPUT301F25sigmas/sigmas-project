@@ -38,6 +38,10 @@ public class EventRepository {
         void onFailure(Exception e);
     }
 
+    public interface EventUpdateCallback {
+        void onComplete(boolean success);
+    }
+
     /**
      * Get all events from Firebase
      */
@@ -118,10 +122,16 @@ public class EventRepository {
     /**
      * Update an existing event
      */
-    public Task<Void> updateEvent(Event event) {
-        return db.collection("events")
+    public void updateEvent(Event event, EventUpdateCallback callback) {
+        db.collection("events")
                 .document(event.getId())
-                .set(event);
+                .set(event)
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) callback.onComplete(true);
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onComplete(false);
+                });
     }
 
     /**

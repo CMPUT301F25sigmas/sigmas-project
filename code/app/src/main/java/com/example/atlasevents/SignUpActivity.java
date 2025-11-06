@@ -86,7 +86,7 @@ public class SignUpActivity extends AppCompatActivity {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
                         Log.d("Firestore", "User added successfully");
                         Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignUpActivity.this, EntrantDashboardActivity.class);
+                        Intent intent = new Intent(SignUpActivity.this, OrganizerDashboardActivity.class);
                         session.setUserEmail(newUser.getEmail());
                         Bundle bundle = new Bundle();
                         intent.putExtras(bundle);

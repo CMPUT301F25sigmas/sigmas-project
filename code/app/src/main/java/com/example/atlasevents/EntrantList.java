@@ -48,7 +48,6 @@ public class EntrantList implements Serializable {
 
     public boolean containsEntrant(Entrant entrant){
         return userList.contains(entrant);
-
     }
     public int size(){
         return userList.size();

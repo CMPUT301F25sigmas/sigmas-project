@@ -102,6 +102,8 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         if(!event.getImageUrl().isEmpty()){
             Glide.with(this).load(event.getImageUrl()).into(eventImageView);
+        } else {
+            eventImageView.setImageResource(R.drawable.poster);
         }
     }
 

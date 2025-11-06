@@ -1,5 +1,6 @@
 package com.example.atlasevents;
 
+import android.content.ContentResolver;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -95,7 +96,7 @@ public class EditEventActivity extends AppCompatActivity {
         pickMedia =
                 registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri != null) {
-                        uploader.uploadImage(uri, new ImageUploader.UploadCallback() {
+                        uploader.uploadImage(getContentResolver(), uri, new ImageUploader.UploadCallback() {
                             @Override
                             public void onSuccess(String url) {
                                 if(!imageURL.isEmpty()){

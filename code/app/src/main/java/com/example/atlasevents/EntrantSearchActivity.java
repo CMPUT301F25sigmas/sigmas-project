@@ -75,6 +75,8 @@ public class EntrantSearchActivity extends EntrantBase {
             // Set event data
             if(!event.getImageUrl().isEmpty()){
                 Glide.with(this).load(event.getImageUrl()).into(eventImage);
+            } else {
+                eventImage.setImageResource(R.drawable.poster);
             }
             eventName.setText(event.getEventName());
 

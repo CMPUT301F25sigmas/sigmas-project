@@ -1,6 +1,9 @@
 package com.example.atlasevents;
 
+import android.content.ContentResolver;
+import android.graphics.Bitmap;
 import android.net.Uri;
+import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 
@@ -10,7 +13,9 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 public class ImageUploader {
     private final FirebaseStorage storage;
@@ -29,10 +34,20 @@ public class ImageUploader {
         void onFailure(String error);
     }
 
-    public void uploadImage(Uri imageUri, UploadCallback callback) {
+    public void uploadImage(ContentResolver resolver, Uri imageUri, UploadCallback callback) {
+        Bitmap compressed_image = null;
+        try {
+            compressed_image = MediaStore.Images.Media.getBitmap(resolver, imageUri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        compressed_image.compress(Bitmap.CompressFormat.JPEG, 25, baos);
+        byte[] fileInBytes = baos.toByteArray();
+
         String filename = "IMG_" + System.currentTimeMillis();
         StorageReference imageRef = storageRef.child("images/"+filename);
-        UploadTask uploadTask = imageRef.putFile(imageUri);
+        UploadTask uploadTask = imageRef.putBytes(fileInBytes);
 
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override

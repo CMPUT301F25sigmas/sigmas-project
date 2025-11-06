@@ -61,7 +61,7 @@ public class CreateEventActivity extends AppCompatActivity {
                 registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri != null) {
                         uploader = new ImageUploader();
-                        uploader.uploadImage(uri, new ImageUploader.UploadCallback() {
+                        uploader.uploadImage(getContentResolver(), uri, new ImageUploader.UploadCallback() {
                             @Override
                             public void onSuccess(String url) {
                                 if(!imageURL.isEmpty()){

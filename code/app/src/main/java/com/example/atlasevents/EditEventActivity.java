@@ -2,6 +2,7 @@ package com.example.atlasevents;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -68,10 +69,12 @@ public class EditEventActivity extends AppCompatActivity {
         slotsEditText = findViewById(R.id.slotsEditText);
         updateButton = findViewById(R.id.publishEventButton);
         updateButton.setText("Update Event");
+        entrantLimitEditText.setVisibility(View.GONE);
         limitEntrantsSwitch.setOnClickListener(view -> {
-            entrantLimitEditText.setEnabled(limitEntrantsSwitch.isChecked());
-            if (!limitEntrantsSwitch.isChecked()) {
-                entrantLimitEditText.setText("");
+            if (limitEntrantsSwitch.isChecked()) {
+                entrantLimitEditText.setVisibility(View.VISIBLE);
+            } else {
+                entrantLimitEditText.setVisibility(View.GONE);
             }
         });
         updateButton.setOnClickListener(view -> updateEvent());
@@ -95,11 +98,11 @@ public class EditEventActivity extends AppCompatActivity {
                 requireGeoLocationSwitch.setChecked(event.getRequireGeolocation());
                 if (event.getEntrantLimit() > 0) {
                     limitEntrantsSwitch.setChecked(true);
-                    entrantLimitEditText.setEnabled(true);
+                    entrantLimitEditText.setVisibility(View.VISIBLE);
                     entrantLimitEditText.setText(String.valueOf(event.getEntrantLimit()));
                 } else {
                     limitEntrantsSwitch.setChecked(false);
-                    entrantLimitEditText.setEnabled(false);
+                    entrantLimitEditText.setVisibility(View.GONE);
                 }
             }
 
@@ -132,7 +135,7 @@ public class EditEventActivity extends AppCompatActivity {
             String limit = entrantLimitEditText.getText().toString();
             currentEvent.setEntrantLimit(Integer.parseInt(limit));
         } else {
-            currentEvent.setEntrantLimit(0);
+            currentEvent.setEntrantLimit(-1);
         }
 
         eventRepo.updateEvent(currentEvent, success -> {

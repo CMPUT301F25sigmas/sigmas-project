@@ -292,7 +292,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/limitEntrantsSwitch"
@@ -308,6 +308,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
                         android:inputType="number"
+                        android:visibility="gone"
                         android:textColor="@color/black"/>
                 </LinearLayout>
 

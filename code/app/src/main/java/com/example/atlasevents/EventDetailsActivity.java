@@ -142,16 +142,20 @@ public class EventDetailsActivity extends AppCompatActivity {
     private void joinWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
 
-        currentEvent.addToWaitlist(currentEntrant);
-        eventRepository.updateEvent(currentEvent, success -> {
-            if (success) {
-                Toast.makeText(this, "Joined waitlist successfully", Toast.LENGTH_SHORT).show();
-                waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
-                updateWaitlistButtons();
-            } else {
-                Toast.makeText(this, "Failed to join waitlist", Toast.LENGTH_SHORT).show();
-            }
-        });
+        int joined = currentEvent.addToWaitlist(currentEntrant);
+        if (joined == 1) {
+            eventRepository.updateEvent(currentEvent, success -> {
+                if (success) {
+                    Toast.makeText(this, "Joined waitlist successfully", Toast.LENGTH_SHORT).show();
+                    waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
+                    updateWaitlistButtons();
+                } else {
+                    Toast.makeText(this, "Failed to join waitlist", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else if (joined == 0) {
+            Toast.makeText(this, "Waitlist limit reached", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void leaveWaitlist() {

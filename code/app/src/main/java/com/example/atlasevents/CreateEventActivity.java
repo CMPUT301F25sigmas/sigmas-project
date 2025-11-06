@@ -2,6 +2,7 @@ package com.example.atlasevents;
 
 import android.os.Bundle;
 import android.text.Editable;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -59,15 +60,21 @@ public class CreateEventActivity extends AppCompatActivity {
         EditText regEndDate = findViewById(R.id.endDateEditText);
         EditText description = findViewById(R.id.descrEditText);
         EditText location = findViewById(R.id.locEditText);
+
         SwitchCompat limitEntrants = findViewById(R.id.limitEntrantsSwitch);
         SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
         EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
         EditText slots = findViewById(R.id.slotsEditText);
 
-        entrantLimit.setEnabled(false);
-        limitEntrants.setOnClickListener(view ->{
-            entrantLimit.setEnabled(true);
-                });
+        entrantLimit.setVisibility(View.GONE);
+        limitEntrants.setOnClickListener(view -> {
+            if (limitEntrants.isChecked()) {
+                entrantLimit.setVisibility(View.VISIBLE);
+            } else {
+                entrantLimit.setVisibility(View.GONE);
+            }
+        });
+
 
 
 

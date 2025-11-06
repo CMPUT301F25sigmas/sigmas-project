@@ -1,6 +1,7 @@
 package com.example.atlasevents;
 
 
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.example.atlasevents.data.EventRepository;
@@ -174,12 +175,18 @@ public class Event implements Serializable {
      * This method adds an entrant to the waitlist
      * @param entrant the entrant to be added to waitlist
      */
-    public void addToWaitlist(Entrant entrant){
-        if (entrantLimit > 0) {
+    public int addToWaitlist(Entrant entrant) {
+        int currentSize = waitList.size();
+        if (entrantLimit == -1) {
             waitList.addEntrant(entrant);
-            entrantLimit --;
-        }else if(entrantLimit == -1){
+            return 1;
+        }
+        if (currentSize < entrantLimit) {
             waitList.addEntrant(entrant);
+            return 1;
+        } else {
+            Log.w("Waitlist", "Cannot add entrant: waitlist limit reached");
+            return 0;
         }
     }
 
@@ -190,11 +197,7 @@ public class Event implements Serializable {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
-            if(entrantLimit >= 0) { //makes sure if entrantLimit is -1 (no limit) it doesnt inc
-                entrantLimit++;
-            }
         }
-
     }
 
 

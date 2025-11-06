@@ -90,6 +90,9 @@ public class NotificationRepository {
         log.put("fromOrganizer", notification.getFromOrganizeremail());
         log.put("status", status); // "SENT", "OPTED_OUT", "FAILED"
         log.put("createdAt", FieldValue.serverTimestamp());
+        log.put("groupType", notification.getGroupType());
+        log.put("eventName", notification.getEventName());
+
         return db.collection("notification_logs").document().set(log);
     }
 

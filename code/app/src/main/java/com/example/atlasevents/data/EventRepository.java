@@ -1,9 +1,8 @@
 package com.example.atlasevents.data;
 
-import androidx.annotation.NonNull;
+import android.util.Log;
 
 import com.example.atlasevents.Event;
-import com.example.atlasevents.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -101,16 +100,16 @@ public class EventRepository {
 
     /**
      * Get events by organizer ID
-     */
-    public void getEventsByOrganizer(String organizerId, EventsCallback callback) {
+
+    public void getEventsByOrganizer(String organizerEmail, EventsCallback callback) {
         db.collection("events")
-                .whereEqualTo("organizer.id", organizerId) // Assuming organizer has an id field
+                .whereEqualTo("organizer.email", organizerEmail)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     ArrayList<Event> events = new ArrayList<>();
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
                         Event event = document.toObject(Event.class);
-                        if (event != null) {
+                        if (event != null && organizerEmail.equals(event.getOrganizer().getEmail())) {
                             events.add(event);
                         }
                     }
@@ -118,7 +117,38 @@ public class EventRepository {
                 })
                 .addOnFailureListener(callback::onFailure);
     }
+*/
+    public void getEventsByOrganizer(String organizerEmail, EventsCallback callback) {
+        Log.d("EventRepository", "Looking for events by organizer: " + organizerEmail);
 
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d("EventRepository", "Total events in Firebase: " + queryDocumentSnapshots.size());
+
+                    ArrayList<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        Event event = document.toObject(Event.class);
+                        if (event != null) {
+                            String eventOrganizerEmail = event.getOrganizer() != null ?
+                                    event.getOrganizer().getEmail() : "null";
+
+                            Log.d("EventRepository", "Event: " + event.getEventName() +
+                                    ", Organizer email: " + eventOrganizerEmail +
+                                    ", Match: " + organizerEmail.equals(eventOrganizerEmail));
+
+                            if (event.getOrganizer() != null
+                                    && organizerEmail.equals(event.getOrganizer().getEmail())) {
+                                events.add(event);
+                                Log.d("EventRepository", "Added event: " + event.getEventName());
+                            }
+                        }
+                    }
+                    Log.d("EventRepository", "Filtered events count: " + events.size());
+                    callback.onSuccess(events);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
     /**
      * Update an existing event
      */

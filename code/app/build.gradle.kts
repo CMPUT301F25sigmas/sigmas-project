@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.auth)
     implementation(libs.runtime)
+    implementation(libs.room.external.antlr)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -57,8 +58,15 @@ dependencies {
     // Corrected line in build.gradle.kts
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
-// enables mocking finals + static
+    androidTestImplementation("org.mockito:mockito-android:5.11.0")
+    androidTestImplementation ("androidx.test:runner:1.5.2")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation ("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation ("com.google.firebase:firebase-firestore:24.9.1")
+    androidTestImplementation ("androidx.test:core:1.5.0")
     testImplementation("com.google.android.gms:play-services-tasks:18.2.0")
 }

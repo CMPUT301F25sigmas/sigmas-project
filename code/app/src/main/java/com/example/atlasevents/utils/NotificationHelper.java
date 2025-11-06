@@ -9,12 +9,28 @@ import android.view.View;
 import com.google.android.material.snackbar.Snackbar;
 
 /**
- * Minimal helpers to show in-app notifications.
- * Have to link with xml styles.
+ * Utility class for displaying user notifications in the application UI.
+ * Provides methods for showing notifications as dialogs or snackbars on the main thread.
+ *
+ * <p>All methods automatically handle thread switching to the UI thread and null safety checks.</p>
+ *
+ * @see Activity
+ * @see AlertDialog
+ * @see Snackbar
  */
 public class NotificationHelper {
     /**
-     * Shows a simple AlertDialog. Runs on UI thread.
+     * Shows a simple AlertDialog with title and message on the UI thread.
+     * This method is blocking and requires user interaction to dismiss.
+     *
+     * @param activity The Android activity context for displaying the dialog
+     * @param title The title text for the dialog
+     * @param message The message content for the dialog
+     * @return void
+     * @throws NullPointerException if activity is null (method returns early)
+     * @see AlertDialog
+     * @see Handler
+     * @see Looper#getMainLooper()
      */
     public static void showInAppDialog(Activity activity, String title, String message) {
         if (activity == null) return;
@@ -27,9 +43,18 @@ public class NotificationHelper {
         });
     }
 
+
     /**
-     * Shows a Snackbar (non-blocking).
-     * Provide a rootView (findViewById(android.R.id.content) from an Activity).
+     * Shows a non-blocking Snackbar with the specified message.
+     * Snackbars automatically dismiss after a timeout and don't require user interaction.
+     *
+     * @param activity The Android activity context for displaying the snackbar
+     * @param message The message content for the snackbar
+     * @return void
+     * @throws NullPointerException if activity is null (method returns early)
+     * @see Snackbar
+     * @see Handler
+     * @see Looper#getMainLooper()
      */
     public static void showInAppSnackbar(Activity activity, String message) {
         if (activity == null) return;

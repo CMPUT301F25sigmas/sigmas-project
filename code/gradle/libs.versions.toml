@@ -15,6 +15,7 @@ firebaseInappmessagingDisplay = "22.0.2"
 firebaseMessaging = "25.0.1"
 firebaseAuth = "24.0.1"
 runtime = "1.0.0-alpha07"
+roomExternalAntlr = "2.8.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -32,6 +33,7 @@ firebase-inappmessaging-display = { group = "com.google.firebase", name = "fireb
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 runtime = { group = "androidx.xr.runtime", name = "runtime", version.ref = "runtime" }
+room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

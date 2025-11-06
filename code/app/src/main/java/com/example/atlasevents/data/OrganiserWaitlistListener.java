@@ -10,16 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * OrganiserWaitlistListener:
- * - constructed with eventId and organizer email
- * - when started, listens to events/{eventId}/waitlist
- * - on ADDED => create a notification for the organizer under users/{organiserEmail}/notifications
- * - on REMOVED => create a "left" notification
+ * Listens for real-time changes to event waitlists and notifies organizers.
+ * Monitors additions and removals from event waitlists and creates notifications
+ * for the event organizer when changes occur.
  *
- * This is the "client-side" mechanism to create notifications — organizer app must run this listener.
+ * <p>This class provides organizers with immediate feedback when users join or leave
+ * their event waitlists, enabling timely management of event attendance.</p>
  *
- * This implementation writes notifications for the organiser themself
- * Giving the organiser a historical log and multiple organizer devices can read the same notifications.
+ * @see Notification
+ * @see FirebaseFirestore
+ * @see ListenerRegistration
  */
 
 public class OrganiserWaitlistListener {
@@ -29,10 +29,28 @@ public class OrganiserWaitlistListener {
     private final String eventId;
     private final String organiseremail; // organizer's email
 
+    /**
+     * Constructs a new waitlist listener for the specified event and organizer.
+     *
+     * @param eventId The unique identifier of the event to monitor
+     * @param organizerEmail The email address of the event organizer to notify
+     * @throws NullPointerException if eventId or organizerEmail is null
+     * @see #start()
+     * @see #stop()
+     */
     public OrganiserWaitlistListener(@NonNull String eventId, @NonNull String organizerEmail){
         this.eventId = eventId;
         this.organiseremail = organizerEmail;
     }
+    /**
+     * Starts listening for waitlist changes on the specified event.
+     * Attaches a Firestore snapshot listener to the event's waitlist collection.
+     * Creates notifications for the organizer when entrants are added or removed.
+     *
+     * @throws IllegalStateException if Firestore operations fail
+     * @see #stop()
+     * @see #createNotificationForOrganizer(String, String, DocumentSnapshot)
+     */
     public void start() {
         DocumentReference eventRef = db.collection("events").document(eventId);
         CollectionReference waitlistRef = eventRef.collection("waitlist");
@@ -61,6 +79,12 @@ public class OrganiserWaitlistListener {
             }
         });
     }
+    /**
+     * Stops listening for waitlist changes and cleans up resources.
+     * Removes the Firestore snapshot listener.
+     *
+     * @see #start()
+     */
 
     public void stop() {
         if (registration != null) {
@@ -70,6 +94,18 @@ public class OrganiserWaitlistListener {
     }
 
     // Create notification document under users/{organizerUid}/notifications
+    /**
+     * Creates a notification for the organizer when waitlist changes occur.
+     * Writes a notification document to the organizer's notifications collection.
+     *
+     * @param title The title of the notification
+     * @param message The detailed message content
+     * @param waitlistDoc The Firestore document that triggered the change
+     * @return void
+     * @throws Exception If Firestore write operations fail
+     * @see FirebaseFirestore
+     * @see FieldValue#serverTimestamp()
+     */
     private void createNotificationForOrganizer(String title, String message, DocumentSnapshot waitlistDoc) {
         try {
             CollectionReference notifRef = db.collection("users").document(organiseremail).collection("notifications");

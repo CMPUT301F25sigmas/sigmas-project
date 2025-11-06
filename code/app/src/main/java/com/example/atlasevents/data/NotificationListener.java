@@ -12,7 +12,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.*;
 import com.example.atlasevents.utils.NotificationHelper;
-
+/**
+ * Listens for real-time notifications for a specific user and handles their display.
+ * Monitors both notification preferences and incoming notifications, displaying them
+ * via dialogs and automatically marking them as read.
+ *
+ * <p>This class manages two Firestore listeners:
+ * <ul>
+ *   <li>Preference listener: Monitors user's notification enabled/disabled preference</li>
+ *   <li>Notification listener: Monitors incoming notifications when preferences allow</li>
+ * </ul>
+ * </p>
+ *
+ * @see Notification
+ * @see NotificationHelper
+ * @see FirebaseFirestore
+ */
 public class NotificationListener {
 
     private static final String TAG = "NotificationListener";
@@ -23,7 +38,14 @@ public class NotificationListener {
 
     private final String email;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
-
+    /**
+     * Constructs a new NotificationListener for the specified user and activity.
+     *
+     * @param activity The Android activity context for displaying notifications
+     * @param userEmail The email address of the user to listen for notifications
+     * @throws NullPointerException if activity or userEmail is null
+     * @see FirebaseFirestore#getInstance()
+     */
     public NotificationListener(@NonNull Activity activity, @NonNull String userEmail) {
         this.activity = activity;
         this.db = FirebaseFirestore.getInstance();
@@ -33,6 +55,12 @@ public class NotificationListener {
     /**
      * Start listening for unread notifications for the current user.
      * Displays each new notification via NotificationHelper and marks it read.
+     *   Attaches listeners to monitor user preferences and incoming notifications.
+     *       If user email is null, this method does nothing.
+     *
+     *       @see #stop()
+     *       @see #attachNotificationsListener()
+     *       @see #detachNotificationsListener()
      */
     public void start() {
         if (email == null) return;
@@ -51,7 +79,14 @@ public class NotificationListener {
             else detachNotificationsListener();
         });
     }
-
+    /**
+     * Attaches the notifications listener to monitor incoming unread notifications.
+     * Only attaches if not already attached and notifications are enabled.
+     * Listens for new notifications ordered by creation time (newest first).
+     *
+     * @throws IllegalStateException if Firestore operations fail
+     * @see NotificationHelper#showInAppDialog(Activity, String, String)
+     */
     private void attachNotificationsListener() {
         if (notifsRegistration != null) return;
         CollectionReference notifsRef = db.collection("users").document(email).collection("notifications");
@@ -93,14 +128,26 @@ public class NotificationListener {
                     }
                 });
     }
-
+    /**
+     * Detaches the notifications listener to stop monitoring incoming notifications.
+     * Called when notifications are disabled or when stopping the listener.
+     *
+     * @see #start()
+     * @see #stop()
+     */
     private void detachNotificationsListener() {
         if (notifsRegistration != null) {
             notifsRegistration.remove();
             notifsRegistration = null;
         }
     }
-
+    /**
+     * Stops all listeners and cleans up resources.
+     * Removes both preference and notification listeners.
+     * Should be called when the activity is stopped or destroyed.
+     *
+     * @see #start()
+     */
     public void stop() {
         if (prefRegistration != null) {
             prefRegistration.remove();

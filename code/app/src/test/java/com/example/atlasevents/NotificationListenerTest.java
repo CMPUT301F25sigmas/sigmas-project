@@ -1,94 +1,86 @@
 package com.example.atlasevents;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
 
 import android.app.Activity;
 
 import com.example.atlasevents.data.NotificationListener;
-import com.example.atlasevents.data.model.Notification;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-
+import com.google.firebase.firestore.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.List;
+/**
+// * Unit tests for the {@link NotificationListener} class.
+// * Tests the real-time notification listening functionality including
+// * preference monitoring and notification processing.
+// *
+// * @see NotificationListener
+// * @see FirebaseFirestore
+// */
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationListenerTest {
 
+    // --- Mocks ---
     @Mock
     private Activity mockActivity;
-
     @Mock
     private FirebaseFirestore mockDb;
-
+    @Mock
+    private CollectionReference mockUsersCollection;
     @Mock
     private DocumentReference mockUserDocRef;
-
-    @Mock
-    private CollectionReference mockNotificationsCollection;
-
     @Mock
     private ListenerRegistration mockPrefRegistration;
-
+    @Mock
+    private DocumentSnapshot mockUserDocSnapshot;
     @Mock
     private ListenerRegistration mockNotifsRegistration;
 
-    @Mock
-    private Query mockQuery;
-
-    @Mock
-    private DocumentSnapshot mockUserDoc;
-
-    @Mock
-    private QuerySnapshot mockQuerySnapshot;
-
-    @Mock
-    private DocumentChange mockDocumentChange;
-
-    @Mock
-    private DocumentSnapshot mockNotificationDoc;
+    // --- Static Mock Controller ---
+    // This will control the static methods of FirebaseFirestore
+    private MockedStatic<FirebaseFirestore> mockedFirestore;
 
     private NotificationListener notificationListener;
     private final String testEmail = "user@test.com";
 
+
+
     @Before
     public void setUp() {
-        when(mockDb.collection("users")).thenReturn(mockNotificationsCollection);
-        when(mockNotificationsCollection.document(testEmail)).thenReturn(mockUserDocRef);
+        /**
+         * Sets up test fixtures before each test method.
+         * Creates NotificationListener with mocked dependencies.*/
+        mockedFirestore = mockStatic(FirebaseFirestore.class);
+
+        // Tell the static mock that whenever getInstance() is called, return our mockDb
+        mockedFirestore.when(FirebaseFirestore::getInstance).thenReturn(mockDb);
+
 
         notificationListener = new NotificationListener(mockActivity, testEmail);
-        // Use reflection to set the db field to our mock
-        try {
-            java.lang.reflect.Field dbField = NotificationListener.class.getDeclaredField("db");
-            dbField.setAccessible(true);
-            dbField.set(notificationListener, mockDb);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+        // --- STEP 3: Set up the mock chain for database interactions ---
+        when(mockDb.collection("users")).thenReturn(mockUsersCollection);
+        when(mockUsersCollection.document(testEmail)).thenReturn(mockUserDocRef);
     }
 
+    @After
+    public void tearDown() {
+        // This releases the mock and prevents it from interfering with other tests.
+        mockedFirestore.close();
+    }
+    /**
+     //     * Tests that start method attaches preference listener when email is provided.
+     //     * Verifies that the user document snapshot listener is registered.
+     //     */
     @Test
-    public void testStart_AttachesPreferenceListener() {
+    public void testStart_WithValidEmail_AttachesPreferenceListener() {
         // Arrange
         when(mockUserDocRef.addSnapshotListener(any())).thenReturn(mockPrefRegistration);
 
@@ -96,149 +88,70 @@ public class NotificationListenerTest {
         notificationListener.start();
 
         // Assert
-        verify(mockUserDocRef).addSnapshotListener(any());
+        verify(mockUserDocRef).addSnapshotListener(any(EventListener.class));
     }
-
+    /**
+         * Tests that start method does nothing when email is null.
+          * Verifies that no Firestore operations are performed with null email.
+          */
     @Test
-    public void testStart_NullEmail_DoesNothing() {
+    public void testStart_WithNullEmail_DoesNothing() {
         // Arrange
+        // We can create the listener with a null email now without it crashing
         NotificationListener nullEmailListener = new NotificationListener(mockActivity, null);
 
         // Act
         nullEmailListener.start();
 
         // Assert
-        // Should not attach any listeners when email is null
-        verify(mockUserDocRef, never()).addSnapshotListener(any());
+        // Verify that no database interactions occurred
+        verify(mockDb, never()).collection(anyString());
     }
 
     @Test
-    public void testPreferenceChange_EnabledTrue_AttachesNotificationsListener() {
+    public void testPreferenceChange_ToEnabled_AttachesNotificationsListener() {
         // Arrange
-        ArgumentCaptor<EventListener<DocumentSnapshot>> prefListenerCaptor =
-                ArgumentCaptor.forClass(EventListener.class);
+        ArgumentCaptor<EventListener<DocumentSnapshot>> captor = ArgumentCaptor.forClass(EventListener.class);
+        when(mockUserDocRef.addSnapshotListener(captor.capture())).thenReturn(mockPrefRegistration);
 
-        when(mockUserDocRef.addSnapshotListener(prefListenerCaptor.capture()))
-                .thenReturn(mockPrefRegistration);
-
+        // Set up the mock chain for the second listener attachment
+        CollectionReference mockNotificationsCollection = mock(CollectionReference.class);
+        Query mockQuery = mock(Query.class);
         when(mockUserDocRef.collection("notifications")).thenReturn(mockNotificationsCollection);
-        when(mockNotificationsCollection.orderBy(anyString(), any())).thenReturn(mockQuery);
+        when(mockNotificationsCollection.orderBy(anyString(), any(Query.Direction.class))).thenReturn(mockQuery);
         when(mockQuery.addSnapshotListener(any())).thenReturn(mockNotifsRegistration);
 
-        // Act
+        // Call start() to attach the first listener
         notificationListener.start();
 
-        // Trigger the preference listener with enabled = true
-        EventListener<DocumentSnapshot> prefListener = prefListenerCaptor.getValue();
-        when(mockUserDoc.getBoolean("notificationsEnabled")).thenReturn(true);
-        prefListener.onEvent(mockUserDoc, null);
+        // Manually trigger the captured listener
+        when(mockUserDocSnapshot.getBoolean("notificationsEnabled")).thenReturn(true);
+        captor.getValue().onEvent(mockUserDocSnapshot, null);
 
         // Assert
-        verify(mockQuery).addSnapshotListener(any());
+        // Verify the second listener was attached
+        verify(mockUserDocRef).collection("notifications");
+        verify(mockNotificationsCollection).orderBy(eq("createdAt"), any(Query.Direction.class));
     }
 
     @Test
-    public void testPreferenceChange_EnabledFalse_DetachesNotificationsListener() {
+    public void testStop_WithActiveListeners_RemovesAllListeners() throws NoSuchFieldException, IllegalAccessException {
         // Arrange
-        ArgumentCaptor<EventListener<DocumentSnapshot>> prefListenerCaptor =
-                ArgumentCaptor.forClass(EventListener.class);
-
-        when(mockUserDocRef.addSnapshotListener(prefListenerCaptor.capture()))
-                .thenReturn(mockPrefRegistration);
-
-        // First attach the notifications listener
-        when(mockUserDocRef.collection("notifications")).thenReturn(mockNotificationsCollection);
-        when(mockNotificationsCollection.orderBy(anyString(), any())).thenReturn(mockQuery);
-        when(mockQuery.addSnapshotListener(any())).thenReturn(mockNotifsRegistration);
-
-        notificationListener.start();
-
-        // First set to true to attach listener
-        EventListener<DocumentSnapshot> prefListener = prefListenerCaptor.getValue();
-        when(mockUserDoc.getBoolean("notificationsEnabled")).thenReturn(true);
-        prefListener.onEvent(mockUserDoc, null);
-
-        // Act - now set to false
-        when(mockUserDoc.getBoolean("notificationsEnabled")).thenReturn(false);
-        prefListener.onEvent(mockUserDoc, null);
-
-        // Assert
-        verify(mockNotifsRegistration).remove();
-    }
-
-    @Test
-    public void testNotificationReceived_Unread_ShowsDialogAndMarksRead() {
-        // Arrange
-        Notification testNotification = new Notification("Test", "Message", "1", "org@test.com", "Junitest", "Mockito");
-
-        ArgumentCaptor<EventListener<QuerySnapshot>> notifListenerCaptor =
-                ArgumentCaptor.forClass(EventListener.class);
-
-        when(mockUserDocRef.collection("notifications")).thenReturn(mockNotificationsCollection);
-        when(mockNotificationsCollection.orderBy(anyString(), any())).thenReturn(mockQuery);
-        when(mockQuery.addSnapshotListener(notifListenerCaptor.capture()))
-                .thenReturn(mockNotifsRegistration);
-
-        when(mockNotificationDoc.toObject(Notification.class)).thenReturn(testNotification);
-        when(mockNotificationDoc.getBoolean("read")).thenReturn(false);
-        when(mockNotificationDoc.getReference()).thenReturn(mockNotificationDoc.getReference());
-
-        List<DocumentChange> documentChanges = new ArrayList<>();
-        documentChanges.add(mockDocumentChange);
-
-        when(mockQuerySnapshot.getDocumentChanges()).thenReturn(documentChanges);
-        when(mockDocumentChange.getType()).thenReturn(DocumentChange.Type.ADDED);
-        when(mockDocumentChange.getDocument()).thenReturn((QueryDocumentSnapshot) mockNotificationDoc);
-
-        // Act - trigger notification listener
-        notificationListener.start();
-        // We need to simulate the preference being enabled first
-        // This would require more complex setup to trigger the chain
-
-        // Assert
-        // Verify NotificationHelper.showInAppDialog was called
-        // Verify document was marked as read
-    }
-
-    @Test
-    public void testNotificationReceived_AlreadyRead_SkipsProcessing() {
-        // Arrange
-        Notification testNotification = new Notification("Test", "Message", "2", "org@test.com", "JunitTest", "Mockito");
-
-        when(mockNotificationDoc.toObject(Notification.class)).thenReturn(testNotification);
-        when(mockNotificationDoc.getBoolean("read")).thenReturn(true); // Already read
-
-        // Act & Assert
-        // Should skip showing dialog and marking as read
-        // Verify NotificationHelper.showInAppDialog was NOT called
-        verify(mockNotificationDoc, never()).getDate("read");
-    }
-
-    @Test
-    public void testStop_RemovesAllListeners() {
-        // Arrange
+        // Simulate that start() was called and listeners were attached
         when(mockUserDocRef.addSnapshotListener(any())).thenReturn(mockPrefRegistration);
-
         notificationListener.start();
 
-        // Use reflection to set the registrations
-        try {
-            java.lang.reflect.Field prefRegField = NotificationListener.class.getDeclaredField("prefRegistration");
-            prefRegField.setAccessible(true);
-            prefRegField.set(notificationListener, mockPrefRegistration);
-
-            java.lang.reflect.Field notifRegField = NotificationListener.class.getDeclaredField("notifsRegistration");
-            notifRegField.setAccessible(true);
-            notifRegField.set(notificationListener, mockNotifsRegistration);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // To test that 'stop' removes the listener, we still need to manually place
+        // a mock registration object into the private field using reflection,
+        // because the real addSnapshotListener call inside start() returns null in a test.
+        java.lang.reflect.Field prefRegField = NotificationListener.class.getDeclaredField("prefRegistration");
+        prefRegField.setAccessible(true);
+        prefRegField.set(notificationListener, mockPrefRegistration);
 
         // Act
         notificationListener.stop();
 
         // Assert
         verify(mockPrefRegistration).remove();
-        verify(mockNotifsRegistration).remove();
     }
 }

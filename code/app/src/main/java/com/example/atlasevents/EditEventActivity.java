@@ -23,33 +23,155 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 
+/**
+ * Activity for editing existing event details.
+ * <p>
+ * This activity allows organizers to modify all aspects of an event including name,
+ * dates, times, location, description, participant limits, geolocation requirements,
+ * and event poster images. It handles image uploads, deletions, and validates inputs
+ * before saving changes to the repository.
+ * </p>
+ * <p>
+ * The activity manages complex image lifecycle including uploading new images,
+ * deleting old images, and cleaning up unsaved images when the activity is closed.
+ * </p>
+ *
+ * @see Event
+ * @see EventRepository
+ * @see ImageUploader
+ */
 public class EditEventActivity extends AppCompatActivity {
+    /**
+     * Intent extra key for passing the event to be edited.
+     */
     public static final String EventKey = "com.example.atlasevents.EVENT";
+
+    /**
+     * Repository for event data operations.
+     */
     EventRepository eventRepo = new EventRepository();
+
+    /**
+     * Current user session containing authentication information.
+     */
     Session session;
+
+    /**
+     * Flag indicating whether the event was successfully saved.
+     * Used to determine image cleanup behavior on activity exit.
+     */
     private boolean eventSaved = false;
+
+    /**
+     * Flag indicating whether the original event image should be deleted.
+     */
     private boolean deleteOldImage = false;
+
+    /**
+     * Utility for uploading and deleting images from Firebase Storage.
+     */
     ImageUploader uploader;
+
+    /**
+     * The event object being edited.
+     */
     private Event currentEvent;
+
+    /**
+     * EditText field for the event name.
+     */
     private EditText nameEditText;
+
+    /**
+     * EditText field for the event date.
+     */
     private EditText dateEditText;
+
+    /**
+     * EditText field for the event time.
+     */
     private EditText timeEditText;
+
+    /**
+     * EditText field for the registration start date.
+     */
     private EditText regStartDateEditText;
+
+    /**
+     * EditText field for the registration end date.
+     */
     private EditText regEndDateEditText;
+
+    /**
+     * EditText field for the event description.
+     */
     private EditText descriptionEditText;
+
+    /**
+     * EditText field for the event location.
+     */
     private EditText locationEditText;
+
+    /**
+     * Switch for enabling or disabling entrant limits.
+     */
     private SwitchCompat limitEntrantsSwitch;
+
+    /**
+     * Switch for requiring geolocation from entrants.
+     */
     private SwitchCompat requireGeoLocationSwitch;
+
+    /**
+     * EditText field for the maximum number of entrants.
+     */
     private EditText entrantLimitEditText;
+
+    /**
+     * EditText field for the number of available slots.
+     */
     private EditText slotsEditText;
+
+    /**
+     * Button to save and update the event.
+     */
     private Button updateButton;
+
+    /**
+     * Button to delete the event poster image.
+     */
     private Button imageDeleteButton;
 
+    /**
+     * Launcher for the image picker activity.
+     */
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
+
+    /**
+     * URL of the newly uploaded image.
+     * Empty string if no new image has been uploaded.
+     */
     private String imageURL = "";
 
+    /**
+     * URL of the original event image.
+     * Empty string if the event had no image.
+     */
     private String oldImageURL = "";
 
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the UI components, sets up the image picker, configures all
+     * input fields and switches, loads the existing event data, and sets up
+     * click listeners for update, upload, and delete operations.
+     * </p>
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *                           previously being shut down, this Bundle contains
+     *                           the data it most recently supplied in onSaveInstanceState.
+     *                           Otherwise it is null.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -154,6 +276,15 @@ public class EditEventActivity extends AppCompatActivity {
         loadEventData();
     }
 
+    /**
+     * Loads the existing event data from the repository.
+     * <p>
+     * Fetches the event by ID from the intent extras and populates all UI fields
+     * with the current event values. If the event has an associated image, it is
+     * loaded and displayed. On failure, an error message is shown and the activity
+     * is closed.
+     * </p>
+     */
     private void loadEventData() {
         eventRepo.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
             @Override
@@ -193,6 +324,15 @@ public class EditEventActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Updates the event with modified values from the UI fields.
+     * <p>
+     * Validates inputs, updates all event properties with the current field values,
+     * handles image URL updates and deletions, and saves the changes to the repository.
+     * Manages cleanup of old images when a new image replaces them. Displays success
+     * or failure messages and closes the activity on success.
+     * </p>
+     */
     private void updateEvent() {
         if (!inputsValid(nameEditText.getText().toString(), slotsEditText.getText().toString())) {
             return;
@@ -241,6 +381,15 @@ public class EditEventActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Loads and displays an image from the specified URL.
+     * <p>
+     * Uses Glide library to load the image from the URL and display it in the
+     * poster ImageView.
+     * </p>
+     *
+     * @param imageURL The URL of the image to load and display
+     */
     public void loadImage(String imageURL) {
         ImageView poster = findViewById(R.id.posterImageView);
         Glide.with(this).load(imageURL).into(poster);
@@ -258,6 +407,15 @@ public class EditEventActivity extends AppCompatActivity {
         return valid;
     }
 
+    /**
+     * Called when the activity is finishing.
+     * <p>
+     * Handles cleanup of uploaded images based on whether the event was saved.
+     * If a new image was uploaded but the event was not saved, the new image is deleted.
+     * If the event was saved with a new image, the old image is deleted. This prevents
+     * orphaned images in Firebase Storage.
+     * </p>
+     */
     @Override
     public void finish() {
         if (!imageURL.isEmpty() && !eventSaved) {

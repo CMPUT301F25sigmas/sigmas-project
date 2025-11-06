@@ -2,19 +2,14 @@ package com.example.atlasevents;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
-import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.utils.NotificationManager;
-import com.example.atlasevents.data.NotificationRepository;
-import com.example.atlasevents.DebugNotificationActivity;
 
 public class OrganizerDashboardActivity extends OrganizerBase {
     private Session session;
@@ -33,11 +28,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        Organizer user;
         session = new Session(this);
-        Bundle bundle = getIntent().getExtras();
-        assert bundle != null;
-        String username = bundle.getString("email");
 
         // Set up notification icon click listener
         findViewById(R.id.notifications_icon).setOnClickListener(v -> {
@@ -72,28 +63,4 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         super.onStop();
         NotificationManager.stopListening();
     }
-
-    NotificationRepository notifRepo = new NotificationRepository();// 1) When organizer runs lottery and moves users to inviteList -> notify chosen entrants
-        public void notifyChosenEntrants(Event event) {
-            String title = "You've been selected!";
-            String message = "You are invited to sign up for " + event.getEventName() + ". Please confirm your spot.";
-            notifRepo.sendToInvited(event, title, message)
-                    .addOnFailureListener(e -> Log.e("Organizer", "Failed sending to invited", e));
-        }
-
-// 2) Send to waitlist (US 02.07.01)
-        public void notifyWaitlist(Event event, String customMessage) {
-            String title = "Update about " + event.getEventName();
-            notifRepo.sendToWaitlist(event, title, customMessage)
-                    .addOnFailureListener(e -> Log.e("Organizer", "Failed sending to waitlist", e));
-        }
-
-// 3) Send to all selected (US 02.07.02) — same as invited
-// 4) Send to cancelled entrants (US 02.07.03)
-        public void notifyCancelled(Event event) {
-            String title = "Event Cancelled: " + event.getEventName();
-            String message = "This event has been cancelled. Please check your dashboard for details.";
-            notifRepo.sendToCancelled(event, title, message)
-                    .addOnFailureListener(e -> Log.e("Organizer", "Failed sending to cancelled list", e));
-        }
 }

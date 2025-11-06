@@ -52,8 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp"
-                android:text="Click on desired Active Event
-to compose notification"
+                android:text="Click on desired Active Event \nto compose notification"
                 android:textAlignment="center" />
 
             <androidx.cardview.widget.CardView

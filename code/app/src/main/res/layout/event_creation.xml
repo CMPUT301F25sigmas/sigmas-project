@@ -51,7 +51,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -154,7 +155,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -205,7 +207,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -251,7 +254,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -269,16 +273,17 @@
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/limitEntrantsSwitch"
-                        android:layout_width="300dp"
+                        android:layout_width="289dp"
                         android:layout_height="wrap_content"
                         android:text="Limit Number of Entrants" />
 
                     <EditText
                         android:id="@+id/maxEntrantsEditText"
-                        android:layout_width="30dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="33dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="right"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        android:hint="0"/>
                 </LinearLayout>
 
                 <TextView

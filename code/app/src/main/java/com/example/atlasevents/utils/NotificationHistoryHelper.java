@@ -202,10 +202,10 @@ public class NotificationHistoryHelper {
 
         
         NotificationCardData data = new NotificationCardData(
-            logData.get("groupType").toString(),
-            logData.get("eventName").toString(),
+            logData.get("groupType") != null ? logData.get("groupType").toString() : "Notification",
+            logData.get("eventName") != null ? logData.get("eventName").toString() : "N/A",
             formatFirestoreTimestamp(logData.get("createdAt")),
-            logData.get("message").toString(),
+            logData.get("message") != null ? logData.get("message").toString() : "",
             recipientInfo,
             true, // Organizer logs are always "read" (no interaction needed)
             null  // No notification ID for logs

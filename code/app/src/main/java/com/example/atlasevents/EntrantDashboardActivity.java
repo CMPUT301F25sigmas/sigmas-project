@@ -56,6 +56,7 @@ public class EntrantDashboardActivity extends EntrantBase {
     protected void onResume() {
         super.onResume();
         NotificationManager.startListening(this, session.getUserEmail());
+        loadEventsFromFirebase();
     }
 
     @Override
@@ -119,11 +120,6 @@ public class EntrantDashboardActivity extends EntrantBase {
         startActivity(intent);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadEventsFromFirebase();
-    }
 
     /**
      * Shows the empty state layout with a message and create event button.

@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,15 +19,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
-
-import java.util.ArrayList;
-
-import com.bumptech.glide.Glide;
-import com.example.atlasevents.data.EventRepository;
-
-import java.util.ArrayList;
-
 import com.example.atlasevents.utils.NotificationManager;
+
+import java.util.ArrayList;
+
 /**
  * Main dashboard activity for event organizers.
  * Provides navigation to event creation, notification center, and serves as the
@@ -121,7 +117,6 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         super.onStop();
         NotificationManager.stopListening();
     }
-}
 
     /**
      * Loads all events created by the currently logged-in organizer from Firestore.

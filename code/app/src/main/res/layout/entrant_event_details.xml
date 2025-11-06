@@ -167,6 +167,17 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="16dp"
             android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_launcher_background" />
+
+        <ImageView
+            android:id="@+id/qrImage"
+            android:layout_width="160dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
             app:srcCompat="@drawable/ic_launcher_background" />
 
         <!-- Waitlist Info Row -->

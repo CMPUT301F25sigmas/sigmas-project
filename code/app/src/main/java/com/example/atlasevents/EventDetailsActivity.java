@@ -11,6 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
@@ -32,13 +35,19 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
             waitlistCountTextView, dateTextView, timeTextView, locationTextView;
-    private ImageView eventImageView, backArrow;
+    private ImageView eventImageView, qrImageView, backArrow;
     private Button joinWaitlistButton, leaveWaitlistButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entrant_event_details);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         eventRepository = new EventRepository();
         userRepository = new UserRepository();
@@ -56,6 +65,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         joinWaitlistButton = findViewById(R.id.joinWaitlistButton);
         leaveWaitlistButton = findViewById(R.id.leaveWaitlistButton);
         eventImageView = findViewById(R.id.eventImage);
+        qrImageView = findViewById(R.id.qrImage);
 
         loadData();
         setupListeners();
@@ -104,6 +114,12 @@ public class EventDetailsActivity extends AppCompatActivity {
             Glide.with(this).load(event.getImageUrl()).into(eventImageView);
         } else {
             eventImageView.setImageResource(R.drawable.poster);
+        }
+        eventImageView.setVisibility(View.VISIBLE);
+
+        if(1==1){
+            qrImageView.setImageBitmap(generateQRCode(event.getId()));
+            qrImageView.setVisibility(View.VISIBLE);
         }
     }
 

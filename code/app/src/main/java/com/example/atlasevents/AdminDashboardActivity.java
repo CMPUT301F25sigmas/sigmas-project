@@ -1,7 +1,6 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
-
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,25 +11,24 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
-import com.example.atlasevents.utils.NotificationManager;
 
-import java.util.ArrayList;====================================================================
+import java.util.ArrayList;
 
 /**
- * Activity displaying the entrant's dashboard with a list of available events.
+ * Activity displaying the admin's dashboard with a list of available events.
  * <p>
- * This activity extends {@link EntrantBase} to provide the navigation sidebar and
- * displays all events retrieved from Firebase. Events are shown as cards that users
+ * This activity extends {@link AdminBase} to provide the navigation sidebar and
+ * displays all events retrieved from Firebase. Events are shown as cards that admins
  * can tap to view detailed information. The activity handles fetching events from
  * the repository and dynamically creating event card views.
  * </p>
  *
- * @see EntrantBase
+ * @see AdminBase
  * @see Event
  * @see EventRepository
  * @see EventDetailsActivity
  */
-public class EntrantDashboardActivity extends EntrantBase {
+public class AdminDashboardActivity extends AdminBase {
 
     /**
      * Container layout that holds all event card views.
@@ -41,8 +39,6 @@ public class EntrantDashboardActivity extends EntrantBase {
      * Repository for fetching event data from Firebase.
      */
     private EventRepository eventRepository;
-    private Session session;
-
 
     /**
      * Scroll view containing the list of events.
@@ -57,17 +53,10 @@ public class EntrantDashboardActivity extends EntrantBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentLayout(R.layout.entrant_dashboard);
+        setContentLayout(R.layout.admin_dashboard);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
-        session = new Session(this);
-
-        // Set up notification icon click listener
-        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
-            Intent intent = new Intent(this, NotificationHistoryActivity.class);
-            startActivity(intent);
-        });
 
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);
@@ -76,38 +65,6 @@ public class EntrantDashboardActivity extends EntrantBase {
         eventsScrollView.setVisibility(View.GONE);
 
         loadEventsFromFirebase();
-    }
-
-    /***
-     * listener for notifications added to event dashboard as this is the foreground/ main activity
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        NotificationManager.startListening(this, session.getUserEmail());
-        loadEventsFromFirebase();
-    }
-
-    @Override
-    protected void onPause() {
-        NotificationManager.stopListening();
-        super.onPause();
-    }
-
-    /***
-     * listener for notifications added to event dashboard as this is the foreground/ main activity
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        NotificationManager.startListening(this, session.getUserEmail());
-        loadEventsFromFirebase();
-    }
-
-    @Override
-    protected void onPause() {
-        NotificationManager.stopListening();
-        super.onPause();
     }
 
     /**
@@ -120,8 +77,7 @@ public class EntrantDashboardActivity extends EntrantBase {
      * </p>
      */
     private void loadEventsFromFirebase() {
-        // Fetch events from Firebase
-        eventRepository.getEventsByEntrant(session.getUserEmail(), new EventRepository.EventsCallback(){
+        eventRepository.getAllEvents(new EventRepository.EventsCallback(){
             @Override
             public void onSuccess(ArrayList<Event> events) {
                 if (events.isEmpty()) {
@@ -142,8 +98,8 @@ public class EntrantDashboardActivity extends EntrantBase {
      * Displays a list of events as card views in the events container.
      * <p>
      * Clears any existing event cards and dynamically inflates new card views
-     * for each event in the list. Each card shows the event name and image
-     * (image loading not yet implemented), and is clickable to open event details.
+     * for each event in the list. Each card shows the event name and image,
+     * and is clickable to open event details.
      * </p>
      *
      * @param events The list of events to display
@@ -151,26 +107,22 @@ public class EntrantDashboardActivity extends EntrantBase {
     private void displayEvents(ArrayList<Event> events) {
         emptyState.setVisibility(View.GONE);
         eventsScrollView.setVisibility(View.VISIBLE);
-        eventsContainer.removeAllViews(); // Clear any existing views
+        eventsContainer.removeAllViews();
 
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (Event event : events) {
-            // Inflate the event card layout
             View eventCard = inflater.inflate(R.layout.event_card_item, eventsContainer, false);
 
-            // Get references to views in the card
             ImageView eventImage = eventCard.findViewById(R.id.event_image);
             TextView eventName = eventCard.findViewById(R.id.event_name);
 
-            // Set event data
             if(!event.getImageUrl().isEmpty()){
                 Glide.with(this).load(event.getImageUrl()).into(eventImage);
             } else {
                 eventImage.setImageResource(R.drawable.poster);
             }
             eventName.setText(event.getEventName());
-
 
             eventCard.setOnClickListener(v -> openEventDetails(event));
 
@@ -193,10 +145,14 @@ public class EntrantDashboardActivity extends EntrantBase {
         startActivity(intent);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadEventsFromFirebase();
+    }
 
     /**
-     * Shows the empty state layout with a message and create event button.
-     * Hides the events scroll view.
+     * Shows the empty state layout with a message and hides the events scroll view.
      */
     private void showEmptyState() {
         emptyState.setVisibility(View.VISIBLE);

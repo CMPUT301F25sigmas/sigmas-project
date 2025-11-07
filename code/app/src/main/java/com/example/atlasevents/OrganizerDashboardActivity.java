@@ -23,6 +23,20 @@ import com.example.atlasevents.utils.NotificationManager;
 
 import java.util.ArrayList;
 
+
+/**
+ * Activity displaying the organizer's dashboard with all their created events.
+ * <p>
+ * This activity extends {@link OrganizerBase} and provides a view of all events
+ * created by the currently logged-in organizer. Events are displayed as clickable
+ * cards that navigate to detailed event information. If no events exist, an empty
+ * state with a create event button is shown.
+ * </p>
+ *
+ * @see OrganizerBase
+ * @see Event
+ * @see EventRepository
+ */
 /**
  * Main dashboard activity for event organizers.
  * Provides navigation to event creation, notification center, and serves as the
@@ -37,7 +51,7 @@ import java.util.ArrayList;
  * @see Session
  */
 public class OrganizerDashboardActivity extends OrganizerBase {
-    private Session session;
+    rivate Session session;
 
     /**
      * Initializes the organizer dashboard and sets up UI components.
@@ -52,10 +66,26 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * @see CreateEventActivity
      */
 
+    /**
+     * Repository for accessing and managing event data from Firestore.
+     */
     private EventRepository eventRepository;
+
+    /**
+     * Container layout that holds individual event card views.
+     */
     private LinearLayout eventsContainer;
+
+    /**
+     * Scrollable view containing the events container.
+     */
     private ScrollView eventsScrollView;
+
+    /**
+     * Layout displayed when the organizer has no events.
+     */
     private LinearLayout emptyState;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,12 +231,22 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         startActivity(intent);
     }
 
+    /**
+     * Opens the EventManageActivity for a specific event.
+     * Passes the event object as an extra in the intent.
+     *
+     * @param event The Event object to manage
+     */
     private void openEventManage(Event event) {
         System.out.println("I failed here");
         Intent intent = new Intent(this, EventManageActivity.class);
         intent.putExtra(EventDetailsActivity.EventKey, event.getId());
         startActivity(intent);
     }
+
+    /**
+     * Resumes the activity and reloads the organizer's events.
+     */
 
     @Override
     protected void onResume() {

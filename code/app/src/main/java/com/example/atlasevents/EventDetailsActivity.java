@@ -23,8 +23,27 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+/**
+ * Activity for displaying detailed information about an event.
+ * <p>
+ * This activity shows event details including the event name, organizer,
+ * description, and a QR code representation of the event ID. It also provides
+ * functionality for entrants to join or leave the event waitlist.
+ * </p>
+ * <p>
+ * The event object is passed to this activity via an Intent extra using the
+ * {@link #EventKey} identifier.
+ * </p>
+ *
+ * @see Event
+ */
 public class EventDetailsActivity extends AppCompatActivity {
 
+    /**
+     * Key used to pass the Event object through Intent extras.
+     * This constant should be used when starting this activity to include
+     * the event data in the intent.
+     */
     public static final String EventKey = "com.example.atlasevents.EVENT";
 
     private EventRepository eventRepository;
@@ -40,6 +59,28 @@ public class EventDetailsActivity extends AppCompatActivity {
     private Button joinWaitlistButton, leaveWaitlistButton;
     private CheckBox optOutCheckBox;
 
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the UI components and populates them with event data retrieved
+     * from the Intent extras. Sets up click listeners for the join and leave
+     * waitlist buttons (functionality to be implemented).
+     * </p>
+     * <p>
+     * The event object is retrieved using {@link #EventKey} and its details are
+     * displayed including:
+     * </p>
+     * <ul>
+     *   <li>Event name</li>
+     *   <li>Organizer name</li>
+     *   <li>Event description</li>
+     *   <li>QR code generated from the event ID</li>
+     * </ul>
+     *
+     * @param savedInstanceState If the activity is being re-initialized after previously
+     *                           being shut down, this Bundle contains the data it most
+     *                           recently supplied. Otherwise it is null.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +115,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         setupListeners();
     }
 
+    /**
+     * Loads the event and entrant data from the repositories.
+     * <p>
+     * Fetches the currently logged-in entrant based on the stored session email
+     * and retrieves the selected event from Firestore using its ID.
+     * </p>
+     */
     private void loadData(){
         userRepository.getEntrant(session.getUserEmail(), entrant -> {
             currentEntrant = entrant;
@@ -97,12 +145,25 @@ public class EventDetailsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Ensures that the waitlist buttons are updated only after both
+     * the current entrant and event data are loaded.
+     */
     private void tryUpdateWaitlistButtons() {
         if (currentEntrant != null && currentEvent != null) {
             updateWaitlistButtons();
         }
     }
 
+    /**
+     * Displays event details on the screen.
+     * <p>
+     * Populates all text fields, loads the event image using Glide,
+     * and generates a QR code for the event ID.
+     * </p>
+     *
+     * @param event The {@link Event} object containing event information.
+     */
     private void displayEventDetails(Event event) {
         eventNameTextView.setText(event.getEventName());
         organizerNameTextView.setText(event.getOrganizer().getName());
@@ -125,6 +186,18 @@ public class EventDetailsActivity extends AppCompatActivity {
         qrImageView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Generates a QR code bitmap from the given event ID.
+     * <p>
+     * Creates a 300x300 pixel QR code image using the ZXing library.
+     * The QR code encodes the event ID as a string and renders it in
+     * black and white.
+     * </p>
+     *
+     * @param eventId The unique identifier of the event to encode in the QR code
+     * @return A Bitmap containing the generated QR code image
+     * @throws RuntimeException if QR code generation fails
+     */
     private Bitmap generateQRCode(String eventId) {
         try {
             QRCodeWriter writer = new QRCodeWriter();
@@ -144,6 +217,10 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sets up click listeners for UI interactions such as the back arrow
+     * and the waitlist join/leave buttons.
+     */
     private void setupListeners() {
         backArrow.setOnClickListener(view -> finish());
         joinWaitlistButton.setOnClickListener(view -> joinWaitlist());
@@ -155,6 +232,10 @@ public class EventDetailsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Updates the visibility of the join and leave waitlist buttons based
+     * on whether the current entrant is already on the waitlist.
+     */
     private void updateWaitlistButtons() {
         if (currentEvent == null || currentEntrant == null) return;
         boolean inWaitlist = currentEvent.getWaitlist().containsEntrant(currentEntrant);
@@ -168,6 +249,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Attempts to add the current entrant to the event's waitlist.
+     * <p>
+     * Updates the event in Firestore and provides feedback to the user
+     * through a Toast message.
+     * </p>
+     */
     private void joinWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
 
@@ -187,6 +275,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Removes the current entrant from the event's waitlist.
+     * <p>
+     * Updates the event in Firestore and refreshes the UI buttons
+     * to reflect the updated waitlist status.
+     * </p>
+     */
     private void leaveWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
 

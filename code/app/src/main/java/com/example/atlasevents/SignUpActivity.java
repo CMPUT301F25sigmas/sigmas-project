@@ -16,10 +16,37 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
 
+/**
+ * Activity for registering new users within the Atlas Events application.
+ * <p>
+ * This activity allows users to create either an {@link Entrant} or {@link Organizer}
+ * account by entering their personal details including name, email, password, and phone number.
+ * Once registration succeeds, a new session is created and the user is redirected
+ * to their respective dashboard.
+ * </p>
+ * <p>
+ * The activity also ensures that only one user type checkbox can be active at a time
+ * and provides input validation feedback through toast messages.
+ * </p>
+ *
+ * @see UserRepository
+ * @see Session
+ * @see EntrantDashboardActivity
+ * @see OrganizerDashboardActivity
+ */
 public class SignUpActivity extends AppCompatActivity {
 
     private Session session;
 
+    /**
+     * Called when the activity is first created.
+     * <p>
+     * Initializes the UI layout, configures edge-to-edge display, binds all input fields,
+     * and sets up event listeners for the create and cancel buttons.
+     * </p>
+     *
+     * @param savedInstanceState the saved state of the activity if it was previously created
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

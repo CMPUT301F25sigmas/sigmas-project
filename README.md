@@ -15,3 +15,7 @@ that notification listner has built in methods to deactivate if user opts out (n
 7. Need to check my firebase connectivity
 
 8. Need to make an organiser base page for further testing, 
+
+
+**ACKNOWLDEMENT THIS PROJECT USES A THIRD PARTY TOOL CALLED GLIDE-TECH BUMP PLEASE REFER TO THE LICENSE AND PLEASE REFER TO THE LINK BELOW:**
+https://github.com/bumptech/glide.git

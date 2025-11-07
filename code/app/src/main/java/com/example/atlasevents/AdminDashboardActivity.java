@@ -140,7 +140,7 @@ public class AdminDashboardActivity extends AdminBase {
      * @param event The event to display details for
      */
     private void openEventDetails(Event event) {
-        Intent intent = new Intent(this, EventDetailsActivity.class);
+        Intent intent = new Intent(this, EventDetailsAdminActivity.class);
         intent.putExtra(EventDetailsActivity.EventKey, event.getId());
         startActivity(intent);
     }

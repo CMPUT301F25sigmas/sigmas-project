@@ -58,8 +58,10 @@ public class SignInActivity extends AppCompatActivity {
                     Intent intent;
                     if (user.getUserType().equals("Organizer")) {
                         intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
-                    } else {
+                    } else if(user.getUserType().equals("Entrant")) {
                         intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
+                    } else {
+                        intent = new Intent(SignInActivity.this, AdminDashboardActivity.class);
                     }
                     startActivity(intent);
                     finish();
@@ -109,26 +111,37 @@ public class SignInActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             if (passwordHasher.checkPass(password,user.getPassword())) { //check pass matches
-                                if (user.getUserType().equals("Organizer")){//check if user is organizer
-                                    Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
-                                    session.setUserEmail(user.getEmail());
-                                    Bundle bundle = new Bundle();
-                                    intent.putExtras(bundle);
-                                    startActivity(intent);
-                                    finish();
+                                switch (user.getUserType()) {
+                                    case "Organizer": {//check if user is organizer
+                                        Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);
+                                        session.setUserEmail(user.getEmail());
+                                        Bundle bundle = new Bundle();
+                                        intent.putExtras(bundle);
+                                        startActivity(intent);
+                                        finish();
 
+                                        break;
+                                    }
+                                    //finish();
+                                    case "Entrant": {//check if user is entrant
+                                        Intent intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
+                                        session.setUserEmail(user.getEmail());
+                                        Bundle bundle = new Bundle();
+                                        intent.putExtras(bundle);
+                                        startActivity(intent);
+                                        finish();
+                                        break;
+                                    }
+                                    case "Admin": {//check if user is admin
+                                        Intent intent = new Intent(SignInActivity.this, AdminDashboardActivity.class);
+                                        session.setUserEmail(user.getEmail());
+                                        Bundle bundle = new Bundle();
+                                        intent.putExtras(bundle);
+                                        startActivity(intent);
+                                        finish();
+                                        break;
+                                    }
                                 }
-                                //finish();
-                                if (user.getUserType().equals("Entrant")){//check if user is entrant
-                                    Intent intent = new Intent(SignInActivity.this, EntrantDashboardActivity.class);
-                                    session.setUserEmail(user.getEmail());
-                                    Bundle bundle = new Bundle();
-                                    intent.putExtras(bundle);
-                                    startActivity(intent);
-                                    finish();
-                                }
-
-
                             }else{
                                 Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
                             }

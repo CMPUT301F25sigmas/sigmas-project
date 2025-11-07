@@ -14,7 +14,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.NotificationManager;
 
-import java.util.ArrayList;====================================================================
+import java.util.ArrayList;
 
 /**
  * Activity displaying the entrant's dashboard with a list of available events.
@@ -87,28 +87,16 @@ public class EntrantDashboardActivity extends EntrantBase {
         NotificationManager.startListening(this, session.getUserEmail());
         loadEventsFromFirebase();
     }
-
-    @Override
-    protected void onPause() {
-        NotificationManager.stopListening();
-        super.onPause();
-    }
-
     /***
      * listener for notifications added to event dashboard as this is the foreground/ main activity
      */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        NotificationManager.startListening(this, session.getUserEmail());
-        loadEventsFromFirebase();
-    }
 
     @Override
     protected void onPause() {
         NotificationManager.stopListening();
         super.onPause();
     }
+
 
     /**
      * Fetches all events from Firebase and displays them.

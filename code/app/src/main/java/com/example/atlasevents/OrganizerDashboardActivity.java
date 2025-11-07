@@ -51,7 +51,7 @@ import java.util.ArrayList;
  * @see Session
  */
 public class OrganizerDashboardActivity extends OrganizerBase {
-    rivate Session session;
+    private Session session;
 
     /**
      * Initializes the organizer dashboard and sets up UI components.

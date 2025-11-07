@@ -8,7 +8,13 @@ import com.example.atlasevents.data.EventRepository;
 import com.google.type.DateTime;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 
@@ -196,10 +202,47 @@ public class Event implements Serializable {
     }
 
     /**
+     * Validates if registration is currently open based on registration dates
+     * @return true if registration is open, false otherwise
+     */
+    public boolean isRegistrationOpen() {
+        if (regStartDate == null || regEndDate == null) {
+            Log.w("Registration", "Registration dates not set");
+            return false;
+        }
+
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date currentDate = new Date();
+            Date startDate = formatter.parse(regStartDate);
+            Date endDate = formatter.parse(regEndDate);
+
+            if (currentDate.before(startDate)) {
+                Log.w("Registration", "Registration has not started yet");
+                return false;
+            }
+
+            if (currentDate.after(endDate)) {
+                Log.w("Registration", "Registration has ended");
+                return false;
+            }
+
+            return true;
+
+        } catch (ParseException e) {
+            Log.e("Registration", "Error parsing dates");
+            return false;
+        }
+    }
+
+    /**
      * This method adds an entrant to the waitlist
      * @param entrant the entrant to be added to waitlist
      */
     public int addToWaitlist(Entrant entrant) {
+        if (!isRegistrationOpen()) {
+            return -1;
+        }
         int currentSize = waitList.size();
         if (entrantLimit == -1) {
             waitList.addEntrant(entrant);

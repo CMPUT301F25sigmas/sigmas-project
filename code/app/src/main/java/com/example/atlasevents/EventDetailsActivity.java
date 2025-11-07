@@ -272,6 +272,8 @@ public class EventDetailsActivity extends AppCompatActivity {
             });
         } else if (joined == 0) {
             Toast.makeText(this, "Waitlist limit reached", Toast.LENGTH_SHORT).show();
+        } else if (joined == -1) {
+            Toast.makeText(this, "Waitlist not open yet or past deadline", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -308,7 +310,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         String organizerEmail = currentEvent.getOrganizer().getEmail();
         
         userRepository.isOrganizerBlocked(userEmail, organizerEmail, isBlocked -> {
+            optOutCheckBox.setOnCheckedChangeListener(null);
             optOutCheckBox.setChecked(isBlocked);
+            optOutCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (currentEvent != null && currentEvent.getOrganizer() != null) {
+                    updateBlockedStatus(isChecked);
+                }
+            });
         });
     }
     

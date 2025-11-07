@@ -34,6 +34,7 @@ import com.example.atlasevents.data.UserRepository;
  * @see EntrantDashboardActivity
  */
 public class SignInActivity extends AppCompatActivity {
+    private static final String TAG = "SignInActivity";
     private UserRepository userRepo;
     private EventRepository eventRepo;
     private Button signInbutton;
@@ -111,6 +112,7 @@ public class SignInActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             if (passwordHasher.checkPass(password,user.getPassword())) { //check pass matches
+                             session.setUserEmail(user.getEmail());
                                 switch (user.getUserType()) {
                                     case "Organizer": {//check if user is organizer
                                         Intent intent = new Intent(SignInActivity.this, OrganizerDashboardActivity.class);

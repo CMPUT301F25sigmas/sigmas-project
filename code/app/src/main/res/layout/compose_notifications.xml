@@ -5,42 +5,27 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="100dp" />
-
-    <include
-        android:id="@+id/organizer_tab"
-        layout="@layout/organizer_tab"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/white"
             android:orientation="vertical"
             android:padding="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageView
                     android:id="@+id/back_arrow"
@@ -54,47 +39,52 @@
                     android:layout_weight="1"
                     android:text="Notification Center"
                     android:textAlignment="center"
+                    android:textColor="@android:color/black"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Compose Notification"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Send a message to your event entrants"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Select Recipients"
                 android:layout_marginTop="16dp"
-                android:textStyle="bold"/>
+                android:text="Compose Notification"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Send a message to your event entrants" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Select Recipients"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
 
             <!-- Waiting List Entrants Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="8dp">
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/white"
                     android:padding="16dp">
+
                     <RadioButton
                         android:id="@+id/radioWaitingList"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
-                        android:checked="true"/>
+                        android:checked="true" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -121,7 +111,7 @@
 
                     <Button
                         android:id="@+id/waitingListCount"
-                        android:layout_width="54dp"
+                        android:layout_width="56dp"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
@@ -137,17 +127,20 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="8dp">
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/white"
                     android:padding="16dp">
+
                     <RadioButton
                         android:id="@+id/radioChosenEntrants"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"/>
+                        android:layout_centerVertical="true" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -155,12 +148,12 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="18dp"
-                        android:layout_toStartOf="@+id/chosenEntrantsCount"
+                        android:layout_toStartOf="@+id/chosenCount"
                         android:layout_toEndOf="@id/radioChosenEntrants"
                         android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Chosen Entrants"
                             android:textColor="@android:color/black"
@@ -173,8 +166,8 @@
                     </LinearLayout>
 
                     <Button
-                        android:id="@+id/chosenEntrantsCount"
-                        android:layout_width="54dp"
+                        android:id="@+id/chosenCount"
+                        android:layout_width="56dp"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
@@ -190,17 +183,20 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="8dp">
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/white"
                     android:padding="16dp">
+
                     <RadioButton
                         android:id="@+id/radioCancelledEntrants"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"/>
+                        android:layout_centerVertical="true" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -208,29 +204,30 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="17dp"
-                        android:layout_toStartOf="@+id/cancelledEntrantsCount"
+                        android:layout_toStartOf="@+id/cancelledCount"
                         android:layout_toEndOf="@id/radioCancelledEntrants"
                         android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="134dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Cancelled Entrants"
                             android:textColor="@android:color/black"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:layout_width="144dp"
+                            android:layout_width="match_parent"
                             android:layout_height="33dp"
                             android:text="Declined or expired registrations" />
                     </LinearLayout>
-                     <Button
-                        android:id="@+id/cancelledEntrantsCount"
-                         android:layout_width="54dp"
-                         android:layout_height="wrap_content"
+
+                    <Button
+                        android:id="@+id/cancelledCount"
+                        android:layout_width="56dp"
+                        android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                         android:layout_marginEnd="4dp"
+                        android:layout_marginEnd="4dp"
                         android:backgroundTint="@color/background_grey"
                         android:drawableTop="@drawable/group"
                         android:text="0"
@@ -241,33 +238,35 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Message"
                 android:layout_marginTop="16dp"
-                android:textStyle="bold"/>
+                android:text="Message"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/messageEditText"
                 android:layout_width="match_parent"
                 android:layout_height="120dp"
-                android:hint="Enter your notification message..."
-                android:gravity="top"
-                android:padding="16dp"
+                android:layout_marginTop="8dp"
                 android:backgroundTint="@color/background_grey"
-                android:layout_marginTop="8dp"/>
+                android:gravity="top"
+                android:hint="Enter your notification message..."
+                android:padding="16dp" />
 
             <TextView
+                android:id="@+id/characterCount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="0 characters"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp"
+                android:text="0 characters" />
 
             <Button
                 android:id="@+id/sendNotificationButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Send to chosen Recipients"
                 android:drawableLeft="@drawable/notify"
-                />
+                android:text="Send to chosen Recipients" />
 
         </LinearLayout>
     </ScrollView>

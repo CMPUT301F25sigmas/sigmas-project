@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.example.atlasevents"},{"l":"com.example.atlasevents.data"},{"l":"com.example.atlasevents.data.model"},{"l":"com.example.atlasevents.utils"}];updateSearchResults();

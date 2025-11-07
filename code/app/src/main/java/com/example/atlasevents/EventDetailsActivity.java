@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,6 +57,7 @@ public class EventDetailsActivity extends AppCompatActivity {
             waitlistCountTextView, dateTextView, timeTextView, locationTextView;
     private ImageView eventImageView, qrImageView, backArrow;
     private Button joinWaitlistButton, leaveWaitlistButton;
+    private CheckBox optOutCheckBox;
 
     /**
      * Called when the activity is first created.
@@ -107,6 +109,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         leaveWaitlistButton = findViewById(R.id.leaveWaitlistButton);
         eventImageView = findViewById(R.id.eventImage);
         qrImageView = findViewById(R.id.qrImage);
+        optOutCheckBox = findViewById(R.id.optOutCheckBox);
 
         loadData();
         setupListeners();
@@ -130,6 +133,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 currentEvent = event;
                 displayEventDetails(event);
                 tryUpdateWaitlistButtons();
+                loadBlockedStatus();
             }
 
             @Override
@@ -221,6 +225,11 @@ public class EventDetailsActivity extends AppCompatActivity {
         backArrow.setOnClickListener(view -> finish());
         joinWaitlistButton.setOnClickListener(view -> joinWaitlist());
         leaveWaitlistButton.setOnClickListener(view -> leaveWaitlist());
+        optOutCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (currentEvent != null && currentEvent.getOrganizer() != null) {
+                updateBlockedStatus(isChecked);
+            }
+        });
     }
 
     /**
@@ -286,5 +295,69 @@ public class EventDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    
+    /**
+     * Loads the current blocked status for this organizer.
+     * Checks if the organizer's email is in the user's blocked list.
+     */
+    private void loadBlockedStatus() {
+        if (currentEvent == null || currentEvent.getOrganizer() == null) return;
+        
+        String userEmail = session.getUserEmail();
+        String organizerEmail = currentEvent.getOrganizer().getEmail();
+        
+        userRepository.isOrganizerBlocked(userEmail, organizerEmail, isBlocked -> {
+            optOutCheckBox.setChecked(isBlocked);
+        });
+    }
+    
+    /**
+     * Updates the blocked status for this organizer.
+     * Adds or removes the organizer's email from the user's blocked list.
+     * 
+     * @param shouldBlock true to block notifications, false to unblock
+     */
+    private void updateBlockedStatus(boolean shouldBlock) {
+        String userEmail = session.getUserEmail();
+        String organizerEmail = currentEvent.getOrganizer().getEmail();
+        
+        if (shouldBlock) {
+            userRepository.blockOrganizer(userEmail, organizerEmail, new UserRepository.BlockedOrganizersCallback() {
+                @Override
+                public void onResult(boolean isBlocked) {
+                    Toast.makeText(EventDetailsActivity.this, 
+                            "You will no longer receive notifications from this organizer", 
+                            Toast.LENGTH_SHORT).show();
+                }
+                
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to block organizer", e);
+                    Toast.makeText(EventDetailsActivity.this, 
+                            "Failed to update preferences", 
+                            Toast.LENGTH_SHORT).show();
+                    optOutCheckBox.setChecked(false);
+                }
+            });
+        } else {
+            userRepository.unblockOrganizer(userEmail, organizerEmail, new UserRepository.BlockedOrganizersCallback() {
+                @Override
+                public void onResult(boolean isBlocked) {
+                    Toast.makeText(EventDetailsActivity.this, 
+                            "You will now receive notifications from this organizer", 
+                            Toast.LENGTH_SHORT).show();
+                }
+                
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to unblock organizer", e);
+                    Toast.makeText(EventDetailsActivity.this, 
+                            "Failed to update preferences", 
+                            Toast.LENGTH_SHORT).show();
+                    optOutCheckBox.setChecked(true);
+                }
+            });
+        }
     }
 }

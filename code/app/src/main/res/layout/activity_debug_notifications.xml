@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/debug_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tv_debug_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Debug Notification Sender"
+        android:textSize="18sp"
+        android:layout_marginBottom="12dp"/>
+
+    <EditText
+        android:id="@+id/et_target_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Recipient email (leave blank -> self)"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/et_custom_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Custom message (optional)"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btn_send_to_self"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Test Notification To Me"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_send_to_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Test Notification To Email"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_send_batch_example"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Batch (3 test users)"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tv_debug_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: idle"
+        android:layout_marginTop="12dp"/>
+</LinearLayout>

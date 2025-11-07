@@ -51,15 +51,15 @@
             android:padding="0dp"
             app:cornerRadius="8dp"/>
 
-    </LinearLayout>
+        </LinearLayout>
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:cardBackgroundColor="#F2F2F2"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="0dp">
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:cardBackgroundColor="#F2F2F2"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp">
 
         <FrameLayout
             android:layout_width="match_parent"

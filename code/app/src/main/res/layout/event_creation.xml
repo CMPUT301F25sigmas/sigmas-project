@@ -52,7 +52,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -171,7 +172,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -229,7 +231,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -286,7 +289,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -312,12 +316,13 @@
 
                     <EditText
                         android:id="@+id/maxEntrantsEditText"
-                        android:layout_width="30dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="33dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="right"
                         android:inputType="number"
                         android:visibility="gone"
-                        android:textColor="@color/black"/>
+                        android:textColor="@color/black"
+                        android:hint="0"/>
                 </LinearLayout>
 
                 <TextView

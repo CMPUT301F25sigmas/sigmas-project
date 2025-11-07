@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -13,6 +14,18 @@
         android:theme="@style/Theme.AtlasEvents">
         <activity
             android:name=".CreateEventActivity"
+            android:exported="false" />
+        <activity 
+            android:name=".DebugNotificationActivity" 
+            android:exported="false" />
+        <activity 
+            android:name=".NotificationHistoryActivity" 
+            android:exported="false" />
+        <activity 
+            android:name=".NotificationCenterActivity" 
+            android:exported="false" />
+        <activity 
+            android:name=".ComposeNotificationActivity" 
             android:exported="false" />
         <activity
             android:name=".EditEventActivity"
@@ -34,6 +47,8 @@
             android:name=".EntrantProfileActivity"
             android:exported="false" />
         <activity android:name=".EventDetailsActivity"
+            android:exported="false"/>
+        <activity android:name=".EventDetailsAdminActivity"
             android:exported="false"/>
         <activity android:name=".EventManageActivity"
             android:exported="false"/>

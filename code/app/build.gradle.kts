@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.runtime)
     implementation(libs.room.external.antlr)
     implementation("com.google.zxing:core:3.5.3")
+    implementation("androidx.tracing:tracing:1.2.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

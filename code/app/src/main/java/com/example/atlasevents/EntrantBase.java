@@ -118,12 +118,14 @@ public abstract class EntrantBase extends AppCompatActivity {
         finish();
         overridePendingTransition(0, 0);
     }
-    protected void openNotifications() {}
-    protected void openQrReader() {
+    protected void openNotifications() {
         Intent intent = new Intent(this, NotificationHistoryActivity.class);
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);
+    }
+    protected void openQrReader() {
+        //Need to do
     }
 
     /**

@@ -25,6 +25,19 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
+/**
+ * Activity for creating new events in the Atlas Events system.
+ * <p>
+ * This activity provides a form interface for organizers to create events with
+ * various details including name, dates, location, description, participant limits,
+ * and geolocation requirements. The activity validates inputs before creating the
+ * event and saving it to the repository.
+ * </p>
+ *
+ * @see Event
+ * @see Organizer
+ * @see EventRepository
+ */
 public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
@@ -184,16 +197,27 @@ public class CreateEventActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Loads the image from the provided URL into the ImageView.
+     *
+     */
     public void loadImage(){
         ImageView poster = findViewById(R.id.posterImageView);
         Glide.with(this).load(imageURL).into(poster);
     }
+
     /**
-     *  Checks inputs and makes toasts to tell user what is missing or invalid
-     * @param name name of event
-     * @param slots number of slots event has open
-     * todo : check rest of mandatory inputs
-       */
+     * Validates the required inputs for event creation.
+     * <p>
+     * Checks that the event name is not empty and that the number of slots
+     * is provided. Displays appropriate Toast messages to inform the user
+     * of any missing or invalid inputs.
+     * </p>
+     *
+     * @param name The name of the event to validate
+     * @param slots The number of participant slots as a string
+     * @return {@code true} if all inputs are valid, {@code false} otherwise
+     */
     public boolean inputsValid(String name, String slots) {
         boolean valid = true;
         if (name.isEmpty()) { //check if name is empty
@@ -207,6 +231,15 @@ public class CreateEventActivity extends AppCompatActivity {
         return valid;
     }
 
+    /**
+     * Called when the activity is finishing.
+     * <p>
+     * Handles cleanup of uploaded images based on whether the event was saved.
+     * If a new image was uploaded but the event was not saved, the new image is deleted.
+     * If the event was saved with a new image, the old image is deleted. This prevents
+     * orphaned images in Firebase Storage.
+     * </p>
+     */
     @Override
     public void finish() {
         if (!imageURL.isEmpty() && !eventSaved) {

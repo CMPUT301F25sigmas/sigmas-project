@@ -13,9 +13,23 @@ import java.util.Random;
 
 
 /**
- * This is a class that defines an Event.
+ * Represents an event in the Atlas Events application.
+ * <p>
+ * This class manages all aspects of an event including organizer information,
+ * entrant lists (waitlist, invite list, accepted, and declined), and event details
+ * such as location, time, and capacity. It implements {@link Serializable} to allow
+ * event objects to be passed between Android components.
+ * </p>
+ * <p>
+ * The event maintains multiple entrant lists to track participants through different
+ * stages of the registration process, and provides lottery functionality to randomly
+ * select entrants from the waitlist.
+ * </p>
+ *
+ * @see EntrantList
+ * @see Organizer
+ * @see Entrant
  */
-
 public class Event implements Serializable {
 
     Random random = new Random();

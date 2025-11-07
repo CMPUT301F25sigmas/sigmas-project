@@ -103,9 +103,14 @@ public class NotificationHistoryActivity extends AppCompatActivity {
                     }
                 };
             
-            if ("Organizer".equals(userType)) {
+            if ("Admin".equals(userType)) {
+                // Admin sees ALL notification logs from the system
+                notificationHelper.loadAdminAllNotificationLogs(callback);
+            } else if ("Organizer".equals(userType)) {
+                // Organizer sees only notifications they sent
                 notificationHelper.loadOrganizerSentNotifications(userEmail, callback);
             } else {
+                // Entrant sees notifications they received
                 notificationHelper.loadEntrantReceivedNotifications(
                     userEmail, 
                     callback,

@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.atlasevents.R;
+import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,6 +37,7 @@ public class NotificationHistoryHelper {
     private final Context context;
     private final FirebaseFirestore db;
     private final LinearLayout notificationsContainer;
+    private final NotificationRepository notificationRepository;
     
     /**
      * Interface for callbacks when notifications are loaded or fail to load.
@@ -62,6 +65,7 @@ public class NotificationHistoryHelper {
         this.context = context;
         this.db = db;
         this.notificationsContainer = container;
+        this.notificationRepository = new NotificationRepository();
     }
     
     /**
@@ -144,83 +148,101 @@ public class NotificationHistoryHelper {
                     callback.onLoadFailed();
                 });
     }
-
+    
     /**
-     * Simple data holder for notification card information.
+     * Loads ALL notification logs for admin review from notification_logs collection.
+     * Uses NotificationRepository's existing getNotificationLogs method.
+     * 
+     * @param callback Callback for success/failure handling
      */
-    private static class NotificationCardData {
-        final String groupType;
-        final String eventName;
-        final String timestamp;
-        final String message;
-        final String recipientInfo;
-        final boolean isRead;
-        final String notificationId;
+    public void loadAdminAllNotificationLogs(NotificationLoadCallback callback) {
+        notificationRepository.getNotificationLogs(new NotificationRepository.NotificationLogsCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> logs) {
+                notificationsContainer.removeAllViews();
+                
+                if (logs.isEmpty()) {
+                    Log.d(TAG, "No notification logs found");
+                    callback.onLoadFailed();
+                    return;
+                }
+                
+                Log.d(TAG, "Found " + logs.size() + " notification logs");
+                
+                for (Map<String, Object> logData : logs) {
+                    addAdminNotificationCard(logData);
+                }
+                
+                callback.onNotificationsLoaded(logs.size());
+            }
 
-        NotificationCardData(String groupType, String eventName, String timestamp,
-                             String message, String recipientInfo, boolean isRead, String notificationId) {
-            this.groupType = groupType;
-            this.eventName = eventName;
-            this.timestamp = timestamp;
-            this.message = message;
-            this.recipientInfo = recipientInfo;
-            this.isRead = isRead;
-            this.notificationId = notificationId;
-        }
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG, "Error loading admin notification logs", e);
+                callback.onLoadFailed();
+            }
+        });
     }
 
-
     /**
-     * Creates and adds a notification card for entrants.
-     * 
-     * @param notification The notification to display
-     * @param markAsReadCallback Callback for when the card is clicked
+     * Creates and adds a notification card for entrants
      */
     private void addEntrantNotificationCard(Notification notification, MarkAsReadCallback markAsReadCallback) {
-        NotificationCardData data = new NotificationCardData(
+        addNotificationCard(
             notification.getGroupType(),
             notification.getEventName(),
             formatTimestamp(notification.getCreatedAt()),
             notification.getMessage(),
             "1 recipient",
-            notification.isRead(),
-            notification.getNotificationId()
+            markAsReadCallback
         );
-        
-        addNotificationCard(data, markAsReadCallback);
     }
     
     /**
      * Creates and adds a notification card for organizers.
-     * 
-     * @param logData The notification log data from Firestore
      */
     private void addOrganizerNotificationCard(Map<String, Object> logData) {
-        String recipient = logData.get("recipient") != null ? logData.get("recipient").toString() : "Unknown";
-        String status = logData.get("status") != null ? logData.get("status").toString() : "UNKNOWN";
-        String recipientInfo = "X recipient"; //TODO
-
-        
-        NotificationCardData data = new NotificationCardData(
-            logData.get("groupType") != null ? logData.get("groupType").toString() : "Notification",
-            logData.get("eventName") != null ? logData.get("eventName").toString() : "N/A",
+        addNotificationCard(
+            getString(logData, "groupType", "Notification"),
+            getString(logData, "eventName", "N/A"),
             formatFirestoreTimestamp(logData.get("createdAt")),
-            logData.get("message") != null ? logData.get("message").toString() : "",
-            recipientInfo,
-            true, // Organizer logs are always "read" (no interaction needed)
-            null  // No notification ID for logs
+            getString(logData, "message", ""),
+            "X recipient", //TODO update with actual count of recipients
+            null
         );
-        
-        addNotificationCard(data, null);
     }
     
     /**
-     * Common method to create and add a notification card with given data.
-     * 
-     * @param data The notification data to display
-     * @param markAsReadCallback Optional callback for mark-as-read (null for organizer cards)
+     * Creates and adds a notification card for admin view.
      */
-    private void addNotificationCard(NotificationCardData data, MarkAsReadCallback markAsReadCallback) {
+    private void addAdminNotificationCard(Map<String, Object> logData) {
+        String fromOrganizer = getString(logData, "fromOrganizer", "Unknown");
+        //String recipient = getString(logData, "recipient", "Unknown");
+        String status = getString(logData, "status", "UNKNOWN");
+        
+        addNotificationCard(
+            getString(logData, "groupType", "Notification"),
+            getString(logData, "eventName", "N/A"),
+            formatFirestoreTimestamp(logData.get("createdAt")),
+            getString(logData, "message", ""),
+            "From: " + fromOrganizer, // " → " + recipient + " (" + status + ")"
+            null
+        );
+    }
+    
+    /**
+     * Helper to safely get string from map.
+     */
+    private String getString(Map<String, Object> map, String key, String defaultValue) {
+        Object value = map.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+    
+    /**
+     * Common method to create and add a notification card.
+     */
+    private void addNotificationCard(String groupType, String eventName, String timestamp,
+                                      String message, String recipientInfo, MarkAsReadCallback markAsReadCallback) {
         View cardView = LayoutInflater.from(context)
                 .inflate(R.layout.notification_card, notificationsContainer, false);
         
@@ -230,16 +252,14 @@ public class NotificationHistoryHelper {
         TextView recipientsTextView = cardView.findViewById(R.id.notificationRecipientsCount);
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
         
-        tagTextView.setText(data.groupType != null ? data.groupType : "Notification");
-        eventNameTextView.setText(data.eventName != null ? data.eventName : "");
-        timestampTextView.setText(data.timestamp);
-        messageTextView.setText(data.message != null ? data.message : "");
-        recipientsTextView.setText(data.recipientInfo);
-    
+        tagTextView.setText(groupType != null ? groupType : "Notification");
+        eventNameTextView.setText(eventName != null ? eventName : "");
+        timestampTextView.setText(timestamp);
+        messageTextView.setText(message != null ? message : "");
+        recipientsTextView.setText(recipientInfo);
         
         notificationsContainer.addView(cardView);
     }
-    
 
     /**
      * Formats a Date object into a readable timestamp.

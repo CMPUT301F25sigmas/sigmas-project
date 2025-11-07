@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.UserRepository;
 
 import java.util.ArrayList;
 
@@ -41,22 +42,22 @@ public class OrganizerDashboardActivity extends OrganizerBase {
     /**
      * Repository for accessing and managing event data from Firestore.
      */
-    private EventRepository eventRepository;
+    EventRepository eventRepository;
 
     /**
      * Container layout that holds individual event card views.
      */
-    private LinearLayout eventsContainer;
+    LinearLayout eventsContainer;
 
     /**
      * Scrollable view containing the events container.
      */
-    private ScrollView eventsScrollView;
+    ScrollView eventsScrollView;
 
     /**
      * Layout displayed when the organizer has no events.
      */
-    private LinearLayout emptyState;
+    LinearLayout emptyState;
 
 
     @Override
@@ -83,7 +84,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * Retrieves the organizer information using the session email, then queries for their events.
      * Displays events if found, otherwise shows the empty state.
      */
-    private void loadOrganizerEvents() {
+    void loadOrganizerEvents() {
         userRepository.getOrganizer(session.getUserEmail(), organizer -> {
             if (organizer != null) {
                 eventRepository.getEventsByOrganizer(organizer.getEmail(), new EventRepository.EventsCallback() {
@@ -114,7 +115,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      *
      * @param events ArrayList of Event objects to display
      */
-    private void displayEvents(ArrayList<Event> events) {
+    void displayEvents(ArrayList<Event> events) {
         emptyState.setVisibility(View.GONE);
         eventsScrollView.setVisibility(View.VISIBLE);
 
@@ -145,7 +146,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * Shows the empty state layout with a message and create event button.
      * Hides the events scroll view.
      */
-    private void showEmptyState() {
+    void showEmptyState() {
         emptyState.setVisibility(View.VISIBLE);
         eventsScrollView.setVisibility(View.GONE);
     }

@@ -1,13 +1,19 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
@@ -112,19 +118,39 @@ public class AdminDashboardActivity extends AdminBase {
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (Event event : events) {
-            View eventCard = inflater.inflate(R.layout.event_card_item, eventsContainer, false);
+            View eventCard = inflater.inflate(R.layout.event_card_admin_item, eventsContainer, false);
 
             ImageView eventImage = eventCard.findViewById(R.id.event_image);
+            ImageView menuButton = eventCard.findViewById(R.id.menu_button);
             TextView eventName = eventCard.findViewById(R.id.event_name);
 
-            if(!event.getImageUrl().isEmpty()){
+            if (!event.getImageUrl().isEmpty()) {
                 Glide.with(this).load(event.getImageUrl()).into(eventImage);
             } else {
                 eventImage.setImageResource(R.drawable.poster);
             }
             eventName.setText(event.getEventName());
 
-            eventCard.setOnClickListener(v -> openEventDetails(event));
+            menuButton.setOnClickListener(v -> {
+                View dropdownView = inflater.inflate(R.layout.event_dropdown, null);
+
+                PopupWindow popupWindow = new PopupWindow(dropdownView, eventCard.getWidth(), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+
+                popupWindow.setOutsideTouchable(true);
+
+                popupWindow.showAsDropDown(eventCard, 0, -eventCard.getHeight()+150);
+
+                dropdownView.findViewById(R.id.action_view_details).setOnClickListener(item -> {
+                    openEventDetails(event);
+                    popupWindow.dismiss();
+                });
+
+                dropdownView.findViewById(R.id.action_remove_event).setOnClickListener(item -> {
+                    eventRepository.deleteEvent(event.getId());
+                    loadEventsFromFirebase();
+                    popupWindow.dismiss();
+                });
+            });
 
             eventsContainer.addView(eventCard);
         }

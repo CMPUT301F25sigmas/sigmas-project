@@ -69,7 +69,10 @@ public abstract class AdminBase extends AppCompatActivity {
     }
 
     /** Opens the notifications screen. */
-    protected void openNotifications() {}
+    protected void openNotifications() {
+        Intent intent = new Intent(this, NotificationHistoryActivity.class);
+        startActivity(intent);
+    }
 
     /** Opens the events management screen. */
     protected void openEvents() {

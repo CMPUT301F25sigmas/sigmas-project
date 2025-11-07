@@ -30,6 +30,15 @@ public class Entrant extends User{
         event.removeFromWaitlist(this);
     }
 
+    /**
+     * Compares this Entrant object to another object for equality.
+     * <p>
+     * Two Entrant objects are considered equal if they have the same email address.
+     * </p>
+     *
+     * @param obj The object to compare with this Entrant
+     * @return {@code true} if the specified object is also an Admin and has the same email; {@code false} otherwise
+     */
     @Override
     public boolean equals(Object obj) {
         System.out.println("equals() called: comparing " + this.hashCode() + " with "

@@ -147,27 +147,27 @@ public class UserRepository {
         void onResult(Boolean enabled);
     }
 
-    public void isNotificationsEnabled(String email, NotificationsPrefCallback callback) {
-        db.collection("users").document(email)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc == null || !doc.exists()) {
-                        callback.onResult(null);
-                    } else {
-                        Boolean enabled = doc.getBoolean("notificationsEnabled");
-                        // default true if null
-                        if (enabled == null) enabled = true;
-                        callback.onResult(enabled);
-                    }
-                })
-                .addOnFailureListener(e -> callback.onResult(null));
-    }
-
-    public Task<Void> setNotificationsEnabled(String email, boolean enabled) {
-        Map<String, Object> update = new HashMap<>();
-        update.put("notificationsEnabled", enabled);
-        return db.collection("users").document(email).set(update, SetOptions.merge());
-    }
+//    public void isNotificationsEnabled(String email, NotificationsPrefCallback callback) {
+//        db.collection("users").document(email)
+//                .get()
+//                .addOnSuccessListener(doc -> {
+//                    if (doc == null || !doc.exists()) {
+//                        callback.onResult(null);
+//                    } else {
+//                        Boolean enabled = doc.getBoolean("notificationsEnabled");
+//                        // default true if null
+//                        if (enabled == null) enabled = true;
+//                        callback.onResult(enabled);
+//                    }
+//                })
+//                .addOnFailureListener(e -> callback.onResult(null));
+//    }
+//
+//    public Task<Void> setNotificationsEnabled(String email, boolean enabled) {
+//        Map<String, Object> update = new HashMap<>();
+//        update.put("notificationsEnabled", enabled);
+//        return db.collection("users").document(email).set(update, SetOptions.merge());
+//    }
 
     /**
      * This method gets an entrant from the database.
@@ -189,6 +189,92 @@ public class UserRepository {
                     }
                 })
                 .addOnFailureListener(e -> listener.onEntrantFetched(null));
+    }
+    
+    /**
+     * Callback interface for blocked organizers operations
+     */
+    public interface BlockedOrganizersCallback {
+        void onResult(boolean isBlocked);
+        void onFailure(Exception e);
+    }
+    
+    /**
+     * Callback interface for checking if an organizer is blocked
+     */
+    public interface IsBlockedCallback {
+        void onResult(boolean isBlocked);
+    }
+    
+    /**
+     * Checks if a specific organizer is blocked by the user
+     * @param userEmail The email of the user
+     * @param organizerEmail The email of the organizer to check
+     * @param callback Callback with the result
+     */
+    public void isOrganizerBlocked(String userEmail, String organizerEmail, IsBlockedCallback callback) {
+        db.collection("users")
+                .document(userEmail)
+                .collection("preferences")
+                .document("blockedOrganizers")
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        java.util.List<String> blockedEmails = 
+                            (java.util.List<String>) documentSnapshot.get("blockedEmails");
+                        boolean isBlocked = blockedEmails != null && blockedEmails.contains(organizerEmail);
+                        callback.onResult(isBlocked);
+                    } else {
+                        callback.onResult(false);
+                    }
+                })
+                .addOnFailureListener(e -> callback.onResult(false));
+    }
+    
+    /**
+     * Blocks an organizer from sending notifications to the user
+     * @param userEmail The email of the user
+     * @param organizerEmail The email of the organizer to block
+     * @param callback Callback with success/failure result
+     */
+    public void blockOrganizer(String userEmail, String organizerEmail, BlockedOrganizersCallback callback) {
+        db.collection("users")
+                .document(userEmail)
+                .collection("preferences")
+                .document("blockedOrganizers")
+                .update("blockedEmails", com.google.firebase.firestore.FieldValue.arrayUnion(organizerEmail))
+                .addOnSuccessListener(aVoid -> callback.onResult(true))
+                .addOnFailureListener(e -> {
+                    // Document might not exist, create it
+                    java.util.List<String> blockedList = new java.util.ArrayList<>();
+                    blockedList.add(organizerEmail);
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("blockedEmails", blockedList);
+                    
+                    db.collection("users")
+                            .document(userEmail)
+                            .collection("preferences")
+                            .document("blockedOrganizers")
+                            .set(data)
+                            .addOnSuccessListener(aVoid -> callback.onResult(true))
+                            .addOnFailureListener(e2 -> callback.onFailure(e2));
+                });
+    }
+    
+    /**
+     * Unblocks an organizer, allowing them to send notifications to the user again
+     * @param userEmail The email of the user
+     * @param organizerEmail The email of the organizer to unblock
+     * @param callback Callback with success/failure result
+     */
+    public void unblockOrganizer(String userEmail, String organizerEmail, BlockedOrganizersCallback callback) {
+        db.collection("users")
+                .document(userEmail)
+                .collection("preferences")
+                .document("blockedOrganizers")
+                .update("blockedEmails", com.google.firebase.firestore.FieldValue.arrayRemove(organizerEmail))
+                .addOnSuccessListener(aVoid -> callback.onResult(false))
+                .addOnFailureListener(e -> callback.onFailure(e));
     }
 }
 

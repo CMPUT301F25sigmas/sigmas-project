@@ -14,15 +14,18 @@ import com.google.firebase.firestore.*;
 import com.example.atlasevents.utils.NotificationHelper;
 /**
  * Listens for real-time notifications for a specific user and handles their display.
- * Monitors both notification preferences and incoming notifications, displaying them
- * via dialogs and automatically marking them as read.
+ * Monitors notification preferences, blocked organizers, and incoming notifications, 
+ * displaying them via dialogs and automatically marking them as read.
  *
- * <p>This class manages two Firestore listeners:
+ * <p>This class manages three Firestore listeners:
  * <ul>
  *   <li>Preference listener: Monitors user's notification enabled/disabled preference</li>
+ *   <li>Blocked organizers listener: Monitors user's list of blocked organizer emails</li>
  *   <li>Notification listener: Monitors incoming notifications when preferences allow</li>
  * </ul>
  * </p>
+ *
+ * <p>Notifications from blocked organizers are silently marked as read without being displayed.</p>
  *
  * @see Notification
  * @see NotificationHelper
@@ -38,6 +41,8 @@ public class NotificationListener {
 
     private final String email;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
+    private ListenerRegistration preferencesRegistration;
+    private final java.util.Set<String> blockedEmails = new java.util.HashSet<>();
     /**
      * Constructs a new NotificationListener for the specified user and activity.
      *
@@ -55,15 +60,21 @@ public class NotificationListener {
     /**
      * Start listening for unread notifications for the current user.
      * Displays each new notification via NotificationHelper and marks it read.
-     *   Attaches listeners to monitor user preferences and incoming notifications.
-     *       If user email is null, this method does nothing.
+     * Attaches listeners to monitor user preferences, blocked organizers, and incoming notifications.
+     * Notifications from blocked organizers are silently marked as read without being displayed.
+     * If user email is null, this method does nothing.
      *
-     *       @see #stop()
-     *       @see #attachNotificationsListener()
-     *       @see #detachNotificationsListener()
+     * @see #stop()
+     * @see #attachNotificationsListener()
+     * @see #detachNotificationsListener()
+     * @see #attachPreferencesListener()
      */
     public void start() {
         if (email == null) return;
+        
+        // Listen to user's preferences for blocked organizers
+        attachPreferencesListener();
+        
         // Listen to user doc for notificationsEnabled changes
         DocumentReference userRef = db.collection("users").document(email);
         prefRegistration = userRef.addSnapshotListener((snapshot, e) -> {
@@ -79,10 +90,46 @@ public class NotificationListener {
             else detachNotificationsListener();
         });
     }
+    
+    /**
+     * Attaches a listener to monitor the user's blocked organizer preferences.
+     * Updates the blockedEmails set whenever the preferences change.
+     */
+    private void attachPreferencesListener() {
+        if (email == null) return;
+        
+        DocumentReference prefRef = db.collection("users")
+                .document(email)
+                .collection("preferences")
+                .document("blockedOrganizers");
+        
+        preferencesRegistration = prefRef.addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.w(TAG, "preferences listener failed", e);
+                return;
+            }
+            
+            blockedEmails.clear();
+            if (snapshot != null && snapshot.exists()) {
+                Object blockedEmailsObj = snapshot.get("blockedEmails");
+                if (blockedEmailsObj instanceof java.util.List) {
+                    java.util.List<?> list = (java.util.List<?>) blockedEmailsObj;
+                    for (Object item : list) {
+                        if (item instanceof String) {
+                            blockedEmails.add((String) item);
+                        }
+                    }
+                    Log.d(TAG, "Updated blocked emails: " + blockedEmails.size() + " organizers blocked");
+                }
+            }
+        });
+    }
+    
     /**
      * Attaches the notifications listener to monitor incoming unread notifications.
      * Only attaches if not already attached and notifications are enabled.
      * Listens for new notifications ordered by creation time (newest first).
+     * Automatically filters out notifications from blocked organizers.
      *
      * @throws IllegalStateException if Firestore operations fail
      * @see NotificationHelper#showInAppDialog(Activity, String, String)
@@ -114,6 +161,16 @@ public class NotificationListener {
                                 continue; // Skip already read notifications
                             }
                             
+                            // Check if the organizer is blocked
+                            String fromOrganizerEmail = notif.getFromOrganizeremail();
+                            if (fromOrganizerEmail != null && blockedEmails.contains(fromOrganizerEmail)) {
+                                Log.d(TAG, "Skipping notification from blocked organizer: " + fromOrganizerEmail);
+                                // Mark as read silently so it doesn't show up again
+                                doc.getReference().update("read", true)
+                                        .addOnFailureListener(err -> Log.w(TAG, "Unable to mark blocked notif read", err));
+                                continue;
+                            }
+                            
                             // Double-check enabled
                             if (!enabled.get()) {
                                 // skip (but not delete)
@@ -143,7 +200,8 @@ public class NotificationListener {
     }
     /**
      * Stops all listeners and cleans up resources.
-     * Removes both preference and notification listeners.
+     * Removes preference, blocked organizers, and notification listeners.
+     * Clears the blocked emails cache.
      * Should be called when the activity is stopped or destroyed.
      *
      * @see #start()
@@ -153,7 +211,12 @@ public class NotificationListener {
             prefRegistration.remove();
             prefRegistration = null;
         }
+        if (preferencesRegistration != null) {
+            preferencesRegistration.remove();
+            preferencesRegistration = null;
+        }
         detachNotificationsListener();
+        blockedEmails.clear();
     }
 
 

@@ -65,7 +65,7 @@ public class Organizer extends User implements Serializable {
      * @param event The event template to create (currently unused in implementation)
      */
     public void createEvent(Event event) {
-        Event myevent = new Event(this);
+        event.setOrganizer(this);
     }
 
     /**

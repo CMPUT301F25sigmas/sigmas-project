@@ -1,2 +1,9 @@
 
-ACKNOWLEDGEMENT: THIS PROJECT USES A THIRD PARTY TOOL CALLED GLIDE-TECH BUMP PLEASE REFER TO THE LICENSE AND PLEASE REFER TO THE LINK BELOW: https://github.com/bumptech/glide.git
+# ACKNOWLEDGEMENTS:
+
+* Glide: A Media Management and Image Loading Framework for Android by Bump
+  * [Link to the GitHub Page](https://github.com/bumptech/glide.git)
+  * Licence: BSD, part MIT and Apache 2.0
+* ZXing: A Barcode Scanning Library
+  * [Link to the Github Page](https://github.com/zxing/zxing)
+  * Licence: Apache 2.0

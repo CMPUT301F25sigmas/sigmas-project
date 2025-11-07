@@ -32,7 +32,7 @@ public class EntrantProfileActivity extends EntrantBase {
     /**
      * Buttons for saving and canceling changes.
      */
-    private Button saveButton, cancelButton;
+    private Button saveButton, cancelButton, deleteProfileButton;
 
     /**
      * string for original email address
@@ -56,6 +56,7 @@ public class EntrantProfileActivity extends EntrantBase {
 
         saveButton = findViewById(R.id.createButton);
         cancelButton = findViewById(R.id.cancelButton);
+        deleteProfileButton = findViewById(R.id.deleteProfileButton);
 
         loadUserDetails();
         setupListeners();
@@ -93,6 +94,11 @@ public class EntrantProfileActivity extends EntrantBase {
 //        passwordEditIcon.setOnClickListener(v -> toggleEdit(passwordEdit, passwordEditIcon));
         saveButton.setOnClickListener(v -> saveChanges());
         cancelButton.setOnClickListener(v -> loadUserDetails());
+        deleteProfileButton.setOnClickListener(v -> {
+            userRepository.deleteUser(session.getUserEmail());
+            session.logoutAndRedirect(this);
+            Toast.makeText(this, "Successfully deleted profile.", Toast.LENGTH_SHORT).show();
+        });
     }
 
 //    private void toggleEdit(EditText editText, ImageView icon) {

@@ -6,10 +6,7 @@ import com.example.atlasevents.Entrant;
 import com.example.atlasevents.Organizer;
 import com.example.atlasevents.PasswordHasher;
 import com.example.atlasevents.User;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -336,5 +333,16 @@ public class UserRepository {
                 .update("blockedEmails", com.google.firebase.firestore.FieldValue.arrayRemove(organizerEmail))
                 .addOnSuccessListener(aVoid -> callback.onResult(false))
                 .addOnFailureListener(e -> callback.onFailure(e));
+    }
+
+    /**
+     * Deletes a user from Firestore by their email.
+     *
+     * @param userEmail The unique email of the user to delete.
+     */
+    public void deleteUser(String userEmail) {
+        db.collection("users")
+                .document(userEmail)
+                .delete();
     }
 }

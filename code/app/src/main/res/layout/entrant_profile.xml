@@ -12,8 +12,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="16dp"
         android:text="Entrant Profile"
         android:textColor="@color/black"
         android:textSize="34sp"
@@ -247,6 +247,15 @@
             android:backgroundTint="@color/background_grey"
             android:text="Cancel"
             android:textColor="@android:color/black" />
+
+        <Button
+            android:id="@+id/deleteProfileButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/background_red"
+            android:text="Delete Profile"
+            android:textColor="@android:color/white" />
     </LinearLayout>
 
     <RelativeLayout

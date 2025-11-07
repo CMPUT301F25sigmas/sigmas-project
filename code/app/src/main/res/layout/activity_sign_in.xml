@@ -86,44 +86,44 @@
             android:textColor="#1569BF" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:gravity="center_vertical"-->
+<!--        android:layout_marginBottom="16dp">-->
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@android:color/darker_gray"/>
+<!--        <View-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:background="@android:color/darker_gray"/>-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OR"
-            android:textColor="@color/black"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"/>
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="OR"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:layout_marginStart="8dp"-->
+<!--            android:layout_marginEnd="8dp"/>-->
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@android:color/darker_gray"/>
-    </LinearLayout>
+<!--        <View-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:background="@android:color/darker_gray"/>-->
+<!--    </LinearLayout>-->
 
-    <Button
-        android:id="@+id/googleSignInButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#1E2324"
-        android:drawableLeft="@drawable/ic_google_logo"
-        android:text="Sign in with Google"
-        android:textColor="@android:color/white"
-        android:paddingLeft="20dp"
-        android:layout_marginBottom="8dp"/>
+<!--    <Button-->
+<!--        android:id="@+id/googleSignInButton"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:backgroundTint="#1E2324"-->
+<!--        android:drawableLeft="@drawable/ic_google_logo"-->
+<!--        android:text="Sign in with Google"-->
+<!--        android:textColor="@android:color/white"-->
+<!--        android:paddingLeft="20dp"-->
+<!--        android:layout_marginBottom="8dp"/>-->
 
     <RelativeLayout
         android:layout_width="match_parent"

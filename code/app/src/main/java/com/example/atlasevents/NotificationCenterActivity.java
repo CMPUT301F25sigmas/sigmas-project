@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
@@ -154,6 +155,12 @@ public class NotificationCenterActivity extends AppCompatActivity {
             // Set the event name on the card
             TextView eventName = eventCard.findViewById(R.id.event_name);
             eventName.setText(event.getEventName());
+            ImageView eventImage = eventCard.findViewById(R.id.event_image);
+            if(!event.getImageUrl().isEmpty()){
+                Glide.with(this).load(event.getImageUrl()).into(eventImage);
+            } else {
+                eventImage.setImageResource(R.drawable.poster);
+            }
             
             // When card is clicked, open the notification composer for this event
             eventCard.setOnClickListener(v -> {

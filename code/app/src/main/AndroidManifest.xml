@@ -62,6 +62,12 @@
             android:name=".AdminDashboardActivity"
             android:exported="false" />
         <activity
+            android:name=".AdminImagesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ImageDetailsAdminActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignInActivity"
             android:exported="true">
             <intent-filter>

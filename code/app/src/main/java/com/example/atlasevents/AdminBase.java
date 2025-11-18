@@ -83,7 +83,12 @@ public abstract class AdminBase extends AppCompatActivity {
     }
 
     /** Opens the images management screen. */
-    protected void openImages() {}
+    protected void openImages() {
+        Intent intent = new Intent(this, AdminImagesActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /** Opens the organizers management screen. */
     protected void openOrganizers() {}

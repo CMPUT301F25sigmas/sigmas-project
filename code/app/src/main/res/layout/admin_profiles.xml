@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:text="Organizer Events"
+            android:text=""
             android:textColor="@color/black"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -38,16 +38,15 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Events List (shown when there are events) -->
             <ScrollView
-                android:id="@+id/events_scroll_view"
+                android:id="@+id/profiles_scroll_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="16dp"
+                android:paddingTop="16dp"
                 android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/events_container_organizer"
+                    android:id="@+id/profiles_container_organizer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -71,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:text="No Current Events to\ndisplay right now."
+                    android:text="No users to\ndisplay right now."
                     android:textAlignment="center"
                     android:textColor="#494949"
                     android:textSize="16sp" />

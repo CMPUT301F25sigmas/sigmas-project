@@ -88,6 +88,11 @@ public class EventManageActivity extends AppCompatActivity {
     /** Local list holding entrants currently on the waitlist. */
     private ArrayList<Entrant> entrantList;
 
+    private AtomicBoolean chosenVisible = new AtomicBoolean(false);
+    private AtomicBoolean waitlistVisible = new AtomicBoolean(false);
+    private AtomicBoolean cancelledVisible = new AtomicBoolean(false);
+    private AtomicBoolean enrolledVisible = new AtomicBoolean(false);
+
     /**
      * Called when the activity is first created.
      * <p>
@@ -111,10 +116,7 @@ public class EventManageActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        AtomicBoolean chosenVisible = new AtomicBoolean(false);
-        AtomicBoolean waitlistVisible = new AtomicBoolean(false);
-        AtomicBoolean cancelledVisible = new AtomicBoolean(false);
-        AtomicBoolean enrolledVisible = new AtomicBoolean(false);
+        
 
         ImageButton backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(view ->{
@@ -142,35 +144,35 @@ public class EventManageActivity extends AppCompatActivity {
         entrantAdapter = new EntrantRecyclerAdapter(entrantList);
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
-        loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+        loadData();
 
         waitingListButton.setOnClickListener(view ->{
             chosenVisible.set(false);
             waitlistVisible.set(true);
             cancelledVisible.set(false);
             enrolledVisible.set(false);
-            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+            loadData();
         });
         enrolledButton.setOnClickListener(view ->{
             chosenVisible.set(false);
             waitlistVisible.set(false);
             cancelledVisible.set(false);
             enrolledVisible.set(true);
-            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+            loadData();
         });
         cancelledButton.setOnClickListener(view ->{
             chosenVisible.set(false);
             waitlistVisible.set(false);
             cancelledVisible.set(true);
             enrolledVisible.set(false);
-            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+            loadData();
         });
         chosenButton.setOnClickListener(view ->{
             chosenVisible.set(true);
             waitlistVisible.set(false);
             cancelledVisible.set(false);
             enrolledVisible.set(false);
-            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+            loadData();
         });
     }
 
@@ -186,7 +188,7 @@ public class EventManageActivity extends AppCompatActivity {
      * activity is closed.
      * </p>
      */
-    private void loadData(AtomicBoolean waitlistVisible,AtomicBoolean chosenVisible, AtomicBoolean cancelledVisible, AtomicBoolean enrolledVisible) {
+    private void loadData() {
         eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(),
                 new EventRepository.EventCallback() {
                     @Override

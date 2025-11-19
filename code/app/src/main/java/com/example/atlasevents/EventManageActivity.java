@@ -1,11 +1,17 @@
 package com.example.atlasevents;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +27,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Activity for organizers to manage an existing event.
@@ -104,6 +111,15 @@ public class EventManageActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        AtomicBoolean chosenVisible = new AtomicBoolean(false);
+        AtomicBoolean waitlistVisible = new AtomicBoolean(false);
+        AtomicBoolean cancelledVisible = new AtomicBoolean(false);
+        AtomicBoolean enrolledVisible = new AtomicBoolean(false);
+
+        ImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(view ->{
+            finish();
+        });
 
         eventRepository = new EventRepository();
 
@@ -114,13 +130,48 @@ public class EventManageActivity extends AppCompatActivity {
         eventImageView = findViewById(R.id.eventPoster);
         waitingListCard = findViewById(R.id.waitingListViewCard);
         entrantsRecyclerView = findViewById(R.id.entrantsRecyclerView);
+        LinearLayout waitingListButton = findViewById(R.id.WaitingListButton);
+        LinearLayout enrolledButton = findViewById(R.id.enrolledButton);
+        LinearLayout cancelledButton = findViewById(R.id.cancelledButton);
+        LinearLayout chosenButton = findViewById(R.id.chosenButton);
+
+
+
 
         entrantList = new ArrayList<>();
         entrantAdapter = new EntrantRecyclerAdapter(entrantList);
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
+        loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
 
-        loadData();
+        waitingListButton.setOnClickListener(view ->{
+            chosenVisible.set(false);
+            waitlistVisible.set(true);
+            cancelledVisible.set(false);
+            enrolledVisible.set(false);
+            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+        });
+        enrolledButton.setOnClickListener(view ->{
+            chosenVisible.set(false);
+            waitlistVisible.set(false);
+            cancelledVisible.set(false);
+            enrolledVisible.set(true);
+            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+        });
+        cancelledButton.setOnClickListener(view ->{
+            chosenVisible.set(false);
+            waitlistVisible.set(false);
+            cancelledVisible.set(true);
+            enrolledVisible.set(false);
+            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+        });
+        chosenButton.setOnClickListener(view ->{
+            chosenVisible.set(true);
+            waitlistVisible.set(false);
+            cancelledVisible.set(false);
+            enrolledVisible.set(false);
+            loadData(waitlistVisible,chosenVisible,cancelledVisible,enrolledVisible);
+        });
     }
 
     /**
@@ -135,7 +186,7 @@ public class EventManageActivity extends AppCompatActivity {
      * activity is closed.
      * </p>
      */
-    private void loadData() {
+    private void loadData(AtomicBoolean waitlistVisible,AtomicBoolean chosenVisible, AtomicBoolean cancelledVisible, AtomicBoolean enrolledVisible) {
         eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(),
                 new EventRepository.EventCallback() {
                     @Override
@@ -157,7 +208,26 @@ public class EventManageActivity extends AppCompatActivity {
                         }
 
                         // Display waitlist if available
-                        if (event.getWaitlist() != null &&
+                        if (chosenVisible.get() &&
+                                event.getInviteList() != null &&
+                                event.getInviteList().getWaitList() != null &&
+                                !event.getInviteList().getWaitList().isEmpty()) {
+                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            waitingListCard.setVisibility(View.VISIBLE);
+                        }else if (cancelledVisible.get() &&
+                                event.getDeclinedList() != null &&
+                                event.getDeclinedList().getWaitList() != null &&
+                                !event.getDeclinedList().getWaitList().isEmpty()) {
+                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            waitingListCard.setVisibility(View.VISIBLE);
+                        } else if (enrolledVisible.get() &&
+                                event.getAcceptedList() != null &&
+                                event.getAcceptedList().getWaitList() != null &&
+                                !event.getAcceptedList().getWaitList().isEmpty()) {
+                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            waitingListCard.setVisibility(View.VISIBLE);
+                        } else if (waitlistVisible.get() &&
+                                event.getWaitlist() != null &&
                                 event.getWaitlist().getWaitList() != null &&
                                 !event.getWaitlist().getWaitList().isEmpty()) {
                             entrantAdapter.setEntrants(event.getWaitlist().getWaitList());

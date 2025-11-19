@@ -9,6 +9,7 @@ import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -88,6 +89,9 @@ public class EventManageActivity extends AppCompatActivity {
     /** Local list holding entrants currently on the waitlist. */
     private ArrayList<Entrant> entrantList;
 
+    /**
+     * These booleans are for which list is visible, controlled by clicking on the list cards
+     */
     private AtomicBoolean chosenVisible = new AtomicBoolean(false);
     private AtomicBoolean waitlistVisible = new AtomicBoolean(false);
     private AtomicBoolean cancelledVisible = new AtomicBoolean(false);
@@ -116,11 +120,17 @@ public class EventManageActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        
 
+        /**
+         * back button
+         */
         ImageButton backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(view ->{
             finish();
+        });
+        Button drawLotteryButton = findViewById(R.id.drawLotteryButton);
+        drawLotteryButton.setOnClickListener(view ->{
+            //draw lottery
         });
 
         eventRepository = new EventRepository();
@@ -146,6 +156,9 @@ public class EventManageActivity extends AppCompatActivity {
         entrantsRecyclerView.setAdapter(entrantAdapter);
         loadData();
 
+        /**
+         * Listeners for list cards
+         */
         waitingListButton.setOnClickListener(view ->{
             chosenVisible.set(false);
             waitlistVisible.set(true);
@@ -181,7 +194,7 @@ public class EventManageActivity extends AppCompatActivity {
      * <p>
      * Retrieves the event details such as name, date, location, image,
      * and waitlist. Once loaded, the method updates the UI elements and
-     * populates the entrant list if applicable.
+     * populates the entrant list if applicable based on listVisible booleans.
      * </p>
      * <p>
      * If the event retrieval fails, a toast message is displayed and the
@@ -209,24 +222,24 @@ public class EventManageActivity extends AppCompatActivity {
                             eventImageView.setImageResource(R.drawable.poster);
                         }
 
-                        // Display waitlist if available
+                        // Display waitlist or other lists if available
                         if (chosenVisible.get() &&
                                 event.getInviteList() != null &&
                                 event.getInviteList().getWaitList() != null &&
                                 !event.getInviteList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            entrantAdapter.setEntrants(event.getInviteList().getWaitList());
                             waitingListCard.setVisibility(View.VISIBLE);
                         }else if (cancelledVisible.get() &&
                                 event.getDeclinedList() != null &&
                                 event.getDeclinedList().getWaitList() != null &&
                                 !event.getDeclinedList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            entrantAdapter.setEntrants(event.getDeclinedList().getWaitList());
                             waitingListCard.setVisibility(View.VISIBLE);
                         } else if (enrolledVisible.get() &&
                                 event.getAcceptedList() != null &&
                                 event.getAcceptedList().getWaitList() != null &&
                                 !event.getAcceptedList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
+                            entrantAdapter.setEntrants(event.getAcceptedList().getWaitList());
                             waitingListCard.setVisibility(View.VISIBLE);
                         } else if (waitlistVisible.get() &&
                                 event.getWaitlist() != null &&

@@ -11,48 +11,49 @@ import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
 import java.util.ArrayList;
 
 /**
- * Activity displaying the admin's dashboard with a list of available events.
+ * Activity displaying the admin's dashboard with a list of users.
  * <p>
  * This activity extends {@link AdminBase} to provide the navigation sidebar and
- * displays all events retrieved from Firebase. Events are shown as cards that admins
- * can tap to view detailed information. The activity handles fetching events from
- * the repository and dynamically creating event card views.
+ * displays all users retrieved from Firebase based on type. Users are shown as cards
+ * that admins can tap to view detailed information. The activity handles fetching
+ * users from the repository and dynamically creating user card views.
  * </p>
  *
  * @see AdminBase
- * @see Event
- * @see EventRepository
- * @see EventDetailsActivity
+ * @see User
+ * @see UserRepository
+ * @see UserDetailsAdminActivity
  */
 public class AdminProfilesActivity extends AdminBase {
 
     /**
-     * Container layout that holds all event card views.
+     * Container layout that holds all user card views.
      */
-    private LinearLayout profilesContainer;
+    private LinearLayout usersContainer;
 
     /**
-     * Repository for fetching event data from Firebase.
+     * Repository for fetching user data from Firebase.
      */
     private UserRepository userRepository;
 
     /**
-     * Scroll view containing the list of events.
+     * Scroll view containing the list of users.
      */
-    private ScrollView profilesScrollView;
+    private ScrollView usersScrollView;
 
     /**
-     * Layout for displaying a message when no events are available.
+     * Layout for displaying a message when no users are available.
      */
     private LinearLayout emptyState;
 
+    /**
+     * The type of users to display
+     */
     private String userType;
 
     @Override
@@ -65,23 +66,23 @@ public class AdminProfilesActivity extends AdminBase {
         TextView pageTitle = findViewById(R.id.page_title);
         pageTitle.setText(userType.equals("Entrant")? "Entrants" : "Organizers");
 
-        profilesContainer = findViewById(R.id.profiles_container_organizer);
+        usersContainer = findViewById(R.id.profiles_container_organizer);
         userRepository = new UserRepository();
 
-        profilesScrollView = findViewById(R.id.profiles_scroll_view);
+        usersScrollView = findViewById(R.id.profiles_scroll_view);
         emptyState = findViewById(R.id.empty_state);
 
         emptyState.setVisibility(View.GONE);
-        profilesScrollView.setVisibility(View.GONE);
+        usersScrollView.setVisibility(View.GONE);
 
         loadProfilesFromFirebase();
     }
 
     /**
-     * Fetches all events from Firebase and displays them.
+     * Fetches users from Firebase based on type and displays them.
      * <p>
-     * Makes an asynchronous call to the event repository to retrieve all available
-     * events. On success, the events are passed to {@link #displayEvents(ArrayList)}
+     * Makes an asynchronous call to the event repository to retrieve all applicable
+     * users. On success, the users are passed to {@link #displayUsers(ArrayList)}
      * for rendering. On failure, {@link #showEmptyState()} is called to show an
      * empty state layout.
      * </p>
@@ -93,7 +94,7 @@ public class AdminProfilesActivity extends AdminBase {
                 if (users.isEmpty()) {
                     showEmptyState();
                 } else {
-                    displayEvents(users);
+                    displayUsers(users);
                 }
             }
 
@@ -105,24 +106,24 @@ public class AdminProfilesActivity extends AdminBase {
     }
 
     /**
-     * Displays a list of events as card views in the events container.
+     * Displays a list of users as card views in the users container.
      * <p>
-     * Clears any existing event cards and dynamically inflates new card views
-     * for each event in the list. Each card shows the event name and image,
-     * and is clickable to open event details.
+     * Clears any existing user cards and dynamically inflates new card views
+     * for each user in the list. Each card shows the user and is clickable
+     * to open event details.
      * </p>
      *
-     * @param events The list of events to display
+     * @param users The list of users to display
      */
-    private void displayEvents(ArrayList<User> users) {
+    private void displayUsers(ArrayList<User> users) {
         emptyState.setVisibility(View.GONE);
-        profilesScrollView.setVisibility(View.VISIBLE);
-        profilesContainer.removeAllViews();
+        usersScrollView.setVisibility(View.VISIBLE);
+        usersContainer.removeAllViews();
 
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (User user : users) {
-            View userCard = inflater.inflate(R.layout.profile_card_admin_item, profilesContainer, false);
+            View userCard = inflater.inflate(R.layout.profile_card_admin_item, usersContainer, false);
 
             ImageView menuButton = userCard.findViewById(R.id.menu_button);
             TextView userName = userCard.findViewById(R.id.user_name);
@@ -150,7 +151,7 @@ public class AdminProfilesActivity extends AdminBase {
                 });
             });
 
-            profilesContainer.addView(userCard);
+            usersContainer.addView(userCard);
         }
     }
 
@@ -167,10 +168,10 @@ public class AdminProfilesActivity extends AdminBase {
     }
 
     /**
-     * Shows the empty state layout with a message and hides the events scroll view.
+     * Shows the empty state layout with a message and hides the users scroll view.
      */
     private void showEmptyState() {
         emptyState.setVisibility(View.VISIBLE);
-        profilesScrollView.setVisibility(View.GONE);
+        usersScrollView.setVisibility(View.GONE);
     }
 }

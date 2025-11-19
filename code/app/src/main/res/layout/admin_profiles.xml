@@ -70,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:text="No images to\ndisplay right now."
+                    android:text="No users to\ndisplay right now."
                     android:textAlignment="center"
                     android:textColor="#494949"
                     android:textSize="16sp" />

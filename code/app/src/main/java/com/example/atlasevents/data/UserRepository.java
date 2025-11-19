@@ -42,6 +42,9 @@ public class UserRepository {
         void onUserFetched(User user);
     }
 
+    /**
+     * Callback interface for operations that return a list of users.
+     */
     public interface UsersCallback {
         /**
          * Called when the event retrieval operation succeeds.
@@ -149,6 +152,11 @@ public class UserRepository {
                 .addOnFailureListener(e -> listener.onUserFetched(null));
     }
 
+    /**
+     * Fetches users from Firestore with the matching user type.
+     *
+     * @param callback The {@link UsersCallback} to handle success or failure.
+     */
     public void getUsers(String type, UsersCallback callback) {
         db.collection("users")
                 .whereEqualTo("userType", type)

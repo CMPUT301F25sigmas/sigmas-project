@@ -18,24 +18,24 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 
 /**
- * Activity for displaying detailed information about an event.
+ * Activity for displaying detailed information about a user.
  * <p>
- * This activity shows image details including the event name and organizer.
- * It also provides functionality to delete images.
+ * This activity shows user details including the user name, user email and
+ * phone number if applicable. It also provides functionality to delete users.
  * </p>
  * <p>
- * The event object is passed to this activity via an Intent extra using the
+ * The user object is passed to this activity via an Intent extra using the
  * {@link #UserKey} identifier.
  * </p>
  *
- * @see Event
+ * @see User
  */
 public class UserDetailsAdminActivity extends AppCompatActivity {
 
     /**
-     * Key used to pass the Event object through Intent extras.
+     * Key used to pass the User object through Intent extras.
      * This constant should be used when starting this activity to include
-     * the event data in the intent.
+     * the user data in the intent.
      */
     public static final String UserKey = "com.example.atlasevents.USER";
 
@@ -46,17 +46,18 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
     /**
      * Called when the activity is first created.
      * <p>
-     * Initializes the UI components and populates them with event data retrieved
+     * Initializes the UI components and populates them with user data retrieved
      * from the Intent extras. Sets up click listeners for the delete and back
      * arrow buttons.
      * </p>
      * <p>
-     * The event object is retrieved using {@link #UserKey} and its details are
+     * The user object is retrieved using {@link #UserKey} and its details are
      * displayed including:
      * </p>
      * <ul>
-     *   <li>Event name</li>
-     *   <li>Organizer name</li>
+     *   <li>User name</li>
+     *   <li>User email</li>
+     *   <li>Phone number (if applicable)</li>
      * </ul>
      *
      * @param savedInstanceState If the activity is being re-initialized after previously
@@ -89,12 +90,12 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays image details on the screen.
+     * Displays user details on the screen.
      * <p>
-     * Populates all text fields and loads the event image using Glide.
+     * Populates all text fields.
      * </p>
      *
-     * @param user The {@link Event} object containing event information.
+     * @param user The {@link User} object containing user information.
      */
     private void displayUserDetails(User user) {
         pageTitle.setText(user.getUserType());

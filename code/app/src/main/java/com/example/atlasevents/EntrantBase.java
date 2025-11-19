@@ -1,6 +1,7 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
@@ -10,6 +11,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.material.card.MaterialCardView;
 
 /**
  * Abstract base activity for all entrant-related screens in the Atlas Events application.
@@ -73,6 +75,17 @@ public abstract class EntrantBase extends AppCompatActivity {
     }
 
     /**
+     * Sets the active state for the current screen's navigation icon.
+     */
+    protected void setActiveNavItem(int iconCardId) {
+        ((MaterialCardView) findViewById(R.id.profile_icon)).setCardBackgroundColor(Color.parseColor("#676767"));
+        ((MaterialCardView) findViewById(R.id.events_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+        ((MaterialCardView) findViewById(R.id.search_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+
+        ((MaterialCardView) findViewById(iconCardId)).setCardBackgroundColor(Color.parseColor("#E8DEF8"));
+    }
+
+    /**
      * Opens the settings screen.
      */
     protected void openSettings() {}
@@ -121,8 +134,6 @@ public abstract class EntrantBase extends AppCompatActivity {
     protected void openNotifications() {
         Intent intent = new Intent(this, NotificationHistoryActivity.class);
         startActivity(intent);
-        finish();
-        overridePendingTransition(0, 0);
     }
     protected void openQrReader() {
         //Need to do

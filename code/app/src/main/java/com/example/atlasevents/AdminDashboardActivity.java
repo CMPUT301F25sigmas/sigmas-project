@@ -60,6 +60,7 @@ public class AdminDashboardActivity extends AdminBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.admin_dashboard);
+        setActiveNavItem(R.id.events_icon_card);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();

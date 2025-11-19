@@ -62,6 +62,8 @@ public class AdminImagesActivity extends AdminBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.admin_images);
+        setActiveNavItem(R.id.images_icon_card);
+
         uploader = new ImageUploader();
 
         imagesContainer = findViewById(R.id.events_container_organizer);

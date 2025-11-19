@@ -3,11 +3,14 @@ package com.example.atlasevents.data;
 import androidx.annotation.NonNull;
 
 import com.example.atlasevents.Entrant;
+import com.example.atlasevents.Event;
 import com.example.atlasevents.Organizer;
 import com.example.atlasevents.PasswordHasher;
 import com.example.atlasevents.User;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +40,22 @@ public class UserRepository {
      */
     public interface OnUserFetchedListener {
         void onUserFetched(User user);
+    }
+
+    public interface UsersCallback {
+        /**
+         * Called when the event retrieval operation succeeds.
+         *
+         * @param users A list of {@link Event} objects.
+         */
+        void onSuccess(ArrayList<User> users);
+
+        /**
+         * Called when the event retrieval operation fails.
+         *
+         * @param e The exception thrown.
+         */
+        void onFailure(Exception e);
     }
 
     /**
@@ -128,6 +147,23 @@ public class UserRepository {
                     }
                 })
                 .addOnFailureListener(e -> listener.onUserFetched(null));
+    }
+
+    public void getUsers(String type, UsersCallback callback) {
+        db.collection("users")
+                .whereEqualTo("userType", type)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    ArrayList<User> users = new ArrayList<>();
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        User user = document.toObject(User.class);
+                        if (user != null) {
+                            users.add(user);
+                        }
+                    }
+                    callback.onSuccess(users);
+                })
+                .addOnFailureListener(callback::onFailure);
     }
 
     /**

@@ -64,7 +64,7 @@ public abstract class AdminBase extends AppCompatActivity {
         findViewById(R.id.events_icon).setOnClickListener(v -> openEvents());
         findViewById(R.id.images_icon).setOnClickListener(v -> openImages());
         findViewById(R.id.organizers_icon).setOnClickListener(v -> openOrganizers());
-        findViewById(R.id.profiles_icon).setOnClickListener(v -> openProfiles());
+        findViewById(R.id.profiles_icon).setOnClickListener(v -> openEntrants());
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
 
@@ -91,10 +91,22 @@ public abstract class AdminBase extends AppCompatActivity {
     }
 
     /** Opens the organizers management screen. */
-    protected void openOrganizers() {}
+    protected void openOrganizers() {
+        Intent intent = new Intent(this, AdminProfilesActivity.class);
+        intent.putExtra("userType", "Organizer");
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /** Opens the profiles management screen. */
-    protected void openProfiles() {}
+    protected void openEntrants() {
+        Intent intent = new Intent(this, AdminProfilesActivity.class);
+        intent.putExtra("userType", "Entrant");
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /**
      * Inflates and adds a layout to the content container.

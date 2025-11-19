@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="theme">#DFCFFB</color>
     <color name="background_grey">#E8E8E8</color>
+    <color name="dark_grey">#717171</color>
     <color name="background_red">#FF0000</color>
     <color name="light_purple">#8152E5</color>
     <color name="text_color">#1B1A1A</color>

@@ -65,7 +65,13 @@
             android:name=".AdminImagesActivity"
             android:exported="false" />
         <activity
+            android:name=".AdminProfilesActivity"
+            android:exported="false" />
+        <activity
             android:name=".ImageDetailsAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserDetailsAdminActivity"
             android:exported="false" />
         <activity
             android:name=".SignInActivity"

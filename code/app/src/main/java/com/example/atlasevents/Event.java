@@ -267,5 +267,22 @@ public class Event implements Serializable {
         }
     }
 
+    /**
+     * This method converts string date to timestamp
+     *
+     * @param event
+     * @return date
+     */
+    public static long getEventTimestamp(Event event) {
+        try {
+            String dateTime = event.getDate() + " " + event.getTime();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+            Date date = sdf.parse(dateTime);
+            return date != null ? date.getTime() : 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 
 }

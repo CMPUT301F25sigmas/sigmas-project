@@ -2,13 +2,18 @@ package com.example.atlasevents;
 
 import android.content.Intent;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
@@ -54,6 +59,11 @@ public class EntrantDashboardActivity extends EntrantBase {
      */
     private LinearLayout emptyState;
 
+    private Button currentButton, pastButton;
+    private ArrayList<Event> userEvents = new ArrayList<>();
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +78,12 @@ public class EntrantDashboardActivity extends EntrantBase {
             Intent intent = new Intent(this, NotificationHistoryActivity.class);
             startActivity(intent);
         });
+
+        currentButton = findViewById(R.id.filterCurrentButton);
+        pastButton = findViewById(R.id.filterPastButton);
+
+        currentButton.setOnClickListener(v -> filterEvents(true));
+        pastButton.setOnClickListener(v -> filterEvents(false));
 
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);
@@ -115,7 +131,9 @@ public class EntrantDashboardActivity extends EntrantBase {
                 if (events.isEmpty()) {
                     showEmptyState();
                 } else {
-                    displayEvents(events);
+                    userEvents.clear();
+                    userEvents.addAll(events);
+                    displayEvents(userEvents);
                 }
             }
 
@@ -163,6 +181,56 @@ public class EntrantDashboardActivity extends EntrantBase {
             eventCard.setOnClickListener(v -> openEventDetails(event));
 
             eventsContainer.addView(eventCard);
+        }
+    }
+
+    /**
+     * Filters the list of events based on the current button state.
+     *
+     * @param showActive
+     * @see #displayEvents(ArrayList)
+     */
+    private void filterEvents(boolean showActive) {
+        long currentTime = System.currentTimeMillis();
+        ArrayList<Event> filtered = new ArrayList<>();
+
+        // Reset both button UI states here (no helpers)
+        currentButton.setBackgroundTintList(ColorStateList.valueOf(
+                ContextCompat.getColor(this, R.color.background_grey)));
+        pastButton.setBackgroundTintList(ColorStateList.valueOf(
+                ContextCompat.getColor(this, R.color.background_grey)));
+
+        if (showActive) {
+            // Highlight active button
+            currentButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.light_purple)));
+
+            // Condition: Future events = Active
+            for (Event event : userEvents) {
+                long eventTime = Event.getEventTimestamp(event);
+                if (eventTime > currentTime) {
+                    filtered.add(event);
+                }
+            }
+        } else {
+            // Highlight closed button
+            pastButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.light_purple)));
+
+            // Condition: Already expired = Closed
+            for (Event event : userEvents) {
+                long eventTime = Event.getEventTimestamp(event);
+                long eventEnd = eventTime + 24 * 60 * 60 * 1000; // 24 hours
+                if (eventEnd < currentTime) {
+                    filtered.add(event);
+                }
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            showEmptyState();
+        } else {
+            displayEvents(filtered);
         }
     }
 

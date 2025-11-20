@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:text="Organizer Events"
+            android:text="Images"
             android:textColor="@color/black"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -71,7 +71,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:text="No Current Events to\ndisplay right now."
+                    android:text="No images to\ndisplay right now."
                     android:textAlignment="center"
                     android:textColor="#494949"
                     android:textSize="16sp" />

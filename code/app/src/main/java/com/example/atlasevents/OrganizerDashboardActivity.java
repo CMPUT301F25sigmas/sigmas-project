@@ -99,6 +99,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.organizer_dashboard_empty);
+        setActiveNavItem(R.id.events_icon_card);
         session = new Session(this);
 
         // Set up notification icon click listener

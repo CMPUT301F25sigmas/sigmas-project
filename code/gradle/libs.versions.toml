@@ -16,6 +16,7 @@ firebaseMessaging = "25.0.1"
 firebaseAuth = "24.0.1"
 runtime = "1.0.0-alpha07"
 roomExternalAntlr = "2.8.3"
+fragment = "1.8.9"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -34,6 +35,7 @@ firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 runtime = { group = "androidx.xr.runtime", name = "runtime", version.ref = "runtime" }
 room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
+fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -58,16 +58,17 @@ public class EntrantDashboardActivity extends EntrantBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.entrant_dashboard);
+        setActiveNavItem(R.id.events_icon_card);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
         session = new Session(this);
 
         // Set up notification icon click listener
-        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
-            Intent intent = new Intent(this, NotificationHistoryActivity.class);
-            startActivity(intent);
-        });
+//        findViewById(R.id.notifications_icon).setOnClickListener(v -> {
+//            Intent intent = new Intent(this, NotificationHistoryActivity.class);
+//            startActivity(intent);
+//        });
 
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);

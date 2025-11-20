@@ -1,6 +1,7 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
@@ -10,6 +11,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.material.card.MaterialCardView;
 
 /**
  * Base activity for all organizer-related screens in the application.
@@ -101,6 +103,16 @@ public abstract class OrganizerBase extends AppCompatActivity {
     }
 
     /**
+     * Sets the active state for the current screen's navigation icon.
+     */
+    protected void setActiveNavItem(int iconCardId) {
+        ((MaterialCardView) findViewById(R.id.profile_icon)).setCardBackgroundColor(Color.parseColor("#676767"));
+        ((MaterialCardView) findViewById(R.id.events_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+
+        ((MaterialCardView) findViewById(iconCardId)).setCardBackgroundColor(Color.parseColor("#E8DEF8"));
+    }
+
+    /**
      * Opens the settings screen.
      * <p>
      * Default implementation is empty. Child classes can override to provide
@@ -156,7 +168,10 @@ public abstract class OrganizerBase extends AppCompatActivity {
      * notifications functionality.
      * </p>
      */
-    protected void openNotifications() {}
+    protected void openNotifications() {
+        Intent intent = new Intent(this, NotificationCenterActivity.class);
+        startActivity(intent);
+    }
 
     /**
      * Inflates a layout resource into the content container.

@@ -61,6 +61,7 @@ public class EntrantSearchActivity extends EntrantBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.entrant_search);
+        setActiveNavItem(R.id.search_icon_card);
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();

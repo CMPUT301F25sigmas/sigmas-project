@@ -3,6 +3,7 @@ package com.example.atlasevents.data;
 import android.util.Log;
 
 import com.example.atlasevents.Event;
+import com.example.atlasevents.utils.ImageUploader;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -22,9 +23,15 @@ public class EventRepository {
     /** Reference to the Firestore database instance. */
     private FirebaseFirestore db;
 
+    /**
+     * Utility for uploading and deleting images from Firebase Storage.
+     */
+    private ImageUploader uploader;
+
     /** Initializes the repository and connects to Firestore. */
     public EventRepository() {
         db = FirebaseFirestore.getInstance();
+        uploader = new ImageUploader();
     }
 
     /**
@@ -227,12 +234,25 @@ public class EventRepository {
      * Deletes an event from Firestore by its ID.
      *
      * @param eventId The unique identifier of the event to delete.
-     * @return A {@link Task} that resolves when deletion is complete.
      */
-    public Task<Void> deleteEvent(String eventId) {
-        return db.collection("events")
-                .document(eventId)
-                .delete();
+    public void deleteEvent(String eventId) {
+        DocumentReference ref = db.collection("events").document(eventId);
+        ref.get().onSuccessTask(documentSnapshot -> {
+            Event event = documentSnapshot.toObject(Event.class);
+            assert event != null;
+            if (!event.getImageUrl().isEmpty()) {
+                uploader.deleteImage(event.getImageUrl(), new ImageUploader.DeleteCallback() {
+                    @Override
+                    public void onSuccess() {
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                    }
+                });
+            }
+            return ref.delete();
+        });
     }
 
     /**

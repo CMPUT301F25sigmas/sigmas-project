@@ -8,8 +8,7 @@
     android:gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingTop="16dp"
-    android:paddingBottom="16dp"
-    tools:context=".MainActivity">
+    android:paddingBottom="16dp">
 
     <!-- Profile Item -->
     <ImageView
@@ -19,12 +18,13 @@
         android:layout_marginBottom="24dp"
         app:srcCompat="@drawable/settings_icon" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/profile_icon"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:layout_marginBottom="24dp"
         app:cardBackgroundColor="#676767"
+        app:strokeWidth="0dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp">
 
@@ -34,7 +34,7 @@
             android:layout_gravity="center"
             android:src="@drawable/person_icon"
             app:tint="@android:color/white" />
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 
     <!-- My Events Item -->
@@ -47,19 +47,20 @@
         android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/events_icon_card"
             android:layout_width="64dp"
             android:layout_height="32dp"
             android:layout_marginBottom="4dp"
-            app:cardBackgroundColor="#676767"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:strokeWidth="0dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:src="@drawable/star_icon"
-                app:tint="@android:color/white" />
+                android:src="@drawable/star_icon" />
 
         </com.google.android.material.card.MaterialCardView>
 
@@ -80,11 +81,23 @@
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/create_events_icon_card"
+            android:layout_width="64dp"
+            android:layout_height="32dp"
             android:layout_marginBottom="4dp"
-            android:src="@drawable/calender_icon" />
+            app:cardBackgroundColor="@android:color/transparent"
+            app:strokeWidth="0dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/calender_icon" />
+
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:layout_width="wrap_content"

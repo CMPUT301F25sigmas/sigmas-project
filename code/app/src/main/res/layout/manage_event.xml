@@ -109,26 +109,30 @@
                 app:cardElevation="4dp"
                 app:cardUseCompatPadding="true"
                 app:cardBackgroundColor="@color/background_grey">
+
                 <LinearLayout
+                    android:id="@+id/WaitingListButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:padding="16dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Waiting List"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"/>
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp" />
+
                     <TextView
                         android:id="@+id/waitingListCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -142,26 +146,30 @@
                 app:cardElevation="4dp"
                 app:cardUseCompatPadding="true"
                 app:cardBackgroundColor="@color/background_grey">
+
                 <LinearLayout
+                    android:id="@+id/chosenButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:padding="16dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Chosen"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"/>
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp" />
+
                     <TextView
                         android:id="@+id/chosenCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -175,26 +183,30 @@
                 app:cardElevation="4dp"
                 app:cardUseCompatPadding="true"
                 app:cardBackgroundColor="@color/background_grey">
+
                 <LinearLayout
+                    android:id="@+id/cancelledButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:padding="16dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Cancelled"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"/>
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp" />
+
                     <TextView
                         android:id="@+id/cancelledCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -208,26 +220,30 @@
                 app:cardElevation="4dp"
                 app:cardUseCompatPadding="true"
                 app:cardBackgroundColor="@color/background_grey">
+
                 <LinearLayout
+                    android:id="@+id/enrolledButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:padding="16dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Final Enrolled"
-                        android:textSize="16sp"
-                        android:textColor="@android:color/black"/>
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp" />
+
                     <TextView
                         android:id="@+id/finalEnrolledCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -365,24 +381,24 @@
             android:id="@+id/waitingListViewCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardUseCompatPadding="true"
-            app:cardCornerRadius="8dp"
             android:visibility="gone"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="8dp"
             app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/white">
+            app:cardUseCompatPadding="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/white"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:background="@color/white">
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="@color/white">
+                    android:background="@color/white"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/listTitle"
@@ -400,7 +416,7 @@
                         android:orientation="vertical">
 
                         <ImageView
-                            android:id="@+id/imageView5"
+                            android:id="@+id/downloadButton"
                             android:layout_width="36dp"
                             android:layout_height="36dp"
                             app:srcCompat="@drawable/download" />
@@ -413,7 +429,7 @@
                     android:id="@+id/entrantsRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"/>
+                    android:layout_marginTop="8dp" />
 
             </LinearLayout>
 

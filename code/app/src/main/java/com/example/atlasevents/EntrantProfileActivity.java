@@ -43,6 +43,7 @@ public class EntrantProfileActivity extends EntrantBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.entrant_profile);
+        setActiveNavItem(R.id.profile_icon);
 
         nameEdit = findViewById(R.id.name);
         emailEdit = findViewById(R.id.email);

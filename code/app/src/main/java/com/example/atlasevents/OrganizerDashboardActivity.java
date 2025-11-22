@@ -175,7 +175,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
     void loadOrganizerEvents() {
         userRepository.getOrganizer(session.getUserEmail(), organizer -> {
             if (organizer != null) {
-                eventRepository.getAllEvents(new EventRepository.EventsCallback() {
+                eventRepository.getEventsByOrganizer(organizer.getEmail(), new EventRepository.EventsCallback() {
                     @Override
                     public void onSuccess(ArrayList<Event> events) {
                         if (events.isEmpty()) {

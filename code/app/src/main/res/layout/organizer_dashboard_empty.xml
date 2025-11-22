@@ -21,7 +21,7 @@
             android:layout_height="50dp"
             android:layout_marginHorizontal="6dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/background_grey"
+            android:backgroundTint="@color/light_purple"
             android:text="All"
             android:textColor="@color/text_color"
             android:padding="0dp"

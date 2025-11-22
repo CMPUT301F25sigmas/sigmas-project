@@ -6,7 +6,6 @@ plugins {
 android {
     namespace = "com.example.atlasevents"
     compileSdk = 36
-
     defaultConfig {
         applicationId = "com.example.atlasevents"
         minSdk = 24

@@ -155,6 +155,7 @@
                         android:textSize="16sp"
                         android:textColor="@android:color/black"/>
                     <TextView
+                        android:id="@+id/chosenCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -187,6 +188,7 @@
                         android:textSize="16sp"
                         android:textColor="@android:color/black"/>
                     <TextView
+                        android:id="@+id/cancelledCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -219,6 +221,7 @@
                         android:textSize="16sp"
                         android:textColor="@android:color/black"/>
                     <TextView
+                        android:id="@+id/finalEnrolledCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -230,6 +233,47 @@
 
         </GridLayout>
 
+        <!-- Lottery Timer Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/colorAccent"
+            android:visibility="gone"
+            android:id="@+id/lotteryTimerCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lottery Countdown"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/timerTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lottery available in: --:--:--"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:gravity="center"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
         <Button
             android:id="@+id/drawLotteryButton"
             android:layout_width="match_parent"
@@ -237,7 +281,55 @@
             android:text="Draw Lottery"
             android:drawableLeft="@drawable/dice"
             android:textColor="@color/white"
-            android:layout_margin="16dp"/>
+            android:layout_margin="16dp"
+            android:enabled="false"
+            android:alpha="0.6"/>
+
+        <ProgressBar
+            android:id="@+id/lotteryProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- Lottery Status Information -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/background_grey">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Lottery Status"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/lotteryStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Loading event details..."
+                    android:textSize="14sp"
+                    android:textColor="@color/black"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -266,6 +358,7 @@
                 android:text="Show map"
                 android:textColor="@color/white"
                 android:layout_marginStart="8dp"/>
+
         </LinearLayout>
 
         <androidx.cardview.widget.CardView

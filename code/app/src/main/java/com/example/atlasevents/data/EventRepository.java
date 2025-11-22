@@ -3,7 +3,7 @@ package com.example.atlasevents.data;
 import android.util.Log;
 
 import com.example.atlasevents.Event;
-import com.example.atlasevents.ImageUploader;
+import com.example.atlasevents.utils.ImageUploader;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;

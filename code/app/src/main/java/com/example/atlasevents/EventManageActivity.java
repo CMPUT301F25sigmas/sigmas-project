@@ -273,7 +273,7 @@ public class EventManageActivity extends AppCompatActivity {
                         eventNameTextView.setText(event.getEventName());
                         waitlistCountTextView.setText(String.valueOf(
                                 event.getWaitlist() != null ? event.getWaitlist().size() : 0));
-                        dateTextView.setText(event.getDate());
+                        dateTextView.setText(event.getDateFormatted());
                         locationTextView.setText(event.getAddress());
 
                         // Load event image using Glide

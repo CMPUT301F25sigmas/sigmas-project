@@ -141,7 +141,7 @@ public class EventDetailsAdminActivity extends AppCompatActivity {
         organizerNameTextView.setText(event.getOrganizer().getName());
         descriptionTextView.setText(event.getDescription());
         locationTextView.setText(event.getAddress());
-        dateTextView.setText(event.getDate());
+        dateTextView.setText(event.getDateFormatted());
         timeTextView.setText(event.getTime());
 
         waitlistCountTextView.setText(String.valueOf(

@@ -1,6 +1,5 @@
 package com.example.atlasevents;
 
-import android.content.ContentResolver;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +21,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.utils.DatePickerHelper;
+import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.TimePickerHelper;
 
 /**
  * Activity for editing existing event details.
@@ -95,12 +97,7 @@ public class EditEventActivity extends AppCompatActivity {
     /**
      * EditText field for the registration start date.
      */
-    private EditText regStartDateEditText;
-
-    /**
-     * EditText field for the registration end date.
-     */
-    private EditText regEndDateEditText;
+    private EditText regDateRange;
 
     /**
      * EditText field for the event description.
@@ -160,6 +157,21 @@ public class EditEventActivity extends AppCompatActivity {
     private String oldImageURL = "";
 
     /**
+     * The date picker to pick the start date of the event
+     */
+    private DatePickerHelper startDatePicker;
+
+    /**
+     * The date picker to pick the registration period
+     */
+    private DatePickerHelper registrationPeriodPicker;
+
+    /**
+     * The time picker to pick the start time
+     */
+    private TimePickerHelper timePicker;
+
+    /**
      * Called when the activity is first created.
      * <p>
      * Initializes the UI components, sets up the image picker, configures all
@@ -183,6 +195,10 @@ public class EditEventActivity extends AppCompatActivity {
             return insets;
         });
 
+        startDatePicker = new DatePickerHelper();
+        registrationPeriodPicker = new DatePickerHelper(Boolean.TRUE);
+        timePicker = new TimePickerHelper();
+
         ImageButton backButton = findViewById(R.id.createBackButton);
         backButton.setOnClickListener(view -> finish());
 
@@ -190,9 +206,27 @@ public class EditEventActivity extends AppCompatActivity {
 
         nameEditText = findViewById(R.id.nameEditText);
         dateEditText = findViewById(R.id.dateEditText);
+        dateEditText.setOnClickListener(v -> {
+            startDatePicker.showPicker(getSupportFragmentManager(), (startDate, endDate) -> {
+                dateEditText.setText(startDatePicker.getStartDateFormatted());
+            });
+        });
+
         timeEditText = findViewById(R.id.timeEditText);
-        regStartDateEditText = findViewById(R.id.startDateEditText);
-        regEndDateEditText = findViewById(R.id.endDateEditText);
+        timeEditText.setOnClickListener(v -> {
+            timePicker.showPicker(this, (h, m) -> {
+                timeEditText.setText(timePicker.getFormattedTime());
+            });
+        });
+
+        regDateRange = findViewById(R.id.regDateEditText);
+        regDateRange.setOnClickListener(v -> {
+            registrationPeriodPicker.showPicker(getSupportFragmentManager(), (startDate, endDate) -> {
+                String text = registrationPeriodPicker.getStartDateFormatted() + " - " + registrationPeriodPicker.getEndDateFormatted();
+                regDateRange.setText(text);
+            });
+        });
+
         descriptionEditText = findViewById(R.id.descrEditText);
         locationEditText = findViewById(R.id.locEditText);
         limitEntrantsSwitch = findViewById(R.id.limitEntrantsSwitch);
@@ -291,10 +325,14 @@ public class EditEventActivity extends AppCompatActivity {
             public void onSuccess(Event event) {
                 currentEvent = event;
                 nameEditText.setText(event.getEventName());
-                dateEditText.setText(event.getDate());
+                startDatePicker.setStartDate(event.getDate());
+                dateEditText.setText(event.getDateFormatted());
+                timePicker.setTimeFromString(event.getTime());
                 timeEditText.setText(event.getTime());
-                regStartDateEditText.setText(event.getRegStartDate());
-                regEndDateEditText.setText(event.getRegEndDate());
+                registrationPeriodPicker.setStartDate(event.getRegStartDate());
+                registrationPeriodPicker.setEndDate(event.getRegEndDate());
+                String text = event.getRegStartDateFormatted() + " - " + event.getRegEndDateFormatted();
+                regDateRange.setText(text);
                 descriptionEditText.setText(event.getDescription());
                 locationEditText.setText(event.getAddress());
                 slotsEditText.setText(String.valueOf(event.getSlots()));
@@ -339,10 +377,10 @@ public class EditEventActivity extends AppCompatActivity {
         }
 
         currentEvent.setEventName(nameEditText.getText().toString());
-        currentEvent.setDate(dateEditText.getText().toString());
-        currentEvent.setTime(timeEditText.getText().toString());
-        currentEvent.setRegStartDate(regStartDateEditText.getText().toString());
-        currentEvent.setRegEndDate(regEndDateEditText.getText().toString());
+        currentEvent.setDate(startDatePicker.getStartDate());
+        currentEvent.setTime(timePicker.getFormattedTime());
+        currentEvent.setRegStartDate(registrationPeriodPicker.getStartDate());
+        currentEvent.setRegEndDate(registrationPeriodPicker.getEndDate());
         currentEvent.setAddress(locationEditText.getText().toString());
         currentEvent.setDescription(descriptionEditText.getText().toString());
         currentEvent.setRequireGeolocation(requireGeoLocationSwitch.isChecked());

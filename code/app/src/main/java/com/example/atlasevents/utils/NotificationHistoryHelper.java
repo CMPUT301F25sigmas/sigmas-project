@@ -1,13 +1,21 @@
 package com.example.atlasevents.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+import com.example.atlasevents.LotteryService;
+import com.example.atlasevents.NotificationHistoryActivity;
 import com.example.atlasevents.R;
+import com.example.atlasevents.Session;
 import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -19,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for loading and displaying notification history.
@@ -38,6 +47,9 @@ public class NotificationHistoryHelper {
     private final FirebaseFirestore db;
     private final LinearLayout notificationsContainer;
     private final NotificationRepository notificationRepository;
+    private String currentUserEmail;
+    private Button acceptButton, declineButton;
+    private TextView responseDeadline;
     
     /**
      * Interface for callbacks when notifications are loaded or fail to load.
@@ -188,15 +200,246 @@ public class NotificationHistoryHelper {
      * Creates and adds a notification card for entrants
      */
     private void addEntrantNotificationCard(Notification notification, MarkAsReadCallback markAsReadCallback) {
-        addNotificationCard(
-            notification.getGroupType(),
-            notification.getEventName(),
-            formatTimestamp(notification.getCreatedAt()),
-            notification.getMessage(),
-            "1 recipient",
-            markAsReadCallback
-        );
+        // Check if this is an invitation notification
+        boolean isInvitation = "Invitation".equals(notification.getType()) ||
+                "Invitation".equals(notification.getGroupType()) ||
+                (notification.getTitle() != null && notification.getTitle().contains("Invitation")) ||
+                (notification.getMessage() != null && notification.getMessage().contains("selected from the waitlist"));
+
+        Log.d(TAG, "Notification type detection:");
+        Log.d(TAG, "  - Type: " + notification.getType());
+        Log.d(TAG, "  - GroupType: " + notification.getGroupType());
+        Log.d(TAG, "  - Title: " + notification.getTitle());
+        Log.d(TAG, "  - Is Invitation: " + isInvitation);
+
+        if (isInvitation) {
+            addInvitationNotificationCard(notification, markAsReadCallback);
+        } else {
+            addRegularNotificationCard(
+                    notification.getGroupType(),
+                    notification.getEventName(),
+                    formatTimestamp(notification.getCreatedAt()),
+                    notification.getMessage(),
+                    "1 recipient",
+                    markAsReadCallback,
+                    notification
+            );
+        }
     }
+
+    /**
+     * Creates and adds a special notification card for event invitations with Accept/Decline buttons
+     */
+    private void addInvitationNotificationCard(Notification notification, MarkAsReadCallback markAsReadCallback) {
+        debugInvitationFlow(notification);
+        View cardView = LayoutInflater.from(context)
+                .inflate(R.layout.notification_invite, notificationsContainer, false);
+
+        // Initialize views
+        TextView tagTextView = cardView.findViewById(R.id.notificationTag);
+        TextView timestampTextView = cardView.findViewById(R.id.notificationTimestamp);
+        TextView titleTextView = cardView.findViewById(R.id.notificationTitle);
+        TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
+        TextView responseDeadline = cardView.findViewById(R.id.responseDeadline);
+        TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
+        TextView organizerTextView = cardView.findViewById(R.id.notificationOrganizer);
+        Button acceptButton = cardView.findViewById(R.id.acceptButton);
+        Button declineButton = cardView.findViewById(R.id.declineButton);
+
+        // Set notification data
+        tagTextView.setText("Event Invitation");
+        titleTextView.setText(notification.getTitle() != null ? notification.getTitle() : "You're Invited!");
+        messageTextView.setText(notification.getMessage() != null ? notification.getMessage() : "");
+        eventNameTextView.setText(notification.getEventName() != null ? notification.getEventName() : "");
+        organizerTextView.setText("Organized by: " + (notification.getFromOrganizeremail() != null ?
+                notification.getFromOrganizeremail() : "Unknown"));
+        timestampTextView.setText(formatTimestamp(notification.getCreatedAt()));
+
+        // Set up response deadline
+        if (notification.getExpirationTime() > 0) {
+            long timeRemaining = notification.getExpirationTime() - System.currentTimeMillis();
+            if (timeRemaining > 0) {
+                String timeText = "⏰ Respond within " + formatTimeRemaining(timeRemaining);
+                responseDeadline.setText(timeText);
+            } else {
+                responseDeadline.setText("⏰ Response time expired");
+                acceptButton.setEnabled(false);
+                declineButton.setEnabled(false);
+            }
+        } else {
+            // Default 24-hour expiration if not set
+            responseDeadline.setText("⏰ Respond within 24 hours");
+        }
+
+        // Set up button click listeners
+        LotteryService lotteryService = new LotteryService();
+
+        acceptButton.setOnClickListener(v -> {
+            handleInvitationResponse(notification, true, lotteryService, acceptButton, declineButton, responseDeadline);
+            // Mark as read when user responds
+            if (markAsReadCallback != null && notification.getNotificationId() != null) {
+                markAsReadCallback.onMarkAsRead(notification.getNotificationId());
+            }
+        });
+
+        declineButton.setOnClickListener(v -> {
+            handleInvitationResponse(notification, false, lotteryService, acceptButton, declineButton, responseDeadline);
+            // Mark as read when user responds
+            if (markAsReadCallback != null && notification.getNotificationId() != null) {
+                markAsReadCallback.onMarkAsRead(notification.getNotificationId());
+            }
+        });
+
+        // Check if user has already responded to this invitation
+        checkInvitationStatus(notification, acceptButton, declineButton, responseDeadline);
+
+        notificationsContainer.addView(cardView);
+    }
+
+    /**
+            * Handles the invitation response when user clicks Accept/Decline
+ */
+    private void handleInvitationResponse(Notification notification, boolean accepted,
+                                          LotteryService lotteryService, Button acceptButton,
+                                          Button declineButton, TextView responseDeadline) {
+        // Disable buttons immediately to prevent multiple clicks
+        acceptButton.setEnabled(false);
+        declineButton.setEnabled(false);
+
+        // Show processing state
+        responseDeadline.setText("Processing...");
+
+        // Get current user email from session
+        String userEmail = getCurrentUserEmail();
+
+        if (userEmail == null || notification.getEventId() == null) {
+            responseDeadline.setText("Error: Unable to process");
+            return;
+        }
+
+        lotteryService.handleInvitationResponse(notification.getEventId(), userEmail, accepted,
+                new LotteryService.InvitationResponseCallback() {
+                    @Override
+                    public void onResponseSuccess(boolean accepted) {
+                        // Update UI on main thread
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            String status = accepted ? "✓ Invitation Accepted" : "✗ Invitation Declined";
+                            responseDeadline.setText(status);
+
+                            // Change text color based on response
+                            int color = accepted ?
+                                    ContextCompat.getColor(context, android.R.color.holo_green_dark) :
+                                    ContextCompat.getColor(context, android.R.color.holo_red_dark);
+                            responseDeadline.setTextColor(color);
+                        });
+                    }
+
+                    @Override
+                    public void onResponseFailed(Exception exception) {
+                        // Re-enable buttons on error
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            acceptButton.setEnabled(true);
+                            declineButton.setEnabled(true);
+                            responseDeadline.setText("Error - please try again");
+                            responseDeadline.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark));
+                        });
+                    }
+                });
+    }
+
+    /**
+     * Checks if user has already responded to this invitation and updates UI accordingly
+     */
+    private void checkInvitationStatus(Notification notification, Button acceptButton,
+                                       Button declineButton, TextView responseDeadline) {
+        // You might want to check Firestore to see if this user is already in accepted/declined list
+        // For now, we'll just check if the notification has been marked as responded
+        if (notification.isResponded()) {
+            acceptButton.setEnabled(false);
+            declineButton.setEnabled(false);
+            responseDeadline.setText(notification.isAccepted() ? "✓ Already Accepted" : "✗ Already Declined");
+        }
+    }
+
+    /**
+     * Gets the current logged-in user's email
+     */
+    /**
+     * Sets the current user email from the activity
+     */
+    public void setCurrentUserEmail(String email) {
+        this.currentUserEmail = email;
+        Log.d(TAG, "User email set in helper: " + email);
+    }
+
+    /**
+     * Gets the current logged-in user's email
+     */
+    private String getCurrentUserEmail() {
+        if (currentUserEmail != null) {
+            Log.d(TAG, "Using email passed from activity: " + currentUserEmail);
+            return currentUserEmail;
+        }
+
+        // Fallback to Session
+        Log.d(TAG, "Falling back to Session for email");
+        try {
+            Session session = new Session(context);
+            String email = session.getUserEmail();
+            Log.d(TAG, "Retrieved from Session: " + email);
+            return email;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting user email from Session", e);
+            return null;
+        }
+    }
+
+
+    /**
+     * Formats time remaining into human-readable format
+     */
+    private String formatTimeRemaining(long millis) {
+        long hours = TimeUnit.MILLISECONDS.toHours(millis);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
+
+        if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        } else {
+            return minutes + " minutes";
+        }
+    }
+
+    /**
+     * Common method to create regular notification cards (non-invitation)
+     */
+    private void addRegularNotificationCard(String groupType, String eventName, String timestamp,
+                                            String message, String recipientInfo,
+                                            MarkAsReadCallback markAsReadCallback, Notification notification) {
+        View cardView = LayoutInflater.from(context)
+                .inflate(R.layout.notification_card, notificationsContainer, false);
+
+        TextView tagTextView = cardView.findViewById(R.id.notificationTag);
+        TextView timestampTextView = cardView.findViewById(R.id.notificationTimestamp);
+        TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
+        TextView recipientsTextView = cardView.findViewById(R.id.notificationRecipientsCount);
+        TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
+
+        tagTextView.setText(groupType != null ? groupType : "Notification");
+        eventNameTextView.setText(eventName != null ? eventName : "");
+        timestampTextView.setText(timestamp);
+        messageTextView.setText(message != null ? message : "");
+        recipientsTextView.setText(recipientInfo);
+
+        // Set click listener to mark as read
+        if (markAsReadCallback != null && notification.getNotificationId() != null) {
+            cardView.setOnClickListener(v -> {
+                markAsReadCallback.onMarkAsRead(notification.getNotificationId());
+            });
+        }
+
+        notificationsContainer.addView(cardView);
+    }
+
     
     /**
      * Creates and adds a notification card for organizers.
@@ -241,8 +484,7 @@ public class NotificationHistoryHelper {
     /**
      * Common method to create and add a notification card.
      */
-    private void addNotificationCard(String groupType, String eventName, String timestamp,
-                                      String message, String recipientInfo, MarkAsReadCallback markAsReadCallback) {
+    private void addNotificationCard(String groupType, String eventName, String timestamp, String message, String recipientInfo, MarkAsReadCallback markAsReadCallback) {
         View cardView = LayoutInflater.from(context)
                 .inflate(R.layout.notification_card, notificationsContainer, false);
         
@@ -294,5 +536,43 @@ public class NotificationHistoryHelper {
             }
         }
         return "Just now";
+    }
+
+    /**
+     * Temporary debug method to test invitation response
+     */
+    private void debugInvitationFlow(Notification notification) {
+        Log.d(TAG, "=== DEBUG INVITATION FLOW ===");
+
+        // Test current user email
+        String userEmail = getCurrentUserEmail();
+        Log.d(TAG, "Current User Email: " + userEmail);
+
+        // Test SharedPreferences access
+        SharedPreferences prefs = context.getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+        Log.d(TAG, "SharedPreferences contains userEmail: " + prefs.contains("userEmail"));
+        Log.d(TAG, "SharedPreferences userEmail value: " + prefs.getString("userEmail", "NOT_FOUND"));
+
+        // Log all SharedPreferences keys
+        Map<String, ?> allEntries = prefs.getAll();
+        Log.d(TAG, "All SharedPreferences entries:");
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            Log.d(TAG, "  " + entry.getKey() + ": " + entry.getValue());
+        }
+
+        // Test notification data
+        if (notification != null) {
+            Log.d(TAG, "Notification Data:");
+            Log.d(TAG, "  - Event ID: " + notification.getEventId());
+            Log.d(TAG, "  - Type: " + notification.getType());
+            Log.d(TAG, "  - Title: " + notification.getTitle());
+            Log.d(TAG, "  - Message: " + notification.getMessage());
+            Log.d(TAG, "  - Organizer: " + notification.getFromOrganizeremail());
+            Log.d(TAG, "  - Notification ID: " + notification.getNotificationId());
+        } else {
+            Log.d(TAG, "Notification is NULL!");
+        }
+
+        Log.d(TAG, "=== END DEBUG ===");
     }
 }

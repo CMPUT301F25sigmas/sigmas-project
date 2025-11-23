@@ -26,27 +26,27 @@ public class EventTest {
         Calendar cal = Calendar.getInstance();
 
         cal.add(Calendar.DAY_OF_MONTH, -1);
-        event.setRegStartDate(formatter.format(cal.getTime()));
+        event.setRegStartDate(cal.getTime());
         cal.add(Calendar.DAY_OF_MONTH, 2);
-        event.setRegEndDate(formatter.format(cal.getTime()));
+        event.setRegEndDate(cal.getTime());
 
         assertTrue(event.isRegistrationOpen());
 
         Event event2 = new Event();
         cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_MONTH, 1);
-        event2.setRegStartDate(formatter.format(cal.getTime()));
+        event2.setRegStartDate(cal.getTime());
         cal.add(Calendar.DAY_OF_MONTH, 2);
-        event2.setRegEndDate(formatter.format(cal.getTime()));
+        event2.setRegEndDate(cal.getTime());
 
         assertFalse(event2.isRegistrationOpen());
 
         Event event3 = new Event();
         cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_MONTH, -3);
-        event3.setRegStartDate(formatter.format(cal.getTime()));
+        event3.setRegStartDate(cal.getTime());
         cal.add(Calendar.DAY_OF_MONTH, 1);
-        event3.setRegEndDate(formatter.format(cal.getTime()));
+        event3.setRegEndDate(cal.getTime());
 
         assertFalse(event3.isRegistrationOpen());
     }
@@ -59,9 +59,9 @@ public class EventTest {
         Calendar cal = Calendar.getInstance();
 
         cal.add(Calendar.DAY_OF_MONTH, -1);
-        event.setRegStartDate(formatter.format(cal.getTime()));
+        event.setRegStartDate(cal.getTime());
         cal.add(Calendar.DAY_OF_MONTH, 2);
-        event.setRegEndDate(formatter.format(cal.getTime()));
+        event.setRegEndDate(cal.getTime());
 
         event.addToWaitlist(entrant1);
         EntrantList entrantList = event.getWaitlist();

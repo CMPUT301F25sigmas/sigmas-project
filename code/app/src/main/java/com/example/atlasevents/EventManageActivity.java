@@ -49,8 +49,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Activity for organizers to manage an existing event.
  * <p>
  * This activity displays event information such as its name, date, location,
- * image, and waitlist details. It also allows organizers to view a list of
- * entrants currently on the event’s waitlist through a {@link RecyclerView}.
+ * image, and waitlist details. It allows organizers to view different entrant lists
+ * (waitlist, chosen, enrolled, cancelled) and download them as CSV files.
+ * Includes lottery functionality with registration date validation and countdown timer.
  * </p>
  *
  * <p>
@@ -63,7 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see EventRepository
  * @see EntrantRecyclerAdapter
  * @see LotteryService
- * @version 1.1
+ * @version 2.0
  */
 public class EventManageActivity extends AppCompatActivity {
 
@@ -75,8 +76,19 @@ public class EventManageActivity extends AppCompatActivity {
      * </p>
      */
     public static final String EventKey = "com.example.atlasevents.EVENT";
+
+    /** Repository for accessing and managing event data in Firestore. */
+    private EventRepository eventRepository;
+
     /** Service for handling lottery operations. */
     private LotteryService lotteryService;
+
+    /** Text view displaying the name of the event. */
+    private TextView eventNameTextView;
+
+    /** Text view displaying the current number of entrants on the waitlist. */
+    private TextView waitlistCountTextView;
+
     /** Text view displaying the number of chosen entrants. */
     private TextView chosenCountTextView;
 
@@ -86,47 +98,11 @@ public class EventManageActivity extends AppCompatActivity {
     /** Text view displaying the number of final enrolled entrants. */
     private TextView finalEnrolledCountTextView;
 
-    /** Repository for accessing and managing event data in Firestore. */
-    private EventRepository eventRepository;
-
-    /** Text view displaying the name of the event. */
-    private TextView eventNameTextView;
-
-    /** Text view displaying the current number of entrants on the waitlist. */
-    private TextView waitlistCountTextView;
-
     /** Text view showing the scheduled date of the event. */
     private TextView dateTextView;
 
     /** Text view showing the event's location or address. */
     private TextView locationTextView;
-
-    /** Image view displaying the event poster or default image. */
-    private ImageView eventImageView;
-
-    /** Recycler view for listing all entrants currently on the event waitlist. */
-    private RecyclerView entrantsRecyclerView;
-
-    /** Adapter for populating the entrant list in the recycler view. */
-    private EntrantRecyclerAdapter entrantAdapter;
-
-    /** Card view container for the waitlist section (hidden if waitlist is empty). */
-    private CardView waitingListCard;
-
-    /** Local list holding entrants currently on the waitlist. */
-    private ArrayList<Entrant> entrantList;
-    private ArrayList<Entrant> downloadableList;
-    private String eventName;
-
-    /**
-     * These booleans are for which list is visible, controlled by clicking on the list cards
-     */
-    private final AtomicBoolean chosenVisible = new AtomicBoolean(false);
-    private final AtomicBoolean waitlistVisible = new AtomicBoolean(false);
-    private final AtomicBoolean cancelledVisible = new AtomicBoolean(false);
-    private final AtomicBoolean enrolledVisible = new AtomicBoolean(false);
-
-
 
     /** Text view showing lottery status information. */
     private TextView lotteryStatusText;
@@ -134,14 +110,38 @@ public class EventManageActivity extends AppCompatActivity {
     /** Text view showing countdown timer until lottery becomes available. */
     private TextView timerTextView;
 
+    /** Text view showing the title of the currently displayed list. */
+    private TextView listTitleTextView;
+
+    /** Image view displaying the event poster or default image. */
+    private ImageView eventImageView;
+
+    /** Recycler view for listing all entrants currently displayed. */
+    private RecyclerView entrantsRecyclerView;
+
+    /** Adapter for populating the entrant list in the recycler view. */
+    private EntrantRecyclerAdapter entrantAdapter;
+
+    /** Card view container for the list display section. */
+    private CardView waitingListCard;
+
     /** Card view container for the lottery timer section. */
     private CardView lotteryTimerCard;
 
-    /**Button for drawing the lottery */
+    /** Local list holding entrants currently displayed. */
+    private ArrayList<Entrant> entrantList;
+
+    /** List used for CSV download functionality. */
+    private ArrayList<Entrant> downloadableList;
+
+    /** Button for drawing the lottery. */
     private Button drawLotteryButton;
 
     /** Button for sending notifications. */
     private Button notifyButton;
+
+    /** Button for showing map. */
+    private Button showMapButton;
 
     /** Progress bar for lottery operations. */
     private ProgressBar lotteryProgressBar;
@@ -149,11 +149,25 @@ public class EventManageActivity extends AppCompatActivity {
     /** Back button for navigation. */
     private ImageButton backButton;
 
+    /** Download button for CSV export. */
+    private ImageView downloadButton;
+
     /** Countdown timer for lottery availability. */
     private CountDownTimer countDownTimer;
 
     /** Current event being managed. */
     private Event currentEvent;
+
+    /** Current event name for CSV file naming. */
+    private String eventName;
+
+    /**
+     * These booleans are for which list is visible, controlled by clicking on the list cards
+     */
+    private final AtomicBoolean chosenVisible = new AtomicBoolean(false);
+    private final AtomicBoolean waitlistVisible = new AtomicBoolean(true); // Default to waitlist
+    private final AtomicBoolean cancelledVisible = new AtomicBoolean(false);
+    private final AtomicBoolean enrolledVisible = new AtomicBoolean(false);
 
     /**
      * Called when the activity is first created.
@@ -179,11 +193,17 @@ public class EventManageActivity extends AppCompatActivity {
             return insets;
         });
 
+        eventRepository = new EventRepository();
+        lotteryService = new LotteryService();
+
         initializeViews();
         setupClickListeners();
         setupRecyclerView();
+        setupListCardListeners();
+
         loadData();
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -192,66 +212,6 @@ public class EventManageActivity extends AppCompatActivity {
             countDownTimer.cancel();
         }
     }
-        /**
-         * back button
-         */
-        ImageButton backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(view ->{
-            finish();
-        });
-        Button drawLotteryButton = findViewById(R.id.drawLotteryButton);
-        drawLotteryButton.setOnClickListener(view ->{
-            //draw lottery
-        });
-
-        ImageView downloadButton = findViewById(R.id.downloadButton);
-        downloadButton.setOnClickListener(view -> {
-
-            String listType = "";
-            if (waitlistVisible.get()){listType = "waitList";}
-            if (cancelledVisible.get()){listType = "cancelledList";}
-            if (enrolledVisible.get()){listType = "enrolledList";}
-            if (chosenVisible.get()){listType = "chosenList";}
-
-            String fileName = eventName +"_"+ listType + ".csv";
-            ContentResolver resolver = getContentResolver();
-
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-            values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
-            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-
-            Uri uri = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-            }
-
-            try {
-                OutputStream outputStream = resolver.openOutputStream(uri);
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-
-                for (int i = 0; i < downloadableList.size(); i++) {
-                    writer.write(downloadableList.get(i).getName());
-                    writer.write(",");
-                    writer.write(downloadableList.get(i).getEmail());
-                    writer.write(",");
-                    writer.write(downloadableList.get(i).getPhoneNumber());
-                    writer.newLine();
-                }
-
-                writer.flush();
-                writer.close();
-
-                Toast.makeText(this, "Saved to Downloads", Toast.LENGTH_SHORT).show();
-
-            } catch (Exception e) {
-                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                e.printStackTrace();
-            }
-        });
-
-
-        eventRepository = new EventRepository();
 
     /**
      * Initializes all UI views from the layout.
@@ -266,22 +226,21 @@ public class EventManageActivity extends AppCompatActivity {
         locationTextView = findViewById(R.id.eventLocation);
         lotteryStatusText = findViewById(R.id.lotteryStatusText);
         timerTextView = findViewById(R.id.timerTextView);
+        listTitleTextView = findViewById(R.id.listTitle);
         eventImageView = findViewById(R.id.eventPoster);
         waitingListCard = findViewById(R.id.waitingListViewCard);
         lotteryTimerCard = findViewById(R.id.lotteryTimerCard);
         entrantsRecyclerView = findViewById(R.id.entrantsRecyclerView);
         drawLotteryButton = findViewById(R.id.drawLotteryButton);
         notifyButton = findViewById(R.id.notifyButton);
+        showMapButton = findViewById(R.id.showMapButton);
         lotteryProgressBar = findViewById(R.id.lotteryProgressBar);
         backButton = findViewById(R.id.backButton);
+        downloadButton = findViewById(R.id.downloadButton);
+
+        entrantList = new ArrayList<>();
+        downloadableList = new ArrayList<>();
     }
-        LinearLayout waitingListButton = findViewById(R.id.WaitingListButton);
-        LinearLayout enrolledButton = findViewById(R.id.enrolledButton);
-        LinearLayout cancelledButton = findViewById(R.id.cancelledButton);
-        LinearLayout chosenButton = findViewById(R.id.chosenButton);
-
-
-
 
     /**
      * Sets up click listeners for interactive elements.
@@ -292,58 +251,72 @@ public class EventManageActivity extends AppCompatActivity {
         drawLotteryButton.setOnClickListener(v -> showLotteryConfirmationDialog());
 
         notifyButton.setOnClickListener(v -> showNotificationOptions());
+
+        showMapButton.setOnClickListener(v -> showEventMap());
+
+        downloadButton.setOnClickListener(v -> downloadCurrentListAsCSV());
     }
 
     /**
-     * Sets up the RecyclerView for displaying the waitlist.
+     * Sets up the RecyclerView for displaying entrant lists.
      */
     private void setupRecyclerView() {
-        entrantList = new ArrayList<>();
-        downloadableList = new ArrayList<>();
         entrantAdapter = new EntrantRecyclerAdapter(entrantList);
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
-        loadData();
+    }
 
-        /**
-         * Listeners for list cards
-         */
-        waitingListButton.setOnClickListener(view ->{
-            chosenVisible.set(false);
-            waitlistVisible.set(true);
-            cancelledVisible.set(false);
-            enrolledVisible.set(false);
+    /**
+     * Sets up click listeners for the list card buttons.
+     */
+    private void setupListCardListeners() {
+        LinearLayout waitingListButton = findViewById(R.id.WaitingListButton);
+        LinearLayout enrolledButton = findViewById(R.id.enrolledButton);
+        LinearLayout cancelledButton = findViewById(R.id.cancelledButton);
+        LinearLayout chosenButton = findViewById(R.id.chosenButton);
+
+        waitingListButton.setOnClickListener(view -> {
+            setListVisibility(false, true, false, false);
             loadData();
         });
-        enrolledButton.setOnClickListener(view ->{
-            chosenVisible.set(false);
-            waitlistVisible.set(false);
-            cancelledVisible.set(false);
-            enrolledVisible.set(true);
+
+        enrolledButton.setOnClickListener(view -> {
+            setListVisibility(false, false, false, true);
             loadData();
         });
-        cancelledButton.setOnClickListener(view ->{
-            chosenVisible.set(false);
-            waitlistVisible.set(false);
-            cancelledVisible.set(true);
-            enrolledVisible.set(false);
+
+        cancelledButton.setOnClickListener(view -> {
+            setListVisibility(false, false, true, false);
             loadData();
         });
-        chosenButton.setOnClickListener(view ->{
-            chosenVisible.set(true);
-            waitlistVisible.set(false);
-            cancelledVisible.set(false);
-            enrolledVisible.set(false);
+
+        chosenButton.setOnClickListener(view -> {
+            setListVisibility(true, false, false, false);
             loadData();
         });
+    }
+
+    /**
+     * Sets the visibility state for all lists.
+     *
+     * @param chosen Whether chosen list should be visible
+     * @param waitlist Whether waitlist should be visible
+     * @param cancelled Whether cancelled list should be visible
+     * @param enrolled Whether enrolled list should be visible
+     */
+    private void setListVisibility(boolean chosen, boolean waitlist, boolean cancelled, boolean enrolled) {
+        chosenVisible.set(chosen);
+        waitlistVisible.set(waitlist);
+        cancelledVisible.set(cancelled);
+        enrolledVisible.set(enrolled);
     }
 
     /**
      * Loads event data from Firestore using the provided event ID.
      * <p>
      * Retrieves the event details such as name, date, location, image,
-     * and waitlist. Once loaded, the method updates the UI elements and
-     * populates the entrant list if applicable based on listVisible booleans.
+     * and all entrant lists. Once loaded, the method updates the UI elements and
+     * populates the appropriate entrant list based on visibility settings.
      * </p>
      * <p>
      * If the event retrieval fails, a toast message is displayed and the
@@ -352,25 +325,16 @@ public class EventManageActivity extends AppCompatActivity {
      */
     private void loadData() {
         String eventId = getIntent().getSerializableExtra(EventKey).toString();
-        eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(),
-                new EventRepository.EventCallback() {
-                    @Override
-                    public void onSuccess(Event event) {
-                        // Populate event details
-                        eventNameTextView.setText(event.getEventName());
-                        waitlistCountTextView.setText(String.valueOf(
-                                event.getWaitlist() != null ? event.getWaitlist().size() : 0));
-                        dateTextView.setText(event.getDateFormatted());
-                        locationTextView.setText(event.getAddress());
-                    }
-                        });
+
         eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
             @Override
             public void onSuccess(Event event) {
                 currentEvent = event;
+                eventName = event.getEventName();
                 updateEventUI(event);
                 updateLotteryUI(event);
                 startLotteryTimerIfNeeded(event);
+                displayCurrentList(event);
             }
 
             @Override
@@ -382,6 +346,7 @@ public class EventManageActivity extends AppCompatActivity {
             }
         });
     }
+
     /**
      * Updates the UI with event details.
      *
@@ -390,7 +355,7 @@ public class EventManageActivity extends AppCompatActivity {
     private void updateEventUI(Event event) {
         // Populate event details
         eventNameTextView.setText(event.getEventName());
-        dateTextView.setText(event.getDate());
+        dateTextView.setText(event.getDateFormatted());
         locationTextView.setText(event.getAddress());
 
         // Update count displays
@@ -403,16 +368,6 @@ public class EventManageActivity extends AppCompatActivity {
                     .into(eventImageView);
         } else {
             eventImageView.setImageResource(R.drawable.poster);
-        }
-
-        // Display waitlist if available
-        if (event.getWaitlist() != null &&
-                event.getWaitlist().getWaitList() != null &&
-                !event.getWaitlist().getWaitList().isEmpty()) {
-            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
-            waitingListCard.setVisibility(View.VISIBLE);
-        } else {
-            waitingListCard.setVisibility(View.GONE);
         }
     }
 
@@ -431,6 +386,49 @@ public class EventManageActivity extends AppCompatActivity {
         chosenCountTextView.setText(String.valueOf(chosenCount));
         cancelledCountTextView.setText(String.valueOf(cancelledCount));
         finalEnrolledCountTextView.setText(String.valueOf(finalEnrolledCount));
+    }
+
+    /**
+     * Displays the appropriate entrant list based on visibility settings.
+     *
+     * @param event The event with entrant lists
+     */
+    private void displayCurrentList(Event event) {
+        String listTitle = "";
+        ArrayList<Entrant> listToDisplay = new ArrayList<>();
+
+        if (chosenVisible.get() && event.getInviteList() != null) {
+            listTitle = "Chosen Entrants";
+            listToDisplay = event.getInviteList().getWaitList();
+            downloadableList = listToDisplay;
+        } else if (cancelledVisible.get() && event.getDeclinedList() != null) {
+            listTitle = "Cancelled Entrants";
+            listToDisplay = event.getDeclinedList().getWaitList();
+            downloadableList = listToDisplay;
+        } else if (enrolledVisible.get() && event.getAcceptedList() != null) {
+            listTitle = "Enrolled Entrants";
+            listToDisplay = event.getAcceptedList().getWaitList();
+            downloadableList = listToDisplay;
+        } else if (waitlistVisible.get() && event.getWaitlist() != null) {
+            listTitle = "Waiting List";
+            listToDisplay = event.getWaitlist().getWaitList();
+            downloadableList = listToDisplay;
+        }
+
+        // Update list title
+        listTitleTextView.setText(listTitle);
+
+        // Display the list if available
+        if (listToDisplay != null && !listToDisplay.isEmpty()) {
+            entrantAdapter.setEntrants(listToDisplay);
+            waitingListCard.setVisibility(View.VISIBLE);
+            downloadButton.setVisibility(View.VISIBLE);
+        } else {
+            entrantAdapter.setEntrants(new ArrayList<>());
+            waitingListCard.setVisibility(View.GONE);
+            downloadButton.setVisibility(View.GONE);
+            Toast.makeText(this, "No entrants in " + listTitle.toLowerCase(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -527,38 +525,6 @@ public class EventManageActivity extends AppCompatActivity {
                     if (currentEvent != null) {
                         updateLotteryUI(currentEvent);
                         lotteryTimerCard.setVisibility(View.GONE);
-                        // Display waitlist or other lists if available
-                        if (chosenVisible.get() &&
-                                event.getInviteList() != null &&
-                                event.getInviteList().getWaitList() != null &&
-                                !event.getInviteList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getInviteList().getWaitList());
-                            waitingListCard.setVisibility(View.VISIBLE);
-                            downloadableList = event.getInviteList().getWaitList(); //set downloadable list
-                        }else if (cancelledVisible.get() &&
-                                event.getDeclinedList() != null &&
-                                event.getDeclinedList().getWaitList() != null &&
-                                !event.getDeclinedList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getDeclinedList().getWaitList());
-                            waitingListCard.setVisibility(View.VISIBLE);
-                            downloadableList = event.getDeclinedList().getWaitList();
-
-                        } else if (enrolledVisible.get() &&
-                                event.getAcceptedList() != null &&
-                                event.getAcceptedList().getWaitList() != null &&
-                                !event.getAcceptedList().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getAcceptedList().getWaitList());
-                            waitingListCard.setVisibility(View.VISIBLE);
-                            downloadableList = event.getAcceptedList().getWaitList();
-
-                        } else if (waitlistVisible.get() &&
-                                event.getWaitlist() != null &&
-                                event.getWaitlist().getWaitList() != null &&
-                                !event.getWaitlist().getWaitList().isEmpty()) {
-                            entrantAdapter.setEntrants(event.getWaitlist().getWaitList());
-                            waitingListCard.setVisibility(View.VISIBLE);
-                            downloadableList = event.getWaitlist().getWaitList();
-                        }
                     }
                 }, 2000);
             }
@@ -695,6 +661,64 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
+     * Downloads the currently displayed list as a CSV file.
+     */
+    private void downloadCurrentListAsCSV() {
+        if (downloadableList == null || downloadableList.isEmpty()) {
+            Toast.makeText(this, "No data to download", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String listType = "";
+        if (waitlistVisible.get()) listType = "waitList";
+        if (cancelledVisible.get()) listType = "cancelledList";
+        if (enrolledVisible.get()) listType = "enrolledList";
+        if (chosenVisible.get()) listType = "chosenList";
+
+        String fileName = eventName + "_" + listType + ".csv";
+        ContentResolver resolver = getContentResolver();
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+        Uri uri = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        }
+
+        try {
+            OutputStream outputStream = resolver.openOutputStream(uri);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+
+            // Write CSV header
+            writer.write("Name,Email,Phone Number");
+            writer.newLine();
+
+            // Write entrant data
+            for (int i = 0; i < downloadableList.size(); i++) {
+                Entrant entrant = downloadableList.get(i);
+                writer.write(entrant.getName() != null ? entrant.getName() : "");
+                writer.write(",");
+                writer.write(entrant.getEmail() != null ? entrant.getEmail() : "");
+                writer.write(",");
+                writer.write(entrant.getPhoneNumber() != null ? entrant.getPhoneNumber() : "");
+                writer.newLine();
+            }
+
+            writer.flush();
+            writer.close();
+
+            Toast.makeText(this, "Saved to Downloads: " + fileName, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Shows notification options for the organizer.
      */
     private void showNotificationOptions() {
@@ -704,7 +728,17 @@ public class EventManageActivity extends AppCompatActivity {
         // This could open a dialog or new activity for sending notifications
         Toast.makeText(this, "Notification options would open here", Toast.LENGTH_SHORT).show();
     }
+
+    /**
+     * Shows the event location on a map.
+     */
+    private void showEventMap() {
+        if (currentEvent == null || currentEvent.getAddress() == null) {
+            Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Implement map display functionality
+        Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
+    }
 }
-
-
-

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service class for handling lottery draws for event waitlists.
@@ -41,6 +42,8 @@ public class LotteryService {
     private static final String TAG = "LotteryService";
     private final FirebaseFirestore db;
     private final NotificationRepository notificationRepo;
+    private static final long LOTTERY_COOLDOWN_HOURS = 24; // 24-hour cooldown
+    private static final long MILLIS_IN_HOUR = 60 * 60 * 1000;
 
     public LotteryService() {
         this.db = FirebaseFirestore.getInstance();
@@ -102,8 +105,9 @@ public class LotteryService {
             Log.d(TAG, "Event loaded: " + event.getEventName());
             Log.d(TAG, "Waitlist size from event object: " + (event.getWaitlist() != null ? event.getWaitlist().size() : "null"));
             // Step 2: Validate registration end date
-            if (!isLotteryAvailable(event)) {
-                callback.onLotteryFailed(new Exception("Lottery not available - registration period has not ended"));
+            LotteryAvailability availability = checkLotteryAvailability(event);
+            if (!availability.isAvailable()) {
+                callback.onLotteryFailed(new Exception(availability.getMessage()));
                 return;
             }
 
@@ -136,9 +140,70 @@ public class LotteryService {
                 return;
             }
 
-            // Step 6: Move selected entrants to invited list and send notifications
+            // Step 6: Update lottery run timestamp
+            updateLotteryRunTimestamp(eventId);
+
+            // Step 7: Move selected entrants to invited list and send notifications
             moveToInvitedAndNotify(event, selectedEntrants, callback);
         });
+    }
+    /**
+     * Data class to represent lottery availability status
+     */
+    public static class LotteryAvailability {
+        private final boolean available;
+        private final String message;
+
+        public LotteryAvailability(boolean available, String message) {
+            this.available = available;
+            this.message = message;
+        }
+
+        public boolean isAvailable() {
+            return available;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    /**
+     * Checks if lottery can be run for the event based on cooldown and available slots
+     *
+     * @param event The event to check
+     * @return LotteryAvailability object with status and message
+     */
+    public LotteryAvailability checkLotteryAvailability(@NonNull Event event) {
+        // Check if registration period has ended
+        if (!isLotteryAvailable(event)) {
+            return new LotteryAvailability(false, "Lottery not available - registration period has not ended");
+        }
+
+        // Check cooldown period
+        if (isInCooldownPeriod(event)) {
+            long hoursRemaining = getCooldownHoursRemaining(event);
+            return new LotteryAvailability(false,
+                    String.format("Lottery can be run again in %d hours", hoursRemaining));
+        }
+
+        // Check available slots
+        int availableSlots = calculateAvailableSlots(event);
+        if (availableSlots <= 0) {
+            return new LotteryAvailability(false, "No available slots for lottery");
+        }
+
+        // Check if there are eligible entrants in waitlist
+        EntrantList waitlist = event.getWaitlist();
+        List<Entrant> eligibleWaitlist = filterEligibleEntrants(waitlist, event);
+
+        if (eligibleWaitlist.isEmpty()) {
+            return new LotteryAvailability(false, "No eligible entrants in waitlist");
+        }
+
+        return new LotteryAvailability(true,
+                String.format("Lottery available - %d slots, %d eligible entrants",
+                        availableSlots, eligibleWaitlist.size()));
     }
 
     /**
@@ -171,6 +236,73 @@ public class LotteryService {
                 " (Reg End: " + regEndDate + ")");
 
         return available;
+    }
+
+    /**
+     * Checks if the event is in cooldown period (24 hours after last lottery run)
+     *
+     * @param event The event to check
+     * @return true if in cooldown period, false otherwise
+     */
+    public boolean isInCooldownPeriod(@NonNull Event event) {
+        if (event.getLastLotteryRun() == null) {
+            return false; // No lottery has been run yet
+        }
+
+        Date lastRun = event.getLastLotteryRun();
+        Date now = new Date();
+
+        long timeSinceLastRun = now.getTime() - lastRun.getTime();
+        long cooldownMillis = LOTTERY_COOLDOWN_HOURS * MILLIS_IN_HOUR;
+
+        boolean inCooldown = timeSinceLastRun < cooldownMillis;
+
+        Log.d(TAG, String.format("Cooldown check - Last run: %s, Time since: %d hours, In cooldown: %b",
+                lastRun, TimeUnit.MILLISECONDS.toHours(timeSinceLastRun), inCooldown));
+
+        return inCooldown;
+    }
+
+    /**
+     * Gets the number of hours remaining in the cooldown period
+     *
+     * @param event The event to check
+     * @return Hours remaining in cooldown, or 0 if not in cooldown
+     */
+    public long getCooldownHoursRemaining(@NonNull Event event) {
+        if (event.getLastLotteryRun() == null) {
+            return 0;
+        }
+
+        Date lastRun = event.getLastLotteryRun();
+        Date now = new Date();
+
+        long timeSinceLastRun = now.getTime() - lastRun.getTime();
+        long cooldownMillis = LOTTERY_COOLDOWN_HOURS * MILLIS_IN_HOUR;
+        long remainingMillis = cooldownMillis - timeSinceLastRun;
+
+        if (remainingMillis <= 0) {
+            return 0;
+        }
+
+        return TimeUnit.MILLISECONDS.toHours(remainingMillis) + 1; // Round up
+    }
+
+    /**
+     * Updates the event with the current timestamp when lottery is run
+     */
+    private void updateLotteryRunTimestamp(String eventId) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("lastLotteryRun", new Date());
+
+        db.collection("events").document(eventId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Updated lastLotteryRun timestamp for event: " + eventId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update lastLotteryRun timestamp", e);
+                });
     }
 
     /**
@@ -289,6 +421,15 @@ public class LotteryService {
         Log.d(TAG, "AcceptedList size: " + event.getAcceptedList().size());
         Log.d(TAG, "DeclinedList size: " + event.getDeclinedList().size());
         Log.d(TAG, "=== END EVENT PARSING ===");
+        // Parse lastLotteryRun if it exists
+        if (doc.contains("lastLotteryRun")) {
+            Object lastRun = doc.get("lastLotteryRun");
+            if (lastRun instanceof Date) {
+                event.setLastLotteryRun((Date) lastRun);
+            } else if (lastRun instanceof com.google.firebase.Timestamp) {
+                event.setLastLotteryRun(((com.google.firebase.Timestamp) lastRun).toDate());
+            }
+        }
 
         return event;
     }

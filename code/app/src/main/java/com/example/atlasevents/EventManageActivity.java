@@ -335,6 +335,9 @@ public class EventManageActivity extends AppCompatActivity {
                 updateLotteryUI(event);
                 startLotteryTimerIfNeeded(event);
                 displayCurrentList(event);
+
+                // Start cooldown countdown if needed
+                startCooldownCountdownIfNeeded(event);
             }
 
             @Override
@@ -345,6 +348,29 @@ public class EventManageActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    /**
+     * Starts a periodic update for cooldown countdown if lottery is in cooldown
+     */
+    private void startCooldownCountdownIfNeeded(Event event) {
+        if (lotteryService.isInCooldownPeriod(event)) {
+            // Update UI every minute to refresh cooldown countdown
+            new CountDownTimer(Long.MAX_VALUE, 60000) { // Update every minute
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    if (currentEvent != null) {
+                        updateLotteryUI(currentEvent);
+                        startLotteryTimerIfNeeded(currentEvent);
+                    }
+                }
+
+                @Override
+                public void onFinish() {
+                    // Timer runs indefinitely until canceled
+                }
+            }.start();
+        }
     }
 
     /**
@@ -432,7 +458,7 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
-     * Updates the lottery-related UI elements.
+     * Updates the lottery-related UI elements with cooldown support.
      *
      * @param event The event to check for lottery availability
      */
@@ -442,7 +468,11 @@ public class EventManageActivity extends AppCompatActivity {
         int waitlistSize = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
-        // Update lottery status text
+        // NEW: Check cooldown period
+        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
+        long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+
+        // Update lottery status text with cooldown info
         String statusText = String.format(
                 "Event: %s\n" +
                         "Entrant Limit: %d\n" +
@@ -450,20 +480,28 @@ public class EventManageActivity extends AppCompatActivity {
                         "Available Slots: %d\n" +
                         "Waitlist Size: %d\n" +
                         "Lottery Available: %s\n" +
-                        "Registration End: %s",
+                        "Registration End: %s\n" +
+                        "Cooldown Active: %s" +
+                        (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
                 event.getEventName(),
                 event.getEntrantLimit(),
                 acceptedCount,
                 availableSlots,
                 waitlistSize,
                 lotteryAvailable ? "Yes" : "No",
-                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set"
+                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set",
+                inCooldown ? "Yes" : "No",
+                cooldownHoursRemaining
         );
 
         lotteryStatusText.setText(statusText);
 
-        // Enable/disable lottery button based on availability
-        boolean canDrawLottery = lotteryAvailable && availableSlots > 0 && waitlistSize > 0;
+        // NEW: Enhanced lottery button logic with cooldown
+        boolean canDrawLottery = lotteryAvailable &&
+                availableSlots > 0 &&
+                waitlistSize > 0 &&
+                !inCooldown;
+
         drawLotteryButton.setEnabled(canDrawLottery);
         drawLotteryButton.setAlpha(canDrawLottery ? 1.0f : 0.6f);
 
@@ -471,6 +509,8 @@ public class EventManageActivity extends AppCompatActivity {
         if (!canDrawLottery) {
             if (!lotteryAvailable) {
                 drawLotteryButton.setText("Lottery Not Available");
+            } else if (inCooldown) {
+                drawLotteryButton.setText(String.format("Cooldown: %dh", cooldownHoursRemaining));
             } else if (availableSlots <= 0) {
                 drawLotteryButton.setText("Event Full");
             } else if (waitlistSize <= 0) {
@@ -482,31 +522,54 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
-     * Starts the countdown timer if lottery is not yet available.
+     * Starts the countdown timer if lottery is not yet available or in cooldown.
      *
      * @param event The event to check
      */
     private void startLotteryTimerIfNeeded(Event event) {
-        if (lotteryService.isLotteryAvailable(event)) {
+        boolean lotteryAvailable = lotteryService.isLotteryAvailable(event);
+        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
+
+        // Show timer if either registration period hasn't ended OR lottery is in cooldown
+        if (lotteryAvailable && !inCooldown) {
             lotteryTimerCard.setVisibility(View.GONE);
             return;
         }
 
-        long timeRemaining = lotteryService.getTimeUntilLotteryAvailable(event);
+        long timeRemaining;
+        String timerPrefix;
+
+        if (inCooldown) {
+            // Show cooldown countdown
+            timeRemaining = lotteryService.getCooldownHoursRemaining(event) * 60 * 60 * 1000;
+            timerPrefix = "Lottery cooldown: ";
+        } else {
+            // Show registration period countdown
+            timeRemaining = lotteryService.getTimeUntilLotteryAvailable(event);
+            timerPrefix = "Lottery available in: ";
+        }
+
         if (timeRemaining > 0) {
             lotteryTimerCard.setVisibility(View.VISIBLE);
-            startCountdownTimer(timeRemaining);
+            startCountdownTimer(timeRemaining, timerPrefix);
+        } else {
+            lotteryTimerCard.setVisibility(View.GONE);
+        }
+        if (timeRemaining > 0) {
+            lotteryTimerCard.setVisibility(View.VISIBLE);
+            startCountdownTimer(timeRemaining, timerPrefix); // Updated call
         } else {
             lotteryTimerCard.setVisibility(View.GONE);
         }
     }
 
     /**
-     * Starts the countdown timer for lottery availability.
+     * Starts the countdown timer for lottery availability or cooldown.
      *
      * @param millisUntilFinished Time remaining in milliseconds
+     * @param timerPrefix Prefix text for the timer display
      */
-    private void startCountdownTimer(long millisUntilFinished) {
+    private void startCountdownTimer(long millisUntilFinished, String timerPrefix) {
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
@@ -514,7 +577,7 @@ public class EventManageActivity extends AppCompatActivity {
         countDownTimer = new CountDownTimer(millisUntilFinished, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                updateTimerText(millisUntilFinished);
+                updateTimerText(millisUntilFinished, timerPrefix);
             }
 
             @Override
@@ -525,6 +588,7 @@ public class EventManageActivity extends AppCompatActivity {
                     if (currentEvent != null) {
                         updateLotteryUI(currentEvent);
                         lotteryTimerCard.setVisibility(View.GONE);
+                        loadData(); // Reload to get updated state
                     }
                 }, 2000);
             }
@@ -535,8 +599,9 @@ public class EventManageActivity extends AppCompatActivity {
      * Updates the timer text with formatted time.
      *
      * @param millisUntilFinished Time remaining in milliseconds
+     * @param timerPrefix Prefix text for the timer display
      */
-    private void updateTimerText(long millisUntilFinished) {
+    private void updateTimerText(long millisUntilFinished, String timerPrefix) {
         long days = millisUntilFinished / (1000 * 60 * 60 * 24);
         long hours = (millisUntilFinished % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
         long minutes = (millisUntilFinished % (1000 * 60 * 60)) / (1000 * 60);
@@ -544,13 +609,13 @@ public class EventManageActivity extends AppCompatActivity {
 
         String timerText;
         if (days > 0) {
-            timerText = String.format("Lottery available in: %dd %02dh %02dm %02ds",
+            timerText = String.format(timerPrefix + "%dd %02dh %02dm %02ds",
                     days, hours, minutes, seconds);
         } else if (hours > 0) {
-            timerText = String.format("Lottery available in: %02dh %02dm %02ds",
+            timerText = String.format(timerPrefix + "%02dh %02dm %02ds",
                     hours, minutes, seconds);
         } else {
-            timerText = String.format("Lottery available in: %02dm %02ds", minutes, seconds);
+            timerText = String.format(timerPrefix + "%02dm %02ds", minutes, seconds);
         }
 
         timerTextView.setText(timerText);
@@ -582,7 +647,8 @@ public class EventManageActivity extends AppCompatActivity {
                 "Draw lottery for '%s'?\n\n" +
                         "Available slots: %d\n" +
                         "Waitlist size: %d\n\n" +
-                        "Selected entrants will receive invitation notifications.",
+                        "Selected entrants will receive invitation notifications.\n\n" +
+                        "Note: Lottery will be locked for 24 hours after drawing.",
                 currentEvent.getEventName(), availableSlots, waitlistSize
         );
 

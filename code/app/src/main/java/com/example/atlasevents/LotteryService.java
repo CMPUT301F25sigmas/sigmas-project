@@ -31,8 +31,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Service class for handling lottery draws for event waitlists.
  * Manages random selection of entrants from waitlists and handles notifications
- * for acceptance/decline. Supports re-drawing when entrants decline invitations.
+ * for acceptance/decline.
  * Includes registration date validation for lottery availability.
+ * and cooldown for lottery re-run checking if accepted list is below entrant limit
  *
  * @see Event
  * @see NotificationRepository

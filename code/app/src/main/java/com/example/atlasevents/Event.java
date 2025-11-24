@@ -27,6 +27,8 @@ import java.util.Random;
  * select entrants from the waitlist.
  * </p>
  *
+ * Modifications made to add lottery getters and setters to support LotteryService functionality
+ * @see LotteryService
  * @see EntrantList
  * @see Organizer
  * @see Entrant

@@ -36,9 +36,14 @@ import java.util.concurrent.TimeUnit;
  * - Loading notifications from Firestore for both entrants and organizers
  * - Creating notification cards for display
  * - Formatting timestamps and data
+ * - sending out lottery selection invites and handling responses/
  * 
  * 
  * @author CMPUT301F25sigmas
+ * @version 2.0
+ * @see notificationhistoryactivity
+ * @see NotificationRepository
+ * @see LotteryService
  */
 public class NotificationHistoryHelper {
     private static final String TAG = "NotificationHistoryHelper";

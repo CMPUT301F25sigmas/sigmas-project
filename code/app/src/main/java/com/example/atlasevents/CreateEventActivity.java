@@ -203,7 +203,7 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            if(inputsValid(name.getText().toString(),slots.getText().toString())) { //validate inputs before making event
+                            if(inputsValid(name.getText().toString(),slots.getText().toString(),limitEntrants.isChecked(), entrantLimit.getText().toString())) { //validate inputs before making event
                                 Event event = new Event(user);
                                 event.setEventName(name.getText().toString()); //get text from edit texts
                                 event.setDate(startDatePicker.getStartDate());
@@ -257,13 +257,16 @@ public class CreateEventActivity extends AppCompatActivity {
      * @param slots The number of participant slots as a string
      * @return {@code true} if all inputs are valid, {@code false} otherwise
      */
-    public boolean inputsValid(String name, String slots) {
+    public boolean inputsValid(String name, String slots,boolean limitEntrants,String limit) {
         boolean valid = true;
         if (name.isEmpty()) { //check if name is empty
             Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
             valid = false;
-        }else if (slots.isEmpty()) { //check that slots is non negative (else if so it doesn't try to display all toasts at once)
+        }else if (slots.isEmpty()) { //check that slots is filled
             Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }else if (limitEntrants && Integer.parseInt(slots) > Integer.parseInt(limit)){
+            Toast.makeText(this,"Waitlist limit cannot be smaller than number of participants", Toast.LENGTH_LONG).show();
             valid = false;
         }
 

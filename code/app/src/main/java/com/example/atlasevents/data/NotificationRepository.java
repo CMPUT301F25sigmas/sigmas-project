@@ -1,18 +1,3 @@
-/***
- * @Muaaz Saif
- * @version 1
- * Repository class for managing notification operations with Firebase Firestore.
- * Handles sending notifications to users, logging notification activities, and retrieving notification logs.
- *
- * <p>This class provides methods for sending notifications to individual users, multiple users,
- * and specific groups (waitlist, invited, cancelled). It also handles user notification preferences
- * and maintains an audit log of all notification activities.</p>
- *
- * @see Notification
- * @see NotificationListener
- * @see FirebaseFirestore
- */
-
 package com.example.atlasevents.data;
 
 import android.util.Log;
@@ -32,7 +17,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.example.atlasevents.data.UserRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,13 +107,12 @@ public class NotificationRepository {
         return Tasks.whenAll(tasks).continueWith(t -> tasks);
     }
 
-    // helper: log notification for admin reviews
     /**
-     * Logs a notification activity for administrative review and auditing purposes.
-     * Creates a document in the notification_logs collection regardless of delivery status.
+     * Logs a notification activity for auditing purposes.
+     * Logs are stored per-organizer under "notification_logs/{organizerEmail}/event/{logId}".
      *
      * @param recipientEmail The email address of the intended recipient
-     * @param notification The notification that was attempted to be sent
+     * @param notification The notification that was attempted to be sent, containing organizer and event details
      * @param status The delivery status ("SENT", "OPTED_OUT", "FAILED")
      * @return A Task that completes when the log entry is written to Firestore
      * @see FirebaseFirestore
@@ -146,7 +129,19 @@ public class NotificationRepository {
         log.put("groupType", notification.getGroupType());
         log.put("eventName", notification.getEventName());
 
-        return db.collection("notification_logs").document().set(log);
+        String organizerEmail = notification.getFromOrganizeremail();
+        String eventId = notification.getEventId();
+
+        if (organizerEmail == null || organizerEmail.isEmpty() || eventId == null || eventId.isEmpty()) {
+            Log.e(TAG, "Organizer email or event ID is null/empty, cannot log notification with new schema.");
+            return Tasks.forException(new IllegalArgumentException("Organizer email or event ID cannot be null or empty"));
+        }
+
+        return db.collection("notification_logs")
+                .document(organizerEmail)
+                .collection("AllNotfications")
+                .document()
+                .set(log);
     }
 
     // Organizer convenience methods (these gather emails from event lists then call sendToUsers)
@@ -226,18 +221,24 @@ public class NotificationRepository {
         }
         return out;
     }
-    // for admin to review logs
+
     /**
-     * Retrieves notification logs for administrative review.
+     * Retrieves notification logs for a specific organizer.
      * Fetches logs from Firestore ordered by creation timestamp (newest first).
      *
+     * @param organizerEmail The email of the organizer whose logs are to be retrieved.
      * @param callback The callback to handle the results or failures
      * @throws NullPointerException if callback is null
      * @see NotificationLogsCallback
-     * @see FirebaseFirestore
+     * @see #getNotificationLogs(String, NotificationLogsCallback)
      */
-    public void getNotificationLogs(@NonNull NotificationLogsCallback callback) {
-        db.collection("notification_logs")
+    public void getNotificationLogs(@NonNull String organizerEmail, @NonNull NotificationLogsCallback callback) {
+        if (organizerEmail == null || organizerEmail.isEmpty()) {
+            callback.onFailure(new IllegalArgumentException("Organizer email cannot be null or empty."));
+            return;
+        }
+        db.collectionGroup("event")
+                .whereEqualTo("fromOrganizer", organizerEmail)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(qs -> {
@@ -249,24 +250,14 @@ public class NotificationRepository {
                 })
                 .addOnFailureListener(e -> callback.onFailure(e));
     }
+
     /**
      * Callback interface for handling notification logs retrieval results.
      *
-     * @see #getNotificationLogs(NotificationLogsCallback)
+     * @see #getNotificationLogs(String, NotificationLogsCallback)
      */
     public interface NotificationLogsCallback {
-        /**
-         * Callback interface for handling notification logs retrieval results.
-         *
-         * @see #getNotificationLogs(NotificationLogsCallback)
-         */
-        void onSuccess(List<Map<String,Object>> logs);
-        /**
-         * Called when notification logs retrieval fails.
-         *
-         * @param e The exception that caused the failure
-         */
+        void onSuccess(List<Map<String, Object>> logs);
         void onFailure(Exception e);
     }
-
 }

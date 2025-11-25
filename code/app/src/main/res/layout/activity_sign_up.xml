@@ -130,13 +130,6 @@
             android:textColor="@color/black"
             android:text="Admin (staff only)" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Leave unchecked for a regular account. Regular users can join events and create their own."
-            android:textColor="@color/black"
-            android:textSize="14sp" />
     </LinearLayout>
 
     <RelativeLayout

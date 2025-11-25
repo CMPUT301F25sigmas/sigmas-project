@@ -159,14 +159,23 @@ public class UserRepository {
      */
     public void getUsers(String type, UsersCallback callback) {
         db.collection("users")
-                .whereEqualTo("userType", type)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     ArrayList<User> users = new ArrayList<>();
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
                         User user = document.toObject(User.class);
-                        if (user != null) {
-                            users.add(user);
+                        if (user == null) {
+                            continue;
+                        }
+                        if ("Admin".equals(type)) {
+                            if ("Admin".equals(user.getUserType())) {
+                                users.add(user);
+                            }
+                        } else {
+                            // Organizer/Entrant both map to the shared non-admin user list.
+                            if (!"Admin".equals(user.getUserType())) {
+                                users.add(user);
+                            }
                         }
                     }
                     callback.onSuccess(users);
@@ -234,10 +243,10 @@ public class UserRepository {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
-                        Organizer user = queryDocumentSnapshots.getDocuments()
+                        User user = queryDocumentSnapshots.getDocuments()
                                 .get(0)
-                                .toObject(Organizer.class);
-                        listener.onOrganizerFetched(user);
+                                .toObject(User.class);
+                        listener.onOrganizerFetched(asOrganizer(user));
                     } else {
                         listener.onOrganizerFetched(null);
                     }
@@ -282,10 +291,10 @@ public class UserRepository {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
-                        Entrant entrant = queryDocumentSnapshots.getDocuments()
+                        User user = queryDocumentSnapshots.getDocuments()
                                 .get(0)
-                                .toObject(Entrant.class);
-                        listener.onEntrantFetched(entrant);
+                                .toObject(User.class);
+                        listener.onEntrantFetched(asEntrant(user));
                     } else {
                         listener.onEntrantFetched(null);
                     }
@@ -388,5 +397,35 @@ public class UserRepository {
         db.collection("users")
                 .document(userEmail)
                 .delete();
+    }
+
+    /**
+     * Converts a generic {@link User} into an {@link Organizer} while keeping existing fields.
+     */
+    private Organizer asOrganizer(User user) {
+        if (user == null) {
+            return null;
+        }
+        Organizer organizer = new Organizer();
+        organizer.setName(user.getName());
+        organizer.setEmail(user.getEmail());
+        organizer.setPassword(user.getPassword());
+        organizer.setPhoneNumber(user.getPhoneNumber());
+        return organizer;
+    }
+
+    /**
+     * Converts a generic {@link User} into an {@link Entrant} while keeping existing fields.
+     */
+    private Entrant asEntrant(User user) {
+        if (user == null) {
+            return null;
+        }
+        Entrant entrant = new Entrant();
+        entrant.setName(user.getName());
+        entrant.setEmail(user.getEmail());
+        entrant.setPassword(user.getPassword());
+        entrant.setPhoneNumber(user.getPhoneNumber());
+        return entrant;
     }
 }

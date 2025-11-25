@@ -222,12 +222,6 @@ public class NotificationHistoryHelper {
                 (notification.getTitle() != null && notification.getTitle().contains("Invitation")) ||
                 (notification.getMessage() != null && notification.getMessage().contains("selected from the waitlist"));
 
-        Log.d(TAG, "Notification type detection:");
-        Log.d(TAG, "  - Type: " + notification.getType());
-        Log.d(TAG, "  - GroupType: " + notification.getGroupType());
-        Log.d(TAG, "  - Title: " + notification.getTitle());
-        Log.d(TAG, "  - Is Invitation: " + isInvitation);
-
         if (isInvitation) {
             addInvitationNotificationCard(notification, markAsReadCallback);
         } else {
@@ -236,7 +230,7 @@ public class NotificationHistoryHelper {
                     notification.getEventName(),
                     formatTimestamp(notification.getCreatedAt()),
                     notification.getMessage(),
-                    "1 recipient",
+                    notification.getRecipientCount() + (notification.getRecipientCount() == 1 ? " recipient" : " recipients"),
                     markAsReadCallback,
                     notification
             );
@@ -439,6 +433,7 @@ public class NotificationHistoryHelper {
         TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
         TextView recipientsTextView = cardView.findViewById(R.id.notificationRecipientsCount);
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
+        View root = cardView.findViewById(R.id.notification_root);
 
         tagTextView.setText(groupType != null ? groupType : "Notification");
         eventNameTextView.setText(eventName != null ? eventName : "");
@@ -447,17 +442,18 @@ public class NotificationHistoryHelper {
         recipientsTextView.setText(recipientInfo);
 
         // Tint for unread vs read
-        if (!notification.isRead()) {
-            cardView.setCardBackgroundColor(context.getColor(R.color.theme));
+        Boolean isRead = notification.isRead();
+        if (isRead == null || isRead) {
+            root.setBackgroundColor(context.getColor(android.R.color.white));
         } else {
-            cardView.setCardBackgroundColor(context.getColor(android.R.color.white));
+            root.setBackgroundColor(context.getColor(R.color.theme));
         }
 
         // Set click listener to mark as read and update tint
         if (markAsReadCallback != null && notification.getNotificationId() != null) {
             cardView.setOnClickListener(v -> {
                 markAsReadCallback.onMarkAsRead(notification.getNotificationId());
-                cardView.setCardBackgroundColor(context.getColor(android.R.color.white));
+                root.setBackgroundColor(context.getColor(android.R.color.white));
             });
         }
 
@@ -469,12 +465,18 @@ public class NotificationHistoryHelper {
      * Creates and adds a notification card for organizers.
      */
     private void addOrganizerNotificationCard(Map<String, Object> logData) {
+        Object countObj = logData.get("recipientCount");
+        String recipientInfo = "1 recipient"; // Default
+        if (countObj instanceof Number) {
+            int count = ((Number) countObj).intValue();
+            recipientInfo = count + (count == 1 ? " recipient" : " recipients");
+        }
         addNotificationCard(
             getString(logData, "groupType", "Notification"),
             getString(logData, "eventName", "N/A"),
             formatFirestoreTimestamp(logData.get("createdAt")),
             getString(logData, "message", ""),
-            "X recipient", //TODO update with actual count of recipients
+            recipientInfo,
             null
         );
     }
@@ -484,7 +486,12 @@ public class NotificationHistoryHelper {
      */
     private void addAdminNotificationCard(Map<String, Object> logData) {
         String fromOrganizer = getString(logData, "fromOrganizer", "Unknown");
-        //String recipient = getString(logData, "recipient", "Unknown");
+        Object countObj = logData.get("recipientCount");
+        String recipientInfo = "1 recipient"; // Default
+        if (countObj instanceof Number) {
+            int count = ((Number) countObj).intValue();
+            recipientInfo = count + (count == 1 ? " recipient" : " recipients");
+        }
         String status = getString(logData, "status", "UNKNOWN");
 
         addNotificationCard(
@@ -517,14 +524,15 @@ public class NotificationHistoryHelper {
         TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
         TextView recipientsTextView = cardView.findViewById(R.id.notificationRecipientsCount);
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
+        View root = cardView.findViewById(R.id.notification_root);
 
         tagTextView.setText(groupType != null ? groupType : "Notification");
         eventNameTextView.setText(eventName != null ? eventName : "");
         timestampTextView.setText(timestamp);
         messageTextView.setText(message != null ? message : "");
         recipientsTextView.setText(recipientInfo);
+        root.setBackgroundColor(context.getColor(android.R.color.white));
 
-        cardView.setBackgroundColor(context.getColor(android.R.color.white));
 
         notificationsContainer.addView(cardView);
     }

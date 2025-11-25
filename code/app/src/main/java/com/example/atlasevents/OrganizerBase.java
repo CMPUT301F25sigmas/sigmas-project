@@ -97,12 +97,11 @@ public abstract class OrganizerBase extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        startNotificationBadgeListener();
+        //stopNotificationBadgeListener();
     }
 
     @Override
     protected void onStop() {
-        stopNotificationBadgeListener();
         super.onStop();
     }
 
@@ -191,71 +190,8 @@ public abstract class OrganizerBase extends AppCompatActivity {
         overridePendingTransition(0, 0);
     }
 
-    private void startNotificationBadgeListener() {
-        String email = session.getUserEmail();
-        if (email == null) {
-            return;
-        }
-        stopNotificationBadgeListener();
-        firestore.collection("users")
-                .document(email)
-                .collection("preferences")
-                .document("blockedOrganizers")
-                .get()
-                .addOnSuccessListener(prefSnapshot -> {
-                    java.util.List<String> blocked = new java.util.ArrayList<>();
-                    if (prefSnapshot.exists()) {
-                        java.util.List<String> stored = (java.util.List<String>) prefSnapshot.get("blockedEmails");
-                        if (stored != null) {
-                            blocked.addAll(stored);
-                        }
-                    }
-                    badgeListener = firestore.collection("users")
-                            .document(email)
-                            .collection("notifications")
-                            .addSnapshotListener((snapshot, error) -> {
-                                if (error != null || snapshot == null) {
-                                    updateBadge(0);
-                                    return;
-                                }
-                                int unread = 0;
-                                for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                                    Boolean read = doc.getBoolean("read");
-                                    String organizer = doc.getString("fromOrganizeremail");
-                                    if (organizer != null && blocked.contains(organizer)) {
-                                        continue;
-                                    }
-                                    if (read == null || !read) {
-                                        unread++;
-                                    }
-                                }
-                                updateBadge(unread);
-                            });
-                })
-                .addOnFailureListener(e -> updateBadge(0));
-    }
 
-    private void stopNotificationBadgeListener() {
-        if (badgeListener != null) {
-            badgeListener.remove();
-            badgeListener = null;
-        }
-    }
 
-    private void updateBadge(int count) {
-        android.widget.TextView badge = findViewById(R.id.notifications_badge);
-        if (badge == null) {
-            NotificationHelper.updateAppBadge(this, count);
-            return;
-        }
-        if (count > 0) {
-            badge.setText(count > 99 ? "99+" : String.valueOf(count));
-            badge.setVisibility(android.view.View.VISIBLE);
-        } else {
-            badge.setVisibility(android.view.View.GONE);
-        }
-        NotificationHelper.updateAppBadge(this, count);
-    }
 
     /**
      * Opens the notifications screen.

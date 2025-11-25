@@ -85,6 +85,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
         // Button to view notification history (for organizers to see what they've sent)
         notificationHistoryButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, NotificationHistoryActivity.class);
+            intent.putExtra("organizerHistory", true);
             startActivity(intent);
         });
 

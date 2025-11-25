@@ -146,7 +146,15 @@ public class NotificationRepository {
         log.put("groupType", notification.getGroupType());
         log.put("eventName", notification.getEventName());
 
-        return db.collection("notification_logs").document().set(log);
+        String organizerEmail = notification.getFromOrganizeremail();
+        if (organizerEmail == null || organizerEmail.isEmpty()) {
+            organizerEmail = "unknown_sender";
+        }
+        return db.collection("notification_logs")
+                .document(organizerEmail)
+                .collection("logs")
+                .document()
+                .set(log);
     }
 
     // Organizer convenience methods (these gather emails from event lists then call sendToUsers)
@@ -237,7 +245,7 @@ public class NotificationRepository {
      * @see FirebaseFirestore
      */
     public void getNotificationLogs(@NonNull NotificationLogsCallback callback) {
-        db.collection("notification_logs")
+        db.collectionGroup("logs")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(qs -> {

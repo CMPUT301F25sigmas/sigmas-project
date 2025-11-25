@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import com.example.atlasevents.LotteryService;
 import com.example.atlasevents.NotificationHistoryActivity;
@@ -31,14 +32,14 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for loading and displaying notification history.
- * 
+ *
  * This class handles the logic for:
  * - Loading notifications from Firestore for both entrants and organizers
  * - Creating notification cards for display
  * - Formatting timestamps and data
  * - sending out lottery selection invites and handling responses/
- * 
- * 
+ *
+ *
  * @author CMPUT301F25sigmas
  * @version 2.0
  * @see notificationhistoryactivity
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class NotificationHistoryHelper {
     private static final String TAG = "NotificationHistoryHelper";
-    
+
     private final Context context;
     private final FirebaseFirestore db;
     private final LinearLayout notificationsContainer;
@@ -55,7 +56,7 @@ public class NotificationHistoryHelper {
     private String currentUserEmail;
     private Button acceptButton, declineButton;
     private TextView responseDeadline;
-    
+
     /**
      * Interface for callbacks when notifications are loaded or fail to load.
      */
@@ -63,17 +64,17 @@ public class NotificationHistoryHelper {
         void onNotificationsLoaded(int count);
         void onLoadFailed();
     }
-    
+
     /**
      * Interface for handling mark-as-read requests from notification cards.
      */
     public interface MarkAsReadCallback {
         void onMarkAsRead(String notificationId);
     }
-    
+
     /**
      * Creates a new helper instance.
-     * 
+     *
      * @param context Android context for inflating layouts
      * @param db Firestore instance
      * @param container The LinearLayout where notification cards will be added
@@ -84,80 +85,90 @@ public class NotificationHistoryHelper {
         this.notificationsContainer = container;
         this.notificationRepository = new NotificationRepository();
     }
-    
+
     /**
      * Loads received notifications for an entrant user.
-     * 
+     *
      * Queries: users/{userEmail}/notifications/
      * Sorted by: createdAt descending (newest first)
-     * 
+     *
      * @param userEmail The email of the entrant user
      * @param callback Callback for success/failure handling
      * @param markAsReadCallback Callback for mark-as-read actions
      */
-    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback, 
-                                                   MarkAsReadCallback markAsReadCallback) {
-        db.collection("users")
+    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback,
+                                                 MarkAsReadCallback markAsReadCallback) {
+        fetchBlockedOrganizers(userEmail, blockedEmails -> db.collection("users")
                 .document(userEmail)
                 .collection("notifications")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     notificationsContainer.removeAllViews();
-                    
+
                     if (queryDocumentSnapshots.isEmpty()) {
                         Log.d(TAG, "No notifications found");
                         callback.onLoadFailed();
                         return;
                     }
-                    
+
                     Log.d(TAG, "Found " + queryDocumentSnapshots.size() + " notifications");
-                    
+                    int displayed = 0;
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Notification notification = document.toObject(Notification.class);
                         notification.setNotificationId(document.getId());
+                        String organizerEmail = notification.getFromOrganizeremail();
+                        if (organizerEmail != null && blockedEmails.contains(organizerEmail)) {
+                            continue;
+                        }
                         addEntrantNotificationCard(notification, markAsReadCallback);
+                        displayed++;
                     }
-                    
-                    callback.onNotificationsLoaded(queryDocumentSnapshots.size());
+
+                    if (displayed == 0) {
+                        callback.onLoadFailed();
+                    } else {
+                        callback.onNotificationsLoaded(displayed);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error loading notifications", e);
                     callback.onLoadFailed();
-                });
+                }));
     }
-    
+
     /**
      * Loads sent notifications for an organizer user from notification_logs.
-     * 
+     *
      * Queries: notification_logs collection
      * Filtered by: fromOrganizer field matching userEmail
      * Sorted by: createdAt descending (newest first)
-     * 
+     *
      * @param userEmail The email of the organizer user
      * @param callback Callback for success/failure handling
      */
     public void loadOrganizerSentNotifications(String userEmail, NotificationLoadCallback callback) {
         db.collection("notification_logs")
-                .whereEqualTo("fromOrganizer", userEmail)
+                .document(userEmail)
+                .collection("logs")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     notificationsContainer.removeAllViews();
-                    
+
                     if (queryDocumentSnapshots.isEmpty()) {
                         Log.d(TAG, "No sent notifications found");
                         callback.onLoadFailed();
                         return;
                     }
-                    
+
                     Log.d(TAG, "Found " + queryDocumentSnapshots.size() + " sent notifications");
-                    
+
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Map<String, Object> logData = document.getData();
                         addOrganizerNotificationCard(logData);
                     }
-                    
+
                     callback.onNotificationsLoaded(queryDocumentSnapshots.size());
                 })
                 .addOnFailureListener(e -> {
@@ -165,11 +176,11 @@ public class NotificationHistoryHelper {
                     callback.onLoadFailed();
                 });
     }
-    
+
     /**
      * Loads ALL notification logs for admin review from notification_logs collection.
      * Uses NotificationRepository's existing getNotificationLogs method.
-     * 
+     *
      * @param callback Callback for success/failure handling
      */
     public void loadAdminAllNotificationLogs(NotificationLoadCallback callback) {
@@ -177,19 +188,19 @@ public class NotificationHistoryHelper {
             @Override
             public void onSuccess(List<Map<String, Object>> logs) {
                 notificationsContainer.removeAllViews();
-                
+
                 if (logs.isEmpty()) {
                     Log.d(TAG, "No notification logs found");
                     callback.onLoadFailed();
                     return;
                 }
-                
+
                 Log.d(TAG, "Found " + logs.size() + " notification logs");
-                
+
                 for (Map<String, Object> logData : logs) {
                     addAdminNotificationCard(logData);
                 }
-                
+
                 callback.onNotificationsLoaded(logs.size());
             }
 
@@ -420,7 +431,7 @@ public class NotificationHistoryHelper {
     private void addRegularNotificationCard(String groupType, String eventName, String timestamp,
                                             String message, String recipientInfo,
                                             MarkAsReadCallback markAsReadCallback, Notification notification) {
-        View cardView = LayoutInflater.from(context)
+        CardView cardView = (CardView) LayoutInflater.from(context)
                 .inflate(R.layout.notification_card, notificationsContainer, false);
 
         TextView tagTextView = cardView.findViewById(R.id.notificationTag);
@@ -435,17 +446,25 @@ public class NotificationHistoryHelper {
         messageTextView.setText(message != null ? message : "");
         recipientsTextView.setText(recipientInfo);
 
-        // Set click listener to mark as read
+        // Tint for unread vs read
+        if (!notification.isRead()) {
+            cardView.setCardBackgroundColor(context.getColor(R.color.theme));
+        } else {
+            cardView.setCardBackgroundColor(context.getColor(android.R.color.white));
+        }
+
+        // Set click listener to mark as read and update tint
         if (markAsReadCallback != null && notification.getNotificationId() != null) {
             cardView.setOnClickListener(v -> {
                 markAsReadCallback.onMarkAsRead(notification.getNotificationId());
+                cardView.setCardBackgroundColor(context.getColor(android.R.color.white));
             });
         }
 
         notificationsContainer.addView(cardView);
     }
 
-    
+
     /**
      * Creates and adds a notification card for organizers.
      */
@@ -459,7 +478,7 @@ public class NotificationHistoryHelper {
             null
         );
     }
-    
+
     /**
      * Creates and adds a notification card for admin view.
      */
@@ -467,7 +486,7 @@ public class NotificationHistoryHelper {
         String fromOrganizer = getString(logData, "fromOrganizer", "Unknown");
         //String recipient = getString(logData, "recipient", "Unknown");
         String status = getString(logData, "status", "UNKNOWN");
-        
+
         addNotificationCard(
             getString(logData, "groupType", "Notification"),
             getString(logData, "eventName", "N/A"),
@@ -477,7 +496,7 @@ public class NotificationHistoryHelper {
             null
         );
     }
-    
+
     /**
      * Helper to safely get string from map.
      */
@@ -485,32 +504,34 @@ public class NotificationHistoryHelper {
         Object value = map.get(key);
         return value != null ? value.toString() : defaultValue;
     }
-    
+
     /**
      * Common method to create and add a notification card.
      */
     private void addNotificationCard(String groupType, String eventName, String timestamp, String message, String recipientInfo, MarkAsReadCallback markAsReadCallback) {
         View cardView = LayoutInflater.from(context)
                 .inflate(R.layout.notification_card, notificationsContainer, false);
-        
+
         TextView tagTextView = cardView.findViewById(R.id.notificationTag);
         TextView timestampTextView = cardView.findViewById(R.id.notificationTimestamp);
         TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
         TextView recipientsTextView = cardView.findViewById(R.id.notificationRecipientsCount);
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
-        
+
         tagTextView.setText(groupType != null ? groupType : "Notification");
         eventNameTextView.setText(eventName != null ? eventName : "");
         timestampTextView.setText(timestamp);
         messageTextView.setText(message != null ? message : "");
         recipientsTextView.setText(recipientInfo);
-        
+
+        cardView.setBackgroundColor(context.getColor(android.R.color.white));
+
         notificationsContainer.addView(cardView);
     }
 
     /**
      * Formats a Date object into a readable timestamp.
-     * 
+     *
      * @param date The date to format
      * @return Formatted string like "2025-11-05 14:30" or "Just now"
      */
@@ -521,10 +542,10 @@ public class NotificationHistoryHelper {
         }
         return "Just now";
     }
-    
+
     /**
      * Formats a Firestore Timestamp object into a readable timestamp.
-     * 
+     *
      * @param timestampObj The Firestore Timestamp object
      * @return Formatted string like "2025-11-05 14:30" or "Just now"
      */
@@ -579,5 +600,30 @@ public class NotificationHistoryHelper {
         }
 
         Log.d(TAG, "=== END DEBUG ===");
+    }
+
+    /**
+     * Fetches the list of blocked organizer emails for the user.
+     */
+    private void fetchBlockedOrganizers(String userEmail, java.util.function.Consumer<List<String>> callback) {
+        db.collection("users")
+                .document(userEmail)
+                .collection("preferences")
+                .document("blockedOrganizers")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<String> blocked = new java.util.ArrayList<>();
+                    if (snapshot.exists()) {
+                        List<String> stored = (List<String>) snapshot.get("blockedEmails");
+                        if (stored != null) {
+                            blocked.addAll(stored);
+                        }
+                    }
+                    callback.accept(blocked);
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Failed to load blocked organizers, defaulting to none", e);
+                    callback.accept(new java.util.ArrayList<>());
+                });
     }
 }

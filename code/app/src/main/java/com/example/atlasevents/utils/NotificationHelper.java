@@ -1,12 +1,24 @@
 package com.example.atlasevents.utils;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.Toast;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.example.atlasevents.R;
 
 /**
  * Utility class for displaying user notifications in the application UI.
@@ -62,5 +74,62 @@ public class NotificationHelper {
             View root = activity.findViewById(android.R.id.content);
             if (root != null) Snackbar.make(root, message, Snackbar.LENGTH_LONG).show();
         });
+    }
+
+    /**
+     * Shows a lightweight toast (non-blocking, does not alter read status).
+     */
+    public static void showToast(Activity activity, String message) {
+        if (activity == null) return;
+        new Handler(Looper.getMainLooper()).post(() ->
+                Toast.makeText(activity, message, Toast.LENGTH_LONG).show());
+    }
+
+    /**
+     * Updates the launcher badge count 
+     * Posts a silent notification with a badge number; cancels it when count is zero.
+     */
+    public static void updateAppBadge(Context context, int count) {
+        if (context == null) return;
+        ensureBadgeChannel(context);
+        NotificationManagerCompat nm = NotificationManagerCompat.from(context);
+        int badgeId = 0xBADD1; // stable ID for badge updates
+
+        if (count <= 0) {
+            nm.cancel(badgeId);
+            return;
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "badge_channel")
+                .setSmallIcon(R.drawable.notifications_icon)
+                .setContentTitle("You have unread notifications")
+                .setContentText(count > 99 ? "99+ new notifications" : count + " new notifications")
+                .setNumber(count)
+                .setOnlyAlertOnce(true)
+                .setAutoCancel(false)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // The calling activity is responsible for requesting the permission.
+                return;
+            }
+        }
+        nm.notify(badgeId, builder.build());
+    }
+
+    private static void ensureBadgeChannel(Context context) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) return;
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
+        if (manager == null) return;
+        NotificationChannel channel = new NotificationChannel(
+                "badge_channel",
+                "Badge Updates",
+                NotificationManager.IMPORTANCE_LOW
+        );
+        channel.setShowBadge(true);
+        channel.setSound(null, null);
+        manager.createNotificationChannel(channel);
     }
 }

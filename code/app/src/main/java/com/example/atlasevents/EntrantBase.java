@@ -1,11 +1,17 @@
 package com.example.atlasevents;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -46,6 +52,8 @@ public abstract class EntrantBase extends AppCompatActivity {
     private ListenerRegistration badgeListener;
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,12 +70,32 @@ public abstract class EntrantBase extends AppCompatActivity {
         userRepository = new UserRepository();
 
         SidebarNavigation();
+
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                // Permission is granted. Continue with notification updates.
+                startNotificationBadgeListener();
+            } else {
+                // Permission is denied. Only affects launcher badge updates.
+            }
+        });
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        startNotificationBadgeListener();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                // Permission already granted, start listener directly
+                startNotificationBadgeListener();
+            } else {
+                // Request permission
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        } else {
+            // For older Android versions, permission is granted at install time, so start listener directly
+            startNotificationBadgeListener();
+        }
     }
 
     @Override

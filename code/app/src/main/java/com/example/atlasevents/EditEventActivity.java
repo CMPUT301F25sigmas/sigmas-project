@@ -199,7 +199,7 @@ public class EditEventActivity extends AppCompatActivity {
         registrationPeriodPicker = new DatePickerHelper(Boolean.TRUE);
         timePicker = new TimePickerHelper();
 
-        ImageButton backButton = findViewById(R.id.createBackButton);
+        ImageButton backButton = findViewById(R.id.notificationCentreBackButton);
         backButton.setOnClickListener(view -> finish());
 
         session = new Session(this);

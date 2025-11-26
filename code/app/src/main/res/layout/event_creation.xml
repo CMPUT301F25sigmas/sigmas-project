@@ -22,7 +22,7 @@
             android:layout_marginBottom="16dp">
 
             <ImageButton
-                android:id="@+id/createBackButton"
+                android:id="@+id/notificationCentreBackButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_arrow_left"

@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -81,11 +82,17 @@ public class NotificationCenterActivity extends AppCompatActivity {
         eventsContainer = findViewById(R.id.events_container);
         emptyView = findViewById(R.id.empty_view_notification);
         Button notificationHistoryButton = findViewById(R.id.notificationHistory);
+        ImageButton backButton = findViewById(R.id.notificationCentreBackButton);
 
         // Button to view notification history (for organizers to see what they've sent)
         notificationHistoryButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, NotificationHistoryActivity.class);
             startActivity(intent);
+        });
+
+        // Back button
+        backButton.setOnClickListener(view ->{
+            finish();
         });
 
         // Load and display all events for this organizer

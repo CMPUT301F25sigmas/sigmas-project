@@ -148,6 +148,12 @@ public class EventManageActivity extends AppCompatActivity {
             //draw lottery
         });
 
+        Button showMapButton = findViewById(R.id.showMapButton);
+        showMapButton.setOnClickListener(view -> {
+            Intent intent = new Intent(EventManageActivity.this, ManageEventMapActivity.class);
+            startActivity(intent);
+        });
+
         ImageView downloadButton = findViewById(R.id.downloadButton);
         downloadButton.setOnClickListener(view -> {
 

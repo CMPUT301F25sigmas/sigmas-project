@@ -1,5 +1,7 @@
 package com.example.atlasevents;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -19,6 +22,10 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -48,10 +55,12 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private EventRepository eventRepository;
     private UserRepository userRepository;
+    private FusedLocationProviderClient fusedLocationClient;
     private Session session;
 
     private Event currentEvent;
     private Entrant currentEntrant;
+
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
             waitlistCountTextView, dateTextView, timeTextView, locationTextView;
@@ -85,7 +94,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entrant_event_details);
-
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -280,11 +289,49 @@ public class EventDetailsActivity extends AppCompatActivity {
      */
     private void joinWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
+        /*
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+            return;
+        }
 
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location != null) {
+
+                }
+            }
+        });
+*/
         int joined = currentEvent.addToWaitlist(currentEntrant);
         if (joined == 1) {
+            /*
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener(this, location -> {
+                            if (location != null) {
+                                LatLng latlngLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                currentEvent.addToEntrantLocation(currentEntrant, latlngLocation);
+                            }
+                        });
+            }
+            */
             eventRepository.updateEvent(currentEvent, success -> {
                 if (success) {
+
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                                .addOnSuccessListener(this, location -> {
+                                    if (location != null) {
+                                        double lat = location.getLatitude();
+                                        double longi = location.getLongitude();
+                                        LatLng latlnglocation = new LatLng(lat, longi);
+                                        currentEvent.addToEntrantLocation(currentEntrant.getEmail(), latlnglocation);
+                                    }
+                                });
+                    }
+
                     Toast.makeText(this, "Joined waitlist successfully", Toast.LENGTH_SHORT).show();
                     waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
                     updateWaitlistButtons();

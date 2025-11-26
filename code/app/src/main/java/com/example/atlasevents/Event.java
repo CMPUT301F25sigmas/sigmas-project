@@ -4,12 +4,15 @@ package com.example.atlasevents;
 import android.util.Log;
 
 import com.example.atlasevents.data.EventRepository;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -40,6 +43,7 @@ public class Event implements Serializable {
     private int slots; //Number of slots available
     private Organizer organizer;
 
+
     public String getAddress() {
         return address;
     }
@@ -61,6 +65,7 @@ public class Event implements Serializable {
     private EntrantList inviteList;
     private EntrantList acceptedList;
     private EntrantList declinedList;
+    private Map<String, LatLng> entrantCoords;
     private String Description;
     private String address;
     private Date date;
@@ -78,6 +83,7 @@ public class Event implements Serializable {
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
         imageUrl = "";
+
     }
     public Event(Organizer organizer) {
         this.organizer = organizer;
@@ -85,6 +91,7 @@ public class Event implements Serializable {
         inviteList = new EntrantList();
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
+        entrantCoords = new HashMap<>();
         imageUrl = "";
     }
 
@@ -149,6 +156,7 @@ public class Event implements Serializable {
     public EntrantList getInviteList(){
         return inviteList;
     }
+    public Map<String, LatLng> getEntrantCoords() {return entrantCoords; }
     public String getEventName() { return eventName;}
 
 
@@ -205,6 +213,15 @@ public class Event implements Serializable {
 
     public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
     public void setEntrantLimit(int max){this.entrantLimit = max;}
+    public void addToEntrantLocation(String email, LatLng coords) {
+        entrantCoords.put(email, coords);
+    }
+    public void removeFromEntrantLocation(Entrant entrant) {
+        if (entrantCoords.containsKey(entrant)) {
+            entrantCoords.remove(entrant);
+        }
+        return;
+    }
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;

@@ -165,7 +165,7 @@ public class EventManageActivity extends AppCompatActivity {
      * These booleans are for which list is visible, controlled by clicking on the list cards
      */
     private final AtomicBoolean chosenVisible = new AtomicBoolean(false);
-    private final AtomicBoolean waitlistVisible = new AtomicBoolean(true); // Default to waitlist
+    private final AtomicBoolean waitlistVisible = new AtomicBoolean(false);
     private final AtomicBoolean cancelledVisible = new AtomicBoolean(false);
     private final AtomicBoolean enrolledVisible = new AtomicBoolean(false);
 
@@ -421,7 +421,7 @@ public class EventManageActivity extends AppCompatActivity {
      */
     private void displayCurrentList(Event event) {
         String listTitle = "";
-        ArrayList<Entrant> listToDisplay = new ArrayList<>();
+        ArrayList<Entrant> listToDisplay = null;
 
         if (chosenVisible.get() && event.getInviteList() != null) {
             listTitle = "Chosen Entrants";
@@ -453,7 +453,9 @@ public class EventManageActivity extends AppCompatActivity {
             entrantAdapter.setEntrants(new ArrayList<>());
             waitingListCard.setVisibility(View.GONE);
             downloadButton.setVisibility(View.GONE);
-            Toast.makeText(this, "No entrants in " + listTitle.toLowerCase(), Toast.LENGTH_SHORT).show();
+            if (!listTitle.isEmpty()) {
+                Toast.makeText(this, "No entrants in " + listTitle.toLowerCase(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

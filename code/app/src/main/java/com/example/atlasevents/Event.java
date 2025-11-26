@@ -30,6 +30,8 @@ import java.util.Random;
  * select entrants from the waitlist.
  * </p>
  *
+ * Modifications made to add lottery getters and setters to support LotteryService functionality
+ * @see LotteryService
  * @see EntrantList
  * @see Organizer
  * @see Entrant
@@ -75,6 +77,7 @@ public class Event implements Serializable {
     private String imageUrl; // Firebase Storage path or URL
     private boolean requireGeolocation;
     private int entrantLimit = -1;
+    private Date lastLotteryRun;
 
 
     public Event(){
@@ -172,6 +175,9 @@ public class Event implements Serializable {
         return imageUrl;
     }
 
+    public Date getLastLotteryRun() {
+        return lastLotteryRun;
+    }
     //Setters
     public void setDate(Date date) {
         this.date = date;
@@ -225,6 +231,9 @@ public class Event implements Serializable {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+    public void setLastLotteryRun(Date lastLotteryRun) {
+        this.lastLotteryRun = lastLotteryRun;
     }
 
     /**

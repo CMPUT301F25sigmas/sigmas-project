@@ -8,4 +8,5 @@
     <color name="background_red">#FF0000</color>
     <color name="light_purple">#8152E5</color>
     <color name="text_color">#1B1A1A</color>
+    <color name="colorAccent">#FF4081</color>
 </resources>

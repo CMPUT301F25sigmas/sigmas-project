@@ -3,16 +3,20 @@ package com.example.atlasevents;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
+import com.example.atlasevents.Session;
+import com.example.atlasevents.LotteryService;
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.data.model.Notification;
 import com.example.atlasevents.utils.NotificationHistoryHelper;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -24,7 +28,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * 
  * This activity coordinates the UI and delegates the data loading and card creation
  * to NotificationHistoryHelper for better code organization.
- * 
+ * @see LotteryService for handlenotification
  * @author CMPUT301F25sigmas
  * @version 2.0
  */
@@ -36,7 +40,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
     private Session session;
     private UserRepository userRepository;
     private NotificationHistoryHelper notificationHelper;
-    
+
     /**
      * Called when the activity is created.
      * Sets up the UI, initializes helper, and loads notifications.
@@ -47,7 +51,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.notification_history);
-        
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -112,6 +116,9 @@ public class NotificationHistoryActivity extends AppCompatActivity {
                         showEmptyState();
                     }
                 };
+
+            // PASSING THE EMAIL TO HELPER BEFORE LOADING
+            notificationHelper.setCurrentUserEmail(userEmail);
             
             if ("Admin".equals(userType)) {
                 // Admin sees ALL notification logs from the system

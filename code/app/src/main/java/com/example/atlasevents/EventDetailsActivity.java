@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -64,7 +65,7 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
             waitlistCountTextView, dateTextView, timeTextView, locationTextView;
-    private ImageView eventImageView, qrImageView, backArrow;
+    private ImageView eventImageView, qrImageView, backArrow, guidelinesButton;
     private Button joinWaitlistButton, leaveWaitlistButton;
     private CheckBox optOutCheckBox;
 
@@ -105,6 +106,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         userRepository = new UserRepository();
         session = new Session(this);
 
+        guidelinesButton = findViewById(R.id.guidelinesButton);
         eventNameTextView = findViewById(R.id.eventName);
         organizerNameTextView = findViewById(R.id.organizerName);
         descriptionTextView = findViewById(R.id.eventDescription);
@@ -251,6 +253,8 @@ public class EventDetailsActivity extends AppCompatActivity {
     /**
      * Sets up click listeners for UI interactions such as the back arrow
      * and the waitlist join/leave buttons.
+     * @version 1.2
+     * Added listner for guidelines button to show lottery criteria
      */
     private void setupListeners() {
         backArrow.setOnClickListener(view -> finish());
@@ -261,6 +265,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 updateBlockedStatus(isChecked);
             }
         });
+        guidelinesButton.setOnClickListener(view -> showEventCriteriaDialog());
     }
 
     /**
@@ -437,5 +442,49 @@ public class EventDetailsActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+    /**
+     * Shows a Material Design dialog with event criteria
+     */
+    private void showEventCriteriaDialog() {
+        if (currentEvent == null) {
+            Toast.makeText(this, "Event data not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int entrantLimit = currentEvent.getEntrantLimit();
+        boolean requireGeolocation = currentEvent.getRequireGeolocation();
+
+        String entrantLimitText = entrantLimit == -1 ? "No limit" : String.valueOf(entrantLimit);
+        String geolocationText = requireGeolocation ? "Yes" : "No";
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Event Criteria")
+                .setMessage("Maximum Entrants: " + entrantLimitText +
+                        "\n\nGeolocation Required: " + geolocationText +
+                        (requireGeolocation ?
+                                "\n\nNote: This event requires location sharing to participate." :
+                                ""))
+                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
+                .setNeutralButton("Learn More", (dialog, which) -> {
+                    // Optional: Show more information about what geolocation means
+                    showGeolocationExplanation();
+                })
+                .show();
+    }
+
+    /**
+     * Shows explanation about geolocation requirements
+     */
+    private void showGeolocationExplanation() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("About Geolocation")
+                .setMessage("When geolocation is required for an event, it means:\n\n" +
+                        "• Your location will be shared with the organizer during the event\n" +
+                        "• This helps organizers manage event capacity and location\n" +
+                        "• Your location data is only used for event purposes\n" +
+                        "• You can control location permissions in your device settings")
+                .setPositiveButton("Got it", null)
+                .show();
     }
 }

@@ -22,7 +22,7 @@
             android:layout_marginBottom="16dp">
 
             <ImageButton
-                android:id="@+id/createBackButton"
+                android:id="@+id/notificationCentreBackButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_arrow_left"
@@ -300,9 +300,9 @@
                         android:id="@+id/limitEntrantsSwitch"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Limit Number of Entrants"
-                        android:textStyle="bold"
-                        android:textColor="@color/black"/>
+                        android:text="Limit Waitlist size"
+                        android:textColor="@color/black"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/maxEntrantsEditText"

@@ -97,7 +97,7 @@ public abstract class OrganizerBase extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        //stopNotificationBadgeListener();
+        // No badges for organizer
     }
 
     @Override

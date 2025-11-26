@@ -133,10 +133,6 @@ public abstract class EntrantBase extends AppCompatActivity {
         ((MaterialCardView) findViewById(iconCardId)).setCardBackgroundColor(Color.parseColor("#E8DEF8"));
     }
 
-    /**
-     * Opens the settings screen.
-     */
-    protected void openSettings() {}
 
     /**
      * Opens the entrant profile screen.
@@ -187,6 +183,10 @@ public abstract class EntrantBase extends AppCompatActivity {
         //Need to do
     }
 
+    /**
+     * Starts the unread-count listener and asks for notification permission on Tiramisu+.
+     * I call this when the screen comes into view so the badge is always fresh.
+     */
     private void startNotificationBadgeListener() {
         String email = session.getUserEmail();
         if (email == null) {
@@ -231,6 +231,10 @@ public abstract class EntrantBase extends AppCompatActivity {
                 .addOnFailureListener(e -> updateBadge(0));
     }
 
+    /**
+     * Removes the unread-count listener if it is active.
+     * I keep this separate so I don't leak listeners across screens.
+     */
     private void stopNotificationBadgeListener() {
         if (badgeListener != null) {
             badgeListener.remove();
@@ -238,6 +242,10 @@ public abstract class EntrantBase extends AppCompatActivity {
         }
     }
 
+    /**
+     * Paints the sidebar badge and pushes the count to the launcher badge.
+     * I clamp big counts to keep the UI tidy.
+     */
     private void updateBadge(int count) {
         android.widget.TextView badge = findViewById(R.id.notifications_badge);
         if (badge == null) {

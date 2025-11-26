@@ -106,13 +106,13 @@ public class NotificationRepository {
     // send to multiple users (fire off parallel tasks)
     /**
      * Sends a notification to multiple users in parallel.
-     * Creates individual send tasks for each user and returns a combined task that completes when all are done.
+     * I stash the recipient count on the template then fan out copies so each write stays independent.
      *
      * @param userEmails List of email addresses to send the notification to
      * @param notification The notification object to send (will be copied for each user)
      * @return A Task containing a list of individual send tasks that complete when all notifications are processed
      * @see #sendToUser(String, Notification)
-     * @see Tasks.whenAll(tasks)
+     * @see Tasks#whenAll(java.util.Collection)
      */
     public Task<List<Task<Void>>> sendToUsers(@NonNull List<String> userEmails, @NonNull Notification notification) {
         List<Task<Void>> tasks = new ArrayList<>();
@@ -127,7 +127,7 @@ public class NotificationRepository {
     // helper: log notification for admin reviews
     /**
      * Logs a notification activity for administrative review and auditing purposes.
-     * Creates a document in the notification_logs collection regardless of delivery status.
+     * I always write a log, even if the user opted out, so admins have traceability.
      *
      * @param recipientEmail The email address of the intended recipient
      * @param notification The notification that was attempted to be sent

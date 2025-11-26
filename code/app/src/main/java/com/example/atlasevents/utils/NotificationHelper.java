@@ -78,6 +78,7 @@ public class NotificationHelper {
 
     /**
      * Shows a lightweight toast (non-blocking, does not alter read status).
+     * I lean on this when I want to alert the user without touching their notification state.
      */
     public static void showToast(Activity activity, String message) {
         if (activity == null) return;
@@ -88,6 +89,7 @@ public class NotificationHelper {
     /**
      * Updates the launcher badge count 
      * Posts a silent notification with a badge number; cancels it when count is zero.
+     * I keep it silent so only the badge changes and the user isn't pinged again.
      */
     public static void updateAppBadge(Context context, int count) {
         if (context == null) return;
@@ -119,6 +121,15 @@ public class NotificationHelper {
         nm.notify(badgeId, builder.build());
     }
 
+    /**
+     * Ensures that the notification channel for badge updates exists.
+     * This is required for Android 8.0 and higher.
+     * <p>
+     * The channel is created with low importance and no sound, making it suitable for
+     * silent notifications that only update the app's badge count without disturbing the user.
+     *
+     * @param context The context used to access the system's NotificationManager.
+     */
     private static void ensureBadgeChannel(Context context) {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) return;
         NotificationManager manager = context.getSystemService(NotificationManager.class);

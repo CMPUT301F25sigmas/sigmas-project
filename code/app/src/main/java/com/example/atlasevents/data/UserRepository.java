@@ -253,31 +253,6 @@ public class UserRepository {
                 })
                 .addOnFailureListener(e -> listener.onOrganizerFetched(null));
     }
-    public interface NotificationsPrefCallback {
-        void onResult(Boolean enabled);
-    }
-
-//    public void isNotificationsEnabled(String email, NotificationsPrefCallback callback) {
-//        db.collection("users").document(email)
-//                .get()
-//                .addOnSuccessListener(doc -> {
-//                    if (doc == null || !doc.exists()) {
-//                        callback.onResult(null);
-//                    } else {
-//                        Boolean enabled = doc.getBoolean("notificationsEnabled");
-//                        // default true if null
-//                        if (enabled == null) enabled = true;
-//                        callback.onResult(enabled);
-//                    }
-//                })
-//                .addOnFailureListener(e -> callback.onResult(null));
-//    }
-//
-//    public Task<Void> setNotificationsEnabled(String email, boolean enabled) {
-//        Map<String, Object> update = new HashMap<>();
-//        update.put("notificationsEnabled", enabled);
-//        return db.collection("users").document(email).set(update, SetOptions.merge());
-//    }
 
     /**
      * Retrieves an {@link Entrant} object from Firestore by email.

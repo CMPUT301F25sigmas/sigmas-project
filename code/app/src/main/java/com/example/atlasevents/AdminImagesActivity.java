@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.utils.ImageUploader;
 
 import java.util.ArrayList;
 
@@ -62,6 +63,8 @@ public class AdminImagesActivity extends AdminBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.admin_images);
+        setActiveNavItem(R.id.images_icon_card);
+
         uploader = new ImageUploader();
 
         imagesContainer = findViewById(R.id.events_container_organizer);

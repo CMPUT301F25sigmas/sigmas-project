@@ -65,6 +65,7 @@ public class AdminProfilesActivity extends AdminBase {
 
         TextView pageTitle = findViewById(R.id.page_title);
         pageTitle.setText(userType.equals("Entrant")? "Entrants" : "Organizers");
+        setActiveNavItem(userType.equals("Entrant")? R.id.profiles_icon_card : R.id.organizers_icon_card);
 
         usersContainer = findViewById(R.id.profiles_container_organizer);
         userRepository = new UserRepository();

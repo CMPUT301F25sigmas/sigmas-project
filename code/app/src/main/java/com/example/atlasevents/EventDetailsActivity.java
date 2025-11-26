@@ -127,22 +127,44 @@ public class EventDetailsActivity extends AppCompatActivity {
             currentEntrant = entrant;
             tryUpdateWaitlistButtons();
         });
-        eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                currentEvent = event;
-                displayEventDetails(event);
-                tryUpdateWaitlistButtons();
-                loadBlockedStatus();
-            }
+        String qrEventId = getIntent().getStringExtra("qrId");
+        String tappedEventId = getIntent().getStringExtra("EventKey");
+        if (qrEventId != null) {
+            eventRepository.getEventById(qrEventId, new EventRepository.EventCallback() {
+                @Override
+                public void onSuccess(Event event) {
+                    currentEvent = event;
+                    displayEventDetails(event);
+                    tryUpdateWaitlistButtons();
+                    loadBlockedStatus();
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                Log.e("EventDetailsActivity", "Failed to fetch event", e);
-                Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        } else if (tappedEventId != null){
+            //             eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
+            eventRepository.getEventById(tappedEventId, new EventRepository.EventCallback() {
+                @Override
+                public void onSuccess(Event event) {
+                    currentEvent = event;
+                    displayEventDetails(event);
+                    tryUpdateWaitlistButtons();
+                    loadBlockedStatus();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        }
     }
 
     /**
@@ -169,7 +191,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         organizerNameTextView.setText(event.getOrganizer().getName());
         descriptionTextView.setText(event.getDescription());
         locationTextView.setText(event.getAddress());
-        dateTextView.setText(event.getDate());
+        dateTextView.setText(event.getDateFormatted());
         timeTextView.setText(event.getTime());
 
         waitlistCountTextView.setText(String.valueOf(
@@ -297,6 +319,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
             }
         });
+
     }
     
     /**

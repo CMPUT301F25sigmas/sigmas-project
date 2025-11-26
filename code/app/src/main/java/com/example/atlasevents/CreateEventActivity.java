@@ -1,6 +1,5 @@
 package com.example.atlasevents;
 
-import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -72,7 +71,6 @@ public class CreateEventActivity extends AppCompatActivity {
      *     previously being shut down then this Bundle contains the data it most
      *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
      *
-     *     todo: make "limit number of entrants" just a editText instead of a switch and editText
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,7 +125,7 @@ public class CreateEventActivity extends AppCompatActivity {
         session = new Session(this);
         String username = session.getUserEmail();
 
-        ImageButton backButton = findViewById(R.id.createBackButton);
+        ImageButton backButton = findViewById(R.id.notificationCentreBackButton);
 
         backButton.setOnClickListener(view ->{
             finish();

@@ -536,7 +536,7 @@ public class LotteryService {
      * @return Number of available slots
      */
     protected int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         int availableSlots = entrantLimit - acceptedCount;
@@ -637,31 +637,34 @@ public class LotteryService {
                                         LotteryCallback callback) {
         String eventId = event.getId();
 
-        // Get current invite list or create new one
         EntrantList currentInviteList = event.getInviteList() != null ? event.getInviteList() : new EntrantList();
+        EntrantList waitlist = event.getWaitlist() != null ? event.getWaitlist() : new EntrantList();
 
-        // Add selected entrants to invite list
         for (Entrant entrant : selectedEntrants) {
             currentInviteList.addEntrant(entrant);
+            waitlist.removeEntrant(entrant);
         }
 
-        // Update the event document with the new invite list
+        event.setInviteList(currentInviteList);
+        event.setWaitlist(waitlist);
+
         Map<String, Object> updates = new HashMap<>();
         updates.put("inviteList", convertEntrantListToMap(currentInviteList));
+        updates.put("waitlist", convertEntrantListToMap(waitlist));
 
         db.collection("events").document(eventId)
                 .update(updates)
                 .addOnCompleteListener(dbTask -> {
                     if (!dbTask.isSuccessful()) {
-                        Log.e(TAG, "Failed to update invite list", dbTask.getException());
+                        Log.e(TAG, "Failed to update invite list and waitlist", dbTask.getException());
                         callback.onLotteryFailed(dbTask.getException());
                         return;
                     }
-
-                    // Send notifications to selected entrants
                     sendInvitationNotifications(event, selectedEntrants, callback);
                 });
     }
+
+
 
     /**
      * Converts EntrantList to a Map for Firestore storage

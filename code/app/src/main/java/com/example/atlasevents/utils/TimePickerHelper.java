@@ -9,6 +9,13 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.Date;
 
+/**
+ * Utility class for a unified time picker.
+ * <p>
+ * Manages a time picker and provides direct
+ * access to the selected time.
+ * </p>
+ */
 public class TimePickerHelper {
     private Integer hour = null;
     private Integer minute = null;
@@ -17,6 +24,15 @@ public class TimePickerHelper {
         void onSelected(int hour, int minute);
     }
 
+    /**
+     * Displays the time picker dialog.
+     * <p>
+     * If hour and minute are already set, they will be selected in the picker.
+     * </p>
+     *
+     * @param context the Context used to create the dialog
+     * @param listener callback invoked when a time is selected
+     */
     public void showPicker(Context context, TimeSelectedCallback listener) {
         Calendar cal = Calendar.getInstance();
 
@@ -41,6 +57,11 @@ public class TimePickerHelper {
         dialog.show();
     }
 
+    /**
+     * Gets the selected time formatted as "hh:mm AM/PM".
+     *
+     * @return the formatted time
+     */
     public String getFormattedTime() {
         if (hour == null || minute == null) return null;
 
@@ -52,6 +73,14 @@ public class TimePickerHelper {
         return sdf.format(cal.getTime()).toUpperCase(Locale.getDefault());
     }
 
+    /**
+     * Sets the time from a formatted string.
+     * <p>
+     * Parses a time string in "hh:mm AM/PM" format and sets the hour and minute fields.
+     * </p>
+     *
+     * @param timeString the time string to parse
+     */
     public void setTimeFromString(String timeString) {
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         try {

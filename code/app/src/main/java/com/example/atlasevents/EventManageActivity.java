@@ -36,6 +36,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -43,6 +45,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -165,7 +170,7 @@ public class EventManageActivity extends AppCompatActivity {
      * These booleans are for which list is visible, controlled by clicking on the list cards
      */
     private final AtomicBoolean chosenVisible = new AtomicBoolean(false);
-    private final AtomicBoolean waitlistVisible = new AtomicBoolean(true); // Default to waitlist
+    private final AtomicBoolean waitlistVisible = new AtomicBoolean(false);
     private final AtomicBoolean cancelledVisible = new AtomicBoolean(false);
     private final AtomicBoolean enrolledVisible = new AtomicBoolean(false);
 
@@ -325,30 +330,35 @@ public class EventManageActivity extends AppCompatActivity {
      */
     private void loadData() {
         String eventId = getIntent().getSerializableExtra(EventKey).toString();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                currentEvent = event;
-                eventName = event.getEventName();
-                updateEventUI(event);
-                updateLotteryUI(event);
-                startLotteryTimerIfNeeded(event);
-                displayCurrentList(event);
+        // Only fetch the event from Firebase; we don't rely on Event methods for lists
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
 
-                // Start cooldown countdown if needed
-                startCooldownCountdownIfNeeded(event);
-            }
+                    currentEvent = snapshot.toObject(Event.class); // for other Event fields like name
+                    eventName = currentEvent.getEventName();
+                    updateEventUI(currentEvent, snapshot);
+                    updateLotteryUI(currentEvent);
+                    startLotteryTimerIfNeeded(currentEvent);
 
-            @Override
-            public void onFailure(Exception e) {
-                Log.e("EventManageActivity", "Failed to fetch event", e);
-                Toast.makeText(EventManageActivity.this,
-                        "Failed to load event", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+                    //display lists directly from Firebase snapshot
+                    displayCurrentListFromSnapshot(currentEvent, snapshot);
+                    updateCountDisplays(currentEvent, snapshot);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventManageActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
     }
+
 
     /**
      * Starts a periodic update for cooldown countdown if lottery is in cooldown
@@ -378,14 +388,16 @@ public class EventManageActivity extends AppCompatActivity {
      *
      * @param event The event to display
      */
-    private void updateEventUI(Event event) {
+    private void updateEventUI(Event event, DocumentSnapshot snapshot) {
         // Populate event details
         eventNameTextView.setText(event.getEventName());
         dateTextView.setText(event.getDateFormatted());
         locationTextView.setText(event.getAddress());
 
         // Update count displays
-        updateCountDisplays(event);
+        if (snapshot != null) {
+            updateCountDisplays(event,snapshot);
+        }
 
         // Load event image using Glide
         if (!event.getImageUrl().isEmpty()) {
@@ -397,16 +409,32 @@ public class EventManageActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * Updates the count displays for all entrant lists.
      *
      * @param event The event with entrant lists
      */
-    private void updateCountDisplays(Event event) {
+    private void updateCountDisplays(Event event, DocumentSnapshot snapshot) {
         int waitlistCount = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
-        int chosenCount = event.getInviteList() != null ? event.getInviteList().size() : 0;
-        int cancelledCount = event.getDeclinedList() != null ? event.getDeclinedList().size() : 0;
-        int finalEnrolledCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
+
+        int chosenCount = 0;
+        if (snapshot.contains("inviteList")) {
+            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
+            chosenCount = mapToEntrantList(inviteMap).size();
+        }
+
+        int cancelledCount = 0;
+        if (snapshot.contains("declinedList")) {
+            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
+            cancelledCount = mapToEntrantList(declinedMap).size();
+        }
+
+        int finalEnrolledCount = 0;
+        if (snapshot.contains("acceptedList")) {
+            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
+            finalEnrolledCount = mapToEntrantList(acceptedMap).size();
+        }
 
         waitlistCountTextView.setText(String.valueOf(waitlistCount));
         chosenCountTextView.setText(String.valueOf(chosenCount));
@@ -414,38 +442,97 @@ public class EventManageActivity extends AppCompatActivity {
         finalEnrolledCountTextView.setText(String.valueOf(finalEnrolledCount));
     }
 
+
+
+    private int countEntrantsInMap(Map<String, Object> map) {
+        if (map == null) return 0;
+        int count = 0;
+        for (Object o : map.values()) {
+            if (o instanceof Map) {
+                Map<?, ?> entrantMap = (Map<?, ?>) o;
+                // Make sure it has an email field, which is required for a valid entrant
+                if (entrantMap.get("email") != null) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+
+    private EntrantList mapToEntrantList(Map<String, Object> map) {
+        EntrantList list = new EntrantList();
+        if (map == null) return list;
+
+        for (Object o : map.values()) {
+            if (o instanceof Map) {
+                Map<String, Object> entrantMap = (Map<String, Object>) o;
+                Entrant entrant = new Entrant(
+                        (String) entrantMap.get("name"),
+                        (String) entrantMap.get("email"),
+                        (String) entrantMap.get("phoneNumber"),
+                        (String) entrantMap.get("userType")
+                );
+                list.addEntrant(entrant);
+            }
+        }
+        return list;
+    }
+    private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
+        Map<String, Object> map = new HashMap<>();
+        for (int i = 0; i < entrantList.size(); i++) {
+            Entrant entrant = entrantList.getEntrant(i);
+            if (entrant != null && entrant.getEmail() != null) {
+                Map<String, Object> entrantMap = new HashMap<>();
+                entrantMap.put("name", entrant.getName());
+                entrantMap.put("email", entrant.getEmail());
+                entrantMap.put("phoneNumber", entrant.getPhoneNumber());
+                entrantMap.put("userType", entrant.getUserType());
+                // Add other entrant fields as needed
+
+                map.put(entrant.getEmail(), entrantMap);
+            }
+        }
+        return map;
+    }
+
+
     /**
      * Displays the appropriate entrant list based on visibility settings.
      *
      * @param event The event with entrant lists
      */
-    private void displayCurrentList(Event event) {
+    private void displayCurrentListFromSnapshot(Event event, DocumentSnapshot snapshot) {
         String listTitle = "";
         ArrayList<Entrant> listToDisplay = new ArrayList<>();
 
-        if (chosenVisible.get() && event.getInviteList() != null) {
+        if (chosenVisible.get() && snapshot.contains("inviteList")) {
             listTitle = "Chosen Entrants";
-            listToDisplay = event.getInviteList().getWaitList();
+            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
+            listToDisplay = mapToEntrantList(inviteMap).getWaitList();
             downloadableList = listToDisplay;
-        } else if (cancelledVisible.get() && event.getDeclinedList() != null) {
+        } else if (cancelledVisible.get() && snapshot.contains("declinedList")) {
             listTitle = "Cancelled Entrants";
-            listToDisplay = event.getDeclinedList().getWaitList();
+            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
+            listToDisplay = mapToEntrantList(declinedMap).getWaitList();
             downloadableList = listToDisplay;
-        } else if (enrolledVisible.get() && event.getAcceptedList() != null) {
+        } else if (enrolledVisible.get() && snapshot.contains("acceptedList")) {
             listTitle = "Enrolled Entrants";
-            listToDisplay = event.getAcceptedList().getWaitList();
+            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
+            listToDisplay = mapToEntrantList(acceptedMap).getWaitList();
             downloadableList = listToDisplay;
-        } else if (waitlistVisible.get() && event.getWaitlist() != null) {
+        } else if (waitlistVisible.get()) {
+            // Use Event's method for waitlist
             listTitle = "Waiting List";
-            listToDisplay = event.getWaitlist().getWaitList();
+            if (event.getWaitlist() != null) {
+                listToDisplay = event.getWaitlist().getWaitList();
+            }
             downloadableList = listToDisplay;
         }
 
-        // Update list title
+        // Update UI
         listTitleTextView.setText(listTitle);
-
-        // Display the list if available
-        if (listToDisplay != null && !listToDisplay.isEmpty()) {
+        if (!listToDisplay.isEmpty()) {
             entrantAdapter.setEntrants(listToDisplay);
             waitingListCard.setVisibility(View.VISIBLE);
             downloadButton.setVisibility(View.VISIBLE);
@@ -453,9 +540,12 @@ public class EventManageActivity extends AppCompatActivity {
             entrantAdapter.setEntrants(new ArrayList<>());
             waitingListCard.setVisibility(View.GONE);
             downloadButton.setVisibility(View.GONE);
-            Toast.makeText(this, "No entrants in " + listTitle.toLowerCase(), Toast.LENGTH_SHORT).show();
+            if (!listTitle.isEmpty()) {
+                Toast.makeText(this, "No entrants in " + listTitle.toLowerCase(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
+
 
     /**
      * Updates the lottery-related UI elements with cooldown support.
@@ -471,11 +561,13 @@ public class EventManageActivity extends AppCompatActivity {
         // NEW: Check cooldown period
         boolean inCooldown = lotteryService.isInCooldownPeriod(event);
         long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+        String entrantLimit = String.valueOf(event.getEntrantLimit());
+        if (entrantLimit.equals("-1")){ entrantLimit = "No limit";}
 
         // Update lottery status text with cooldown info
         String statusText = String.format(
                 "Event: %s\n" +
-                        "Entrant Limit: %d\n" +
+                        "Waitlist Limit: %s\n" +
                         "Accepted: %d\n" +
                         "Available Slots: %d\n" +
                         "Waitlist Size: %d\n" +
@@ -484,7 +576,7 @@ public class EventManageActivity extends AppCompatActivity {
                         "Cooldown Active: %s" +
                         (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
                 event.getEventName(),
-                event.getEntrantLimit(),
+                entrantLimit,
                 acceptedCount,
                 availableSlots,
                 waitlistSize,
@@ -628,7 +720,7 @@ public class EventManageActivity extends AppCompatActivity {
      * @return Number of available slots
      */
     private int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         return Math.max(0, entrantLimit - acceptedCount);
@@ -730,16 +822,33 @@ public class EventManageActivity extends AppCompatActivity {
      * Downloads the currently displayed list as a CSV file.
      */
     private void downloadCurrentListAsCSV() {
-        if (downloadableList == null || downloadableList.isEmpty()) {
+        List<Entrant> listToDownload;
+
+        String listType = "";
+        if (waitlistVisible.get()) {
+            listType = "waitlist";
+            // Use the waitlist directly from the Event object
+            listToDownload = currentEvent.getWaitlist() != null
+                    ? currentEvent.getWaitlist().getWaitList()
+                    : new ArrayList<>();
+        } else if (cancelledVisible.get()) {
+            listType = "cancelledList";
+            listToDownload = downloadableList;
+        } else if (enrolledVisible.get()) {
+            listType = "enrolledList";
+            listToDownload = downloadableList;
+        } else if (chosenVisible.get()) {
+            listType = "chosenList";
+            listToDownload = downloadableList;
+        } else {
             Toast.makeText(this, "No data to download", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String listType = "";
-        if (waitlistVisible.get()) listType = "waitList";
-        if (cancelledVisible.get()) listType = "cancelledList";
-        if (enrolledVisible.get()) listType = "enrolledList";
-        if (chosenVisible.get()) listType = "chosenList";
+        if (listToDownload.isEmpty()) {
+            Toast.makeText(this, "No data to download", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         String fileName = eventName + "_" + listType + ".csv";
         ContentResolver resolver = getContentResolver();
@@ -754,17 +863,15 @@ public class EventManageActivity extends AppCompatActivity {
             uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
         }
 
-        try {
-            OutputStream outputStream = resolver.openOutputStream(uri);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        try (OutputStream outputStream = resolver.openOutputStream(uri);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 
-            // Write CSV header
+            // CSV header
             writer.write("Name,Email,Phone Number");
             writer.newLine();
 
             // Write entrant data
-            for (int i = 0; i < downloadableList.size(); i++) {
-                Entrant entrant = downloadableList.get(i);
+            for (Entrant entrant : listToDownload) {
                 writer.write(entrant.getName() != null ? entrant.getName() : "");
                 writer.write(",");
                 writer.write(entrant.getEmail() != null ? entrant.getEmail() : "");
@@ -773,16 +880,14 @@ public class EventManageActivity extends AppCompatActivity {
                 writer.newLine();
             }
 
-            writer.flush();
-            writer.close();
-
             Toast.makeText(this, "Saved to Downloads: " + fileName, Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
+
 
     /**
      * Shows notification options for the organizer.

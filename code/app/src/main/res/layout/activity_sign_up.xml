@@ -117,8 +117,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Use as "
+        android:layout_marginBottom="16dp"
+            android:text="Account type"
             android:textSize="18sp"
             android:textColor="@color/black"
             android:textStyle="bold" />
@@ -128,22 +128,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/black"
-            android:text="Admin" />
+            android:text="Admin (staff only)" />
 
-        <CheckBox
-            android:id="@+id/organizerCheckBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:text="Organizer" />
-
-        <CheckBox
-            android:id="@+id/entrantCheckBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:textColor="@color/black"
-            android:text="Entrant" />
     </LinearLayout>
 
     <RelativeLayout

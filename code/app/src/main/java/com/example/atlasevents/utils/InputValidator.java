@@ -57,46 +57,22 @@ public class InputValidator {
     private static final Pattern namePattern = Pattern.compile(NAME_PATTERN);
 
     /**
-     * Result of a validation operation.
-     * Contains whether the validation passed and an error message if it failed.
-     */
-    public static class ValidationResult {
-        private final boolean isValid;
-        private final String errorMessage;
-        private final int errorCode;
-
-        public ValidationResult(boolean isValid, String errorMessage) {
-            this.isValid = isValid;
-            this.errorMessage = errorMessage;
-            this.errorCode = 0;
-        }
-
-        public ValidationResult(boolean isValid, String errorMessage, int errorCode) {
-            this.isValid = isValid;
-            this.errorMessage = errorMessage;
-            this.errorCode = errorCode;
-        }
-
-        public boolean isValid() {
-            return isValid;
-        }
-
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public int getErrorCode() {
-            return errorCode;
-        }
+         * Result of a validation operation.
+         * Contains whether the validation passed and an error message if it failed.
+         */
+        public record ValidationResult(boolean isValid, String errorMessage, int errorCode) {
+            public ValidationResult(boolean isValid, String errorMessage) {
+                this(isValid, errorMessage, 0);
+            }
 
         public static ValidationResult success() {
-            return new ValidationResult(true, null);
-        }
+                return new ValidationResult(true, null);
+            }
 
-        public static ValidationResult error(String message) {
-            return new ValidationResult(false, message);
+            public static ValidationResult error(String message) {
+                return new ValidationResult(false, message);
+            }
         }
-    }
 
     /**
      * Validates a name field.

@@ -11,7 +11,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.NotificationHelper;
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+
+import java.util.List;
 
 /**
  * Base activity for all organizer-related screens in the application.
@@ -55,6 +61,8 @@ public abstract class OrganizerBase extends AppCompatActivity {
      * Repository for accessing and managing user data.
      */
     protected UserRepository userRepository;
+    private ListenerRegistration badgeListener;
+    private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
     /**
      * Called when the activity is first created.
@@ -86,6 +94,17 @@ public abstract class OrganizerBase extends AppCompatActivity {
         SidebarNavigation();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // No badges for organizer
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
     /**
      * Sets up click listeners for all sidebar navigation icons.
      * <p>
@@ -94,7 +113,7 @@ public abstract class OrganizerBase extends AppCompatActivity {
      * </p>
      */
     private void SidebarNavigation() {
-        findViewById(R.id.settings_icon).setOnClickListener(v -> openSettings());
+        findViewById(R.id.view_switcher).setOnClickListener(v -> switchToEntrantView());
         findViewById(R.id.profile_icon).setOnClickListener(v -> openProfile());
         findViewById(R.id.my_events_icon).setOnClickListener(v -> openMyEvents());
         findViewById(R.id.create_events_icon).setOnClickListener(v -> openCreateEvents());
@@ -160,6 +179,19 @@ public abstract class OrganizerBase extends AppCompatActivity {
         Intent intent = new Intent(this, CreateEventActivity.class);
         startActivity(intent);
     }
+
+    /**
+     * Switches to the entrant view for the current user.
+     */
+    protected void switchToEntrantView() {
+        Intent intent = new Intent(this, EntrantDashboardActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
+
+
+
 
     /**
      * Opens the notifications screen.

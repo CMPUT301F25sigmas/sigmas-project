@@ -1,6 +1,8 @@
 package com.example.atlasevents.data;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -13,9 +15,9 @@ import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.*;
 import com.example.atlasevents.utils.NotificationHelper;
 /**
- * Listens for real-time notifications for a specific user and handles their display.
- * Monitors notification preferences, blocked organizers, and incoming notifications, 
- * displaying them via dialogs and automatically marking them as read.
+     * Listens for real-time notifications for a specific user and handles their display.
+     * Monitors notification preferences, blocked organizers, and incoming notifications, 
+     * displaying them via toasts (non-blocking) without altering read status.
  *
  * <p>This class manages three Firestore listeners:
  * <ul>
@@ -38,6 +40,7 @@ public class NotificationListener {
     private ListenerRegistration notifsRegistration;
     private ListenerRegistration prefRegistration;
     private final Activity activity;
+    private final SharedPreferences toastPrefs;
 
     private final String email;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
@@ -55,6 +58,7 @@ public class NotificationListener {
         this.activity = activity;
         this.db = FirebaseFirestore.getInstance();
         this.email = userEmail;
+        this.toastPrefs = activity.getSharedPreferences("notification_toasts", Context.MODE_PRIVATE);
     }
 
     /**
@@ -132,7 +136,7 @@ public class NotificationListener {
      * Automatically filters out notifications from blocked organizers.
      *
      * @throws IllegalStateException if Firestore operations fail
-     * @see NotificationHelper#showInAppDialog(Activity, String, String)
+     * @see NotificationHelper#showToast(Activity, String)
      */
     private void attachNotificationsListener() {
         if (notifsRegistration != null) return;
@@ -176,11 +180,14 @@ public class NotificationListener {
                                 // skip (but not delete)
                                 continue;
                             }
+                            String notifId = doc.getId();
+                            if (hasShownToast(notifId)) {
+                                continue;
+                            }
                             String title = notif.getTitle() != null ? notif.getTitle() : "Notification";
                             String message = notif.getMessage() != null ? notif.getMessage() : "";
-                            NotificationHelper.showInAppDialog(activity, title, message);
-                            doc.getReference().update("read", true)
-                                    .addOnFailureListener(err -> Log.w(TAG, "Unable to mark notif read", err));
+                            NotificationHelper.showToast(activity, title + ": " + message);
+                            markToastShown(notifId);
                         }
                     }
                 });
@@ -219,6 +226,20 @@ public class NotificationListener {
         blockedEmails.clear();
     }
 
+    private boolean hasShownToast(String notificationId) {
+        java.util.Set<String> set = toastPrefs.getStringSet("shown_ids", new java.util.HashSet<>());
+        return set != null && set.contains(notificationId);
+    }
+
+    private void markToastShown(String notificationId) {
+        java.util.Set<String> set = new java.util.HashSet<>(
+                toastPrefs.getStringSet("shown_ids", new java.util.HashSet<>()));
+        if (set.size() > 500) {
+            set.clear();
+        }
+        set.add(notificationId);
+        toastPrefs.edit().putStringSet("shown_ids", set).apply();
+    }
+
 
 }
-

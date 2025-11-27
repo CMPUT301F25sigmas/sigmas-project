@@ -22,7 +22,7 @@
             android:layout_marginBottom="16dp">
 
             <ImageButton
-                android:id="@+id/createBackButton"
+                android:id="@+id/notificationCentreBackButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_arrow_left"
@@ -121,9 +121,11 @@
                     android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd"
+                    android:hint="Pick a date"
                     android:textColor="@color/black"
-                    android:textColorHint="@color/black"/>
+                    android:textColorHint="@color/black"
+                    android:focusable="false"
+                    android:clickable="true"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -137,9 +139,11 @@
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/clock"
                     android:drawablePadding="8dp"
-                    android:hint="hh:mm am/pm"
+                    android:hint="Pick a time"
                     android:textColor="@color/black"
-                    android:textColorHint="@color/black"/>
+                    android:textColorHint="@color/black"
+                    android:focusable="false"
+                    android:clickable="true"/>
 
                 <TextView
                     android:id="@+id/textView6"
@@ -187,35 +191,21 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Registration Start Date"
+                    android:text="Registration Start Date - End Date"
                     android:textColor="@color/black"/>
 
                 <EditText
-                    android:id="@+id/startDateEditText"
+                    android:id="@+id/regDateEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:drawableStart="@drawable/calender_icon"
                     android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd"
+                    android:hint="Pick a date range"
                     android:textColor="@color/black"
-                    android:textColorHint="@color/black"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Registration End Date"
-                    android:textColor="@color/black"/>
-
-                <EditText
-                    android:id="@+id/endDateEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/calender_icon"
-                    android:drawablePadding="8dp"
-                    android:hint="yyyy-mm-dd"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/black"/>
+                    android:textColorHint="@color/black"
+                    android:focusable="false"
+                    android:clickable="true"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -310,9 +300,9 @@
                         android:id="@+id/limitEntrantsSwitch"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Limit Number of Entrants"
-                        android:textStyle="bold"
-                        android:textColor="@color/black"/>
+                        android:text="Limit Waitlist size"
+                        android:textColor="@color/black"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/maxEntrantsEditText"

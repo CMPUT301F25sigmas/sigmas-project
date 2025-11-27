@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@color/white">
 
-    <!-- Filter Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,27 +13,16 @@
         android:layout_marginBottom="16dp"
         android:background="@color/white">
 
-        <Button
-            android:id="@+id/filterCurrentButton"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="6dp"
-            android:backgroundTint="@color/light_purple"
-            android:text="Current"
-            android:textColor="@color/text_color"
-            app:cornerRadius="8dp"/>
-
-        <Button
-            android:id="@+id/filterPastButton"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginHorizontal="6dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/background_grey"
-            android:text="Past"
-            android:textColor="@color/text_color"
-            app:cornerRadius="8dp" />
+        <TextView
+            android:id="@+id/page_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="28sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- Events CardView -->
@@ -50,16 +38,15 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Events List (shown when there are events) -->
             <ScrollView
-                android:id="@+id/events_scroll_view"
+                android:id="@+id/profiles_scroll_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="16dp"
+                android:paddingTop="12dp"
                 android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/events_container_organizer"
+                    android:id="@+id/profiles_container_organizer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -83,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
-                    android:text="No Events to\ndisplay right now."
+                    android:text="No users to\ndisplay right now."
                     android:textAlignment="center"
                     android:textColor="#494949"
                     android:textSize="16sp" />

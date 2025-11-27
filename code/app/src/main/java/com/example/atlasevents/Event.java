@@ -2,17 +2,12 @@ package com.example.atlasevents;
 
 
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.example.atlasevents.data.EventRepository;
-import com.google.type.DateTime;
 
 import java.io.Serializable;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
@@ -32,6 +27,8 @@ import java.util.Random;
  * select entrants from the waitlist.
  * </p>
  *
+ * Modifications made to add lottery getters and setters to support LotteryService functionality
+ * @see LotteryService
  * @see EntrantList
  * @see Organizer
  * @see Entrant
@@ -68,13 +65,14 @@ public class Event implements Serializable {
     private EntrantList declinedList;
     private String Description;
     private String address;
-    private String date;
-    private String regStartDate;
-    private String regEndDate;
+    private Date date;
+    private Date regStartDate;
+    private Date regEndDate;
     private String time;
     private String imageUrl; // Firebase Storage path or URL
     private boolean requireGeolocation;
     private int entrantLimit = -1;
+    private Date lastLotteryRun;
 
 
     public Event(){
@@ -94,19 +92,45 @@ public class Event implements Serializable {
     }
 
     //Getters
-    public String getDate() {
+    public Date getDate() {
         return date;
     }
     public String getTime() {
         return time;
     }
 
-    public String getRegStartDate() {
+    public Date getRegStartDate() {
         return regStartDate;
     }
 
-    public String getRegEndDate() {
+    public Date getRegEndDate() {
         return regEndDate;
+    }
+
+    public String getDateFormatted() {
+        if (date == null) {
+            return null;
+        }
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(date);
+    }
+    public String getRegStartDateFormatted() {
+        if (regStartDate == null) {
+            return null;
+        }
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(regStartDate);
+    }
+
+    public String getRegEndDateFormatted() {
+        if (regEndDate == null) {
+            return null;
+        }
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(regEndDate);
     }
 
     public int getSlots() {
@@ -143,17 +167,20 @@ public class Event implements Serializable {
         return imageUrl;
     }
 
+    public Date getLastLotteryRun() {
+        return lastLotteryRun;
+    }
     //Setters
-    public void setDate(String start) {
-        this.date = start;
+    public void setDate(Date date) {
+        this.date = date;
     }
-    public void setTime(String end) {
-        this.time = end;
+    public void setTime(String time) {
+        this.time = time;
     }
-    public void setRegStartDate(String regStartDate) {
+    public void setRegStartDate(Date regStartDate) {
         this.regStartDate = regStartDate;
     }
-    public void setRegEndDate(String regEndDate) {
+    public void setRegEndDate(Date regEndDate) {
         this.regEndDate = regEndDate;
     }
 
@@ -188,6 +215,9 @@ public class Event implements Serializable {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+    public void setLastLotteryRun(Date lastLotteryRun) {
+        this.lastLotteryRun = lastLotteryRun;
+    }
 
     /**
      * This method randomly selects entrants from the waitlist and moves them to the invited list.
@@ -211,28 +241,25 @@ public class Event implements Serializable {
             return false;
         }
 
-        try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            Date currentDate = new Date();
-            Date startDate = formatter.parse(regStartDate);
-            Date endDate = formatter.parse(regEndDate);
+        Calendar cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"));
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date currentDate = cal.getTime();
 
-            if (currentDate.before(startDate)) {
-                Log.w("Registration", "Registration has not started yet");
-                return false;
-            }
-
-            if (currentDate.after(endDate)) {
-                Log.w("Registration", "Registration has ended");
-                return false;
-            }
-
-            return true;
-
-        } catch (ParseException e) {
-            Log.e("Registration", "Error parsing dates");
+        if (currentDate.before(regStartDate)) {
+            Log.w("Registration", "Registration has not started yet");
             return false;
         }
+
+        if (currentDate.after(regEndDate)) {
+            Log.w("Registration", "Registration has ended");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -267,5 +294,35 @@ public class Event implements Serializable {
         }
     }
 
+    /**
+     * This method converts string date to timestamp
+     *
+     * @param event
+     * @return date
+     */
+    public static long getEventTimestamp(Event event) {
+        if (event.getDate() == null || event.getTime() == null) return 0;
+
+        try {
+            SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+            Date time = timeFormat.parse(event.getTime());
+
+            Calendar calDate = Calendar.getInstance();
+            calDate.setTime(event.getDate());
+
+            Calendar calTime = Calendar.getInstance();
+            calTime.setTime(time);
+
+            calDate.set(Calendar.HOUR_OF_DAY, calTime.get(Calendar.HOUR_OF_DAY));
+            calDate.set(Calendar.MINUTE, calTime.get(Calendar.MINUTE));
+            calDate.set(Calendar.SECOND, 0);
+            calDate.set(Calendar.MILLISECOND, 0);
+
+            return calDate.getTimeInMillis();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 
 }

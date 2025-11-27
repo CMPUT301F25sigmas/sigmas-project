@@ -2,6 +2,7 @@ package com.example.atlasevents;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -23,6 +25,7 @@ import com.example.atlasevents.utils.NotificationManager;
 import com.example.atlasevents.data.UserRepository;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 /**
@@ -67,6 +70,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * @see CreateEventActivity
      */
 
+
     /**
      * Repository for accessing and managing event data from Firestore.
      */
@@ -87,11 +91,15 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      */
     LinearLayout emptyState;
 
+    private ArrayList<Event> allEvents = new ArrayList<>();
+    private Button allButton, activeButton, ongoingButton, closedButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.organizer_dashboard_empty);
+        setActiveNavItem(R.id.events_icon_card);
         session = new Session(this);
 
         // Set up notification icon click listener
@@ -99,6 +107,16 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             Intent intent = new Intent(this, NotificationCenterActivity.class);
             startActivity(intent);
         });
+
+        allButton = findViewById(R.id.FilterAllButton);
+        activeButton = findViewById(R.id.filterActivebutton);
+        ongoingButton = findViewById(R.id.filterOngoingButton);
+        closedButton = findViewById(R.id.filterClosedButton);
+
+        allButton.setOnClickListener(v -> filterEvents(FilterType.ALL));
+        activeButton.setOnClickListener(v -> filterEvents(FilterType.ACTIVE));
+        ongoingButton.setOnClickListener(v -> filterEvents(FilterType.ONGOING));
+        closedButton.setOnClickListener(v -> filterEvents(FilterType.CLOSED));
 
         eventsContainer = findViewById(R.id.events_container_organizer);
         Button createEventButton = findViewById(R.id.create_event_button);
@@ -163,7 +181,10 @@ public class OrganizerDashboardActivity extends OrganizerBase {
                         if (events.isEmpty()) {
                             showEmptyState();
                         } else {
-                            displayEvents(events);
+                            allEvents.clear();
+                            allEvents.addAll(events);
+                            displayEvents(allEvents);
+
                         }
                     }
 
@@ -211,6 +232,82 @@ public class OrganizerDashboardActivity extends OrganizerBase {
             eventsContainer.addView(eventCard);
         }
     }
+
+    enum FilterType {
+        ALL, ACTIVE, ONGOING, CLOSED
+    }
+
+
+    void filterEvents(FilterType filterType) {
+        ArrayList<Event> filtered = new ArrayList<>();
+        long currentTime = System.currentTimeMillis();
+
+        switch (filterType) {
+            case ALL:
+                resetButtonStates();
+                allButton.setBackgroundTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.light_purple)));
+                filtered = new ArrayList<>(allEvents);
+                break;
+
+            case ACTIVE:
+                // Active = event hasn't started yet
+                resetButtonStates();
+                activeButton.setBackgroundTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.light_purple)));
+                for (Event event : allEvents) {
+                    long eventTime = Event.getEventTimestamp(event);
+                    if (eventTime > currentTime) {
+                        filtered.add(event);
+                    }
+                }
+                break;
+
+            case ONGOING:
+                // Ongoing = currently happening (within the event day/time)
+                resetButtonStates();
+                ongoingButton.setBackgroundTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.light_purple)));
+                for (Event event : allEvents) {
+                    long eventTime = Event.getEventTimestamp(event);
+                    // Assuming event lasts for the day it's scheduled
+                    long eventEndTime = eventTime + (24 * 60 * 60 * 1000); // +24 hours
+                    if (eventTime <= currentTime && eventEndTime >= currentTime) {
+                        filtered.add(event);
+                    }
+                }
+                break;
+
+            case CLOSED:
+                // Closed = event has ended
+                resetButtonStates();
+                closedButton.setBackgroundTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.light_purple)));
+                for (Event event : allEvents) {
+                    long eventTime = Event.getEventTimestamp(event);
+                    long eventEndTime = eventTime + (24 * 60 * 60 * 1000); // +24 hours
+                    if (eventEndTime < currentTime) {
+                        filtered.add(event);
+                    }
+                }
+                break;
+        }
+
+        if (filtered.isEmpty()) {
+            showEmptyState();
+        } else {
+            displayEvents(filtered);
+        }
+    }
+
+    private void resetButtonStates() {
+        int defaultColor = ContextCompat.getColor(this, R.color.background_grey);
+        allButton.setBackgroundTintList(ColorStateList.valueOf(defaultColor));
+        activeButton.setBackgroundTintList(ColorStateList.valueOf(defaultColor));
+        ongoingButton.setBackgroundTintList(ColorStateList.valueOf(defaultColor));
+        closedButton.setBackgroundTintList(ColorStateList.valueOf(defaultColor));
+    }
+
 
     /**
      * Shows the empty state layout with a message and create event button.

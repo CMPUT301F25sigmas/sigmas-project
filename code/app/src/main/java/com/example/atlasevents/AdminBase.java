@@ -1,6 +1,7 @@
 package com.example.atlasevents;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
@@ -10,6 +11,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.material.card.MaterialCardView;
 
 /**
  * Abstract base activity for all admin-related screens in the Atlas Events application.
@@ -64,9 +66,22 @@ public abstract class AdminBase extends AppCompatActivity {
         findViewById(R.id.events_icon).setOnClickListener(v -> openEvents());
         findViewById(R.id.images_icon).setOnClickListener(v -> openImages());
         findViewById(R.id.organizers_icon).setOnClickListener(v -> openOrganizers());
-        findViewById(R.id.profiles_icon).setOnClickListener(v -> openProfiles());
+        findViewById(R.id.profiles_icon).setOnClickListener(v -> openEntrants());
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
+
+    /**
+     * Sets the active state for the current screen's navigation icon.
+     */
+    protected void setActiveNavItem(int iconCardId) {
+        ((MaterialCardView) findViewById(R.id.events_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+        ((MaterialCardView) findViewById(R.id.images_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+        ((MaterialCardView) findViewById(R.id.organizers_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+        ((MaterialCardView) findViewById(R.id.profiles_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
+
+        ((MaterialCardView) findViewById(iconCardId)).setCardBackgroundColor(Color.parseColor("#E8DEF8"));
+    }
+
 
     /** Opens the notifications screen. */
     protected void openNotifications() {
@@ -83,13 +98,30 @@ public abstract class AdminBase extends AppCompatActivity {
     }
 
     /** Opens the images management screen. */
-    protected void openImages() {}
+    protected void openImages() {
+        Intent intent = new Intent(this, AdminImagesActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /** Opens the organizers management screen. */
-    protected void openOrganizers() {}
+    protected void openOrganizers() {
+        Intent intent = new Intent(this, AdminProfilesActivity.class);
+        intent.putExtra("userType", "Organizer");
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /** Opens the profiles management screen. */
-    protected void openProfiles() {}
+    protected void openEntrants() {
+        Intent intent = new Intent(this, AdminProfilesActivity.class);
+        intent.putExtra("userType", "Entrant");
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
+    }
 
     /**
      * Inflates and adds a layout to the content container.

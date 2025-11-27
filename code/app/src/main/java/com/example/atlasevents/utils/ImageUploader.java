@@ -1,4 +1,4 @@
-package com.example.atlasevents;
+package com.example.atlasevents.utils;
 
 import android.content.ContentResolver;
 import android.graphics.Bitmap;

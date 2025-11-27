@@ -6,7 +6,6 @@ plugins {
 android {
     namespace = "com.example.atlasevents"
     compileSdk = 36
-
     defaultConfig {
         applicationId = "com.example.atlasevents"
         minSdk = 24
@@ -52,6 +51,7 @@ dependencies {
     implementation(libs.room.external.antlr)
     implementation("com.google.zxing:core:3.5.3")
     implementation("androidx.tracing:tracing:1.2.0")
+    implementation(libs.fragment)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -60,9 +60,14 @@ dependencies {
     // Corrected line in build.gradle.kts
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core:1.5.0")
+    // for local unit tests (src/test/java)
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
+    // For Android instrumented tests (in src/androidTest/java)
+    //androidTestImplementation("org.mockito:mockito-inline:5.2.0")
     androidTestImplementation("org.mockito:mockito-android:5.11.0")
+
     androidTestImplementation ("androidx.test:runner:1.5.2")
     androidTestImplementation ("androidx.test:rules:1.5.0")
     androidTestImplementation ("androidx.test.ext:junit:1.1.5")
@@ -76,5 +81,4 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:4.0.0")
 }

@@ -37,6 +37,7 @@ public class OrganizerProfileActivity extends OrganizerBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.organizer_profile);
+        setActiveNavItem(R.id.profile_icon);
 
         nameEdit = findViewById(R.id.name);
         emailEdit = findViewById(R.id.email);

@@ -1,8 +1,6 @@
 package com.example.atlasevents;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +22,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.DatePickerHelper;
+import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.TimePickerHelper;
 
 /**
  * Activity for creating new events in the Atlas Events system.
@@ -50,12 +51,26 @@ public class CreateEventActivity extends AppCompatActivity {
     private String imageURL = "";
 
     /**
+     * The date picker to pick the start date of the event
+     */
+    private DatePickerHelper startDatePicker;
+
+    /**
+     * The date picker to pick the registration period
+     */
+    private DatePickerHelper registrationPeriodPicker;
+
+    /**
+     * The time picker to pick the start time
+     */
+    private TimePickerHelper timePicker;
+
+    /**
      *
      * @param savedInstanceState If the activity is being re-initialized after
      *     previously being shut down then this Bundle contains the data it most
      *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
      *
-     *     todo: make "limit number of entrants" just a editText instead of a switch and editText
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +82,10 @@ public class CreateEventActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        startDatePicker = new DatePickerHelper();
+        registrationPeriodPicker = new DatePickerHelper(Boolean.TRUE);
+        timePicker = new TimePickerHelper();
 
         uploader = new ImageUploader();
 
@@ -106,7 +125,7 @@ public class CreateEventActivity extends AppCompatActivity {
         session = new Session(this);
         String username = session.getUserEmail();
 
-        ImageButton backButton = findViewById(R.id.createBackButton);
+        ImageButton backButton = findViewById(R.id.notificationCentreBackButton);
 
         backButton.setOnClickListener(view ->{
             finish();
@@ -115,9 +134,27 @@ public class CreateEventActivity extends AppCompatActivity {
         //edit texts and switches
         EditText name = findViewById(R.id.nameEditText);
         EditText date = findViewById(R.id.dateEditText);
+        date.setOnClickListener(v -> {
+            startDatePicker.showPicker(getSupportFragmentManager(), (startDate, endDate) -> {
+                date.setText(startDatePicker.getStartDateFormatted());
+            });
+        });
+
         EditText time = findViewById(R.id.timeEditText);
-        EditText regStartDate = findViewById(R.id.startDateEditText);
-        EditText regEndDate = findViewById(R.id.endDateEditText);
+        time.setOnClickListener(v -> {
+            timePicker.showPicker(this, (h, m) -> {
+                time.setText(timePicker.getFormattedTime());
+            });
+        });
+
+        EditText regDateRange = findViewById(R.id.regDateEditText);
+        regDateRange.setOnClickListener(v -> {
+            registrationPeriodPicker.showPicker(getSupportFragmentManager(), (startDate, endDate) -> {
+                String text = registrationPeriodPicker.getStartDateFormatted() + " - " + registrationPeriodPicker.getEndDateFormatted();
+                regDateRange.setText(text);
+            });
+        });
+
         EditText description = findViewById(R.id.descrEditText);
         EditText location = findViewById(R.id.locEditText);
 
@@ -164,13 +201,13 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            if(inputsValid(name.getText().toString(),slots.getText().toString())) { //validate inputs before making event
+                            if(inputsValid(name.getText().toString(),slots.getText().toString(),limitEntrants.isChecked(), entrantLimit.getText().toString())) { //validate inputs before making event
                                 Event event = new Event(user);
                                 event.setEventName(name.getText().toString()); //get text from edit texts
-                                event.setDate(date.getText().toString());
-                                event.setTime(time.getText().toString());
-                                event.setRegStartDate(regStartDate.getText().toString());
-                                event.setRegEndDate(regEndDate.getText().toString());
+                                event.setDate(startDatePicker.getStartDate());
+                                event.setTime(timePicker.getFormattedTime());
+                                event.setRegStartDate(registrationPeriodPicker.getStartDate());
+                                event.setRegEndDate(registrationPeriodPicker.getEndDate());
                                 event.setAddress(location.getText().toString());
                                 event.setDescription(description.getText().toString());
                                 event.setRequireGeolocation(requireGeoLocation.isChecked());
@@ -218,13 +255,16 @@ public class CreateEventActivity extends AppCompatActivity {
      * @param slots The number of participant slots as a string
      * @return {@code true} if all inputs are valid, {@code false} otherwise
      */
-    public boolean inputsValid(String name, String slots) {
+    public boolean inputsValid(String name, String slots,boolean limitEntrants,String limit) {
         boolean valid = true;
         if (name.isEmpty()) { //check if name is empty
             Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
             valid = false;
-        }else if (slots.isEmpty()) { //check that slots is non negative (else if so it doesn't try to display all toasts at once)
+        }else if (slots.isEmpty()) { //check that slots is filled
             Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }else if (limitEntrants && Integer.parseInt(slots) > Integer.parseInt(limit)){
+            Toast.makeText(this,"Waitlist limit cannot be smaller than number of participants", Toast.LENGTH_LONG).show();
             valid = false;
         }
 

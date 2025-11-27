@@ -3,6 +3,8 @@ import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.utils.NotificationHelper;
 
 import java.util.Date;
+import java.util.Map;
+
 /***
  * @Muaaz Saif
  * @version 1
@@ -26,6 +28,10 @@ import java.util.Date;
  * @ since: 2nd November 2025
  */
 public class Notification {
+
+    private String type; // "Invitation" or normal
+    private long expirationTime;
+    private Map<String, String> actions; // "accept", "decline"
     private String groupType;
     private String eventName;
     private String notificationId;
@@ -35,6 +41,9 @@ public class Notification {
     private String fromOrganizeremail;
     private boolean read;
     private Date createdAt;
+
+    private boolean responded;
+    private boolean accepted;
 
     /**
      * Default constructor required for Firestore data mapping.
@@ -178,5 +187,52 @@ public class Notification {
      * @param groupType The group type to set
      */
     public void setGroupType(String groupType) { this.groupType = groupType; }
+
+    /**
+     * Gets the invitation type of this notification.
+     *
+     * @return type of invitation
+     */
+    public String getType() { return type; }
+    /**
+     * Sets the invitation type of this notification.
+     *
+     * @param type type of invitation (string)
+     */
+
+    public void setType(String type) { this.type = type; }
+
+    /**
+     * Gets the expiration type of the invite notification.
+     *
+     * @return time
+     */
+    public long getExpirationTime() { return expirationTime; }
+
+    /**
+     * Sets the expiration type of the invite notification.
+     *
+     * @param long time
+     */
+    public void setExpirationTime(long expirationTime) { this.expirationTime = expirationTime; }
+    /**
+     * Getter for fetching entrant responses.
+     *
+     * @return actions
+     */
+    public Map<String, String> getActions() { return actions; }
+    /**
+     * Sets the entrant responses
+     *
+     * @param Map string
+     */
+    public void setActions(Map<String, String> actions) { this.actions = actions; }
+
+    public boolean isResponded() { return responded; }
+    public void setResponded(boolean responded) { this.responded = responded; }
+
+    public boolean isAccepted() { return accepted; }
+    public void setAccepted(boolean accepted) { this.accepted = accepted; }
+
 }
 

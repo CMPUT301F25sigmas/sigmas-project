@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.example.atlasevents.data.EventRepository;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -67,7 +68,7 @@ public class Event implements Serializable {
     private EntrantList inviteList;
     private EntrantList acceptedList;
     private EntrantList declinedList;
-    private Map<String, LatLng> entrantCoords;
+    private HashMap<String, GeoPoint> entrantCoords;
     private String Description;
     private String address;
     private Date date;
@@ -159,7 +160,7 @@ public class Event implements Serializable {
     public EntrantList getInviteList(){
         return inviteList;
     }
-    public Map<String, LatLng> getEntrantCoords() {return entrantCoords; }
+    public Map<String, GeoPoint> getEntrantCoords() {return entrantCoords; }
     public String getEventName() { return eventName;}
 
 
@@ -219,7 +220,7 @@ public class Event implements Serializable {
 
     public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
     public void setEntrantLimit(int max){this.entrantLimit = max;}
-    public void addToEntrantLocation(String email, LatLng coords) {
+    public void addToEntrantLocation(String email, GeoPoint coords) {
         if (coords != null) {
             entrantCoords.put(email, coords);
         }

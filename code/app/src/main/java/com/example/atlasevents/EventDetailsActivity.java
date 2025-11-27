@@ -27,6 +27,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -319,7 +320,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                             if (location != null) {
                                 double lat = location.getLatitude();
                                 double longi = location.getLongitude();
-                                LatLng latlngLocation = new LatLng(lat, longi);
+                                GeoPoint latlngLocation = new GeoPoint(lat, longi);
                                 currentEvent.addToEntrantLocation(currentEntrant.getEmail(), latlngLocation);
                             }
                             updateWaitList();

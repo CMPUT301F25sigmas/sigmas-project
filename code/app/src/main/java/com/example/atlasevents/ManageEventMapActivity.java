@@ -20,6 +20,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,14 +55,15 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
                 entrantMap.clear();
                 LatLngBounds.Builder builder = new LatLngBounds.Builder();
                 boolean hasPins = false;
-                Map<String, LatLng> locations = event.getEntrantCoords();
+                Map<String, GeoPoint> locations = event.getEntrantCoords();
                 if (locations != null && !locations.isEmpty()) {
-                    for (Map.Entry<String, LatLng> entry: locations.entrySet()) {
+                    for (Map.Entry<String, GeoPoint> entry: locations.entrySet()) {
                         String email = entry.getKey();
-                        LatLng coord = entry.getValue();
+                        GeoPoint coord = entry.getValue();
                         if (coord != null) {
-                            entrantMap.addMarker(new MarkerOptions().position(coord).title(email));
-                            builder.include(coord);
+                            LatLng convertedCoord = new LatLng(coord.getLatitude(), coord.getLongitude());
+                            entrantMap.addMarker(new MarkerOptions().position(convertedCoord).title(email));
+                            builder.include(convertedCoord);
                             hasPins = true;
                         }
                     }

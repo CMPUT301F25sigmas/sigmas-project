@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="32dp"
-        android:text="Organizer Profile"
+        android:text="Profile"
         android:textColor="@color/black"
         android:textSize="28sp"
         android:textStyle="bold" />

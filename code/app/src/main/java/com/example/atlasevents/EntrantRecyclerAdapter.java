@@ -121,3 +121,4 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
         }
     }
 }
+

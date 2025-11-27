@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ManageEventMapActivity extends AppCompatActivity implements OnMapReadyCallback{
+    public static final String EXTRA_EVENT_ID = "EVENT_ID";
     private GoogleMap entrantMap;
     private FusedLocationProviderClient fusedLocationClient;
     //List<LatLng> entrantCoordList = new ArrayList<>();
@@ -40,7 +41,7 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
         setContentView(R.layout.manage_event_map);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         eventRepository = new EventRepository();
-        eventId = getIntent().getStringExtra("EVENT_ID");
+        eventId = getIntent().getStringExtra(EXTRA_EVENT_ID);
         // Get a handle to the fragment and register the callback.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);

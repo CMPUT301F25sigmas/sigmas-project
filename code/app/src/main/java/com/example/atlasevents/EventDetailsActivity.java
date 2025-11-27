@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -26,7 +25,6 @@ import com.example.atlasevents.data.UserRepository;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
@@ -48,6 +46,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
  */
 public class EventDetailsActivity extends AppCompatActivity {
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+
     /**
      * Key used to pass the Event object through Intent extras.
      * This constant should be used when starting this activity to include
@@ -62,6 +62,7 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private Event currentEvent;
     private Entrant currentEntrant;
+    private boolean pendingLocationPermissionForJoin;
 
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
@@ -295,33 +296,31 @@ public class EventDetailsActivity extends AppCompatActivity {
      */
     private void joinWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
-        /*
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+
+        if (currentEvent.getRequireGeolocation()
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            pendingLocationPermissionForJoin = true;
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
             return;
         }
 
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
+        attemptJoinWaitlist();
+    }
 
-                }
-            }
-        });
-*/
-        Toast.makeText(this, "test2", Toast.LENGTH_SHORT).show();
+    private void attemptJoinWaitlist() {
+        if (currentEvent == null || currentEntrant == null) return;
+        pendingLocationPermissionForJoin = false;
+
         int joined = currentEvent.addToWaitlist(currentEntrant);
         if (joined == 1) {
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (currentEvent.getRequireGeolocation()
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                         .addOnSuccessListener(this, location -> {
                             if (location != null) {
-                                double lat = location.getLatitude();
-                                double longi = location.getLongitude();
-                                GeoPoint latlngLocation = new GeoPoint(lat, longi);
-                                currentEvent.addToEntrantLocation(currentEntrant.getEmail(), latlngLocation);
+                                GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+                                currentEvent.addToEntrantLocation(currentEntrant.getEmail(), geoPoint);
                             }
                             updateWaitList();
 
@@ -362,6 +361,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (currentEvent == null || currentEntrant == null) return;
 
         currentEvent.removeFromWaitlist(currentEntrant);
+        currentEvent.removeFromEntrantLocation(currentEntrant);
         eventRepository.updateEvent(currentEvent, success -> {
             if (success) {
                 Toast.makeText(this, "Left waitlist successfully", Toast.LENGTH_SHORT).show();
@@ -441,6 +441,21 @@ public class EventDetailsActivity extends AppCompatActivity {
                     optOutCheckBox.setChecked(true);
                 }
             });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (pendingLocationPermissionForJoin) {
+                    attemptJoinWaitlist();
+                }
+            } else if (pendingLocationPermissionForJoin) {
+                pendingLocationPermissionForJoin = false;
+                Toast.makeText(this, "Location permission is required to join this event", Toast.LENGTH_SHORT).show();
+            }
         }
     }
     /**

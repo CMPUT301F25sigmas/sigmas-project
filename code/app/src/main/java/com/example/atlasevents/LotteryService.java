@@ -536,7 +536,7 @@ public class LotteryService {
      * @return Number of available slots
      */
     protected int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         int availableSlots = entrantLimit - acceptedCount;
@@ -662,6 +662,7 @@ public class LotteryService {
                     sendInvitationNotifications(event, selectedEntrants, callback);
                 });
     }
+
 
     /**
      * Converts EntrantList to a Map for Firestore storage

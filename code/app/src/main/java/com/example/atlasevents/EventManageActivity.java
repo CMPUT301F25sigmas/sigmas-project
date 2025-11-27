@@ -473,11 +473,13 @@ public class EventManageActivity extends AppCompatActivity {
         // NEW: Check cooldown period
         boolean inCooldown = lotteryService.isInCooldownPeriod(event);
         long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+        String entrantLimit = String.valueOf(event.getEntrantLimit());
+        if (entrantLimit.equals("-1")){ entrantLimit = "No limit";}
 
         // Update lottery status text with cooldown info
         String statusText = String.format(
                 "Event: %s\n" +
-                        "Entrant Limit: %d\n" +
+                        "Waitlist Limit: %s\n" +
                         "Accepted: %d\n" +
                         "Available Slots: %d\n" +
                         "Waitlist Size: %d\n" +
@@ -486,7 +488,7 @@ public class EventManageActivity extends AppCompatActivity {
                         "Cooldown Active: %s" +
                         (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
                 event.getEventName(),
-                event.getEntrantLimit(),
+                entrantLimit,
                 acceptedCount,
                 availableSlots,
                 waitlistSize,
@@ -630,7 +632,7 @@ public class EventManageActivity extends AppCompatActivity {
      * @return Number of available slots
      */
     private int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         return Math.max(0, entrantLimit - acceptedCount);

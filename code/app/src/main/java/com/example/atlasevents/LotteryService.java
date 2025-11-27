@@ -536,7 +536,7 @@ public class LotteryService {
      * @return Number of available slots
      */
     protected int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         int availableSlots = entrantLimit - acceptedCount;
@@ -638,16 +638,32 @@ public class LotteryService {
         String eventId = event.getId();
 
         // Get current invite list or create new one
-        EntrantList currentInviteList = event.getInviteList() != null ? event.getInviteList() : new EntrantList();
+        EntrantList currentInviteList = event.getInviteList();
+        if (currentInviteList == null) {
+            currentInviteList = new EntrantList();
+            event.setInviteList(currentInviteList); // update the Event object
+        }
 
         // Add selected entrants to invite list
         for (Entrant entrant : selectedEntrants) {
             currentInviteList.addEntrant(entrant);
         }
 
-        // Update the event document with the new invite list
+        // Convert EntrantList to a Map suitable for Firestore
+        Map<String, Object> inviteMap = new HashMap<>();
+        ArrayList<Map<String, Object>> entrantsArray = new ArrayList<>();
+        for (Entrant e : currentInviteList.getWaitList()) {
+            Map<String, Object> entrantMap = new HashMap<>();
+            entrantMap.put("name", e.getName());
+            entrantMap.put("email", e.getEmail());
+            // add other fields if needed
+            entrantsArray.add(entrantMap);
+        }
+        inviteMap.put("waitList", entrantsArray); // Firestore stores the array
+
+        // Update Firestore with the new invite list
         Map<String, Object> updates = new HashMap<>();
-        updates.put("inviteList", convertEntrantListToMap(currentInviteList));
+        updates.put("inviteList", inviteMap);
 
         db.collection("events").document(eventId)
                 .update(updates)
@@ -658,10 +674,11 @@ public class LotteryService {
                         return;
                     }
 
-                    // Send notifications to selected entrants
+                    // Firestore updated successfully, send notifications
                     sendInvitationNotifications(event, selectedEntrants, callback);
                 });
     }
+
 
     /**
      * Converts EntrantList to a Map for Firestore storage

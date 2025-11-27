@@ -37,6 +37,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.utils.MapWarmUpManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -186,6 +187,7 @@ public class EventManageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_event);
+        MapWarmUpManager.warmUp(getApplicationContext());
 
         // Apply window insets for modern edge-to-edge layout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -332,6 +334,7 @@ public class EventManageActivity extends AppCompatActivity {
             public void onSuccess(Event event) {
                 currentEvent = event;
                 eventName = event.getEventName();
+                MapWarmUpManager.cacheEntrantCoords(event.getId(), event.getEntrantCoords());
                 updateEventUI(event);
                 updateLotteryUI(event);
                 startLotteryTimerIfNeeded(event);

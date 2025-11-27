@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.utils.MapWarmUpManager;
 import com.example.atlasevents.utils.NotificationManager;
 import com.example.atlasevents.data.UserRepository;
 
@@ -100,6 +101,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.organizer_dashboard_empty);
         setActiveNavItem(R.id.events_icon_card);
+        MapWarmUpManager.warmUp(getApplicationContext());
         session = new Session(this);
 
         // Set up notification icon click listener

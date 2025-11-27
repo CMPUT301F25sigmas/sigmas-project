@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.utils.MapWarmUpManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -39,6 +40,10 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
     private String eventId;
     private MapView mapView;
     private boolean isFullScreen;
+    /** In-memory entrant coordinates fetched earlier in the flow to render markers faster. */
+    private Map<String, GeoPoint> cachedEntrantLocations;
+    /** Tracks whether a Firestore fetch is already running to avoid duplicate requests. */
+    private boolean locationsLoading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +51,11 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
         eventRepository = new EventRepository();
         eventId = getIntent().getStringExtra(EXTRA_EVENT_ID);
         isFullScreen = getIntent().getBooleanExtra(EXTRA_FULL_SCREEN, false);
+        MapWarmUpManager.warmUp(getApplicationContext());
+        cachedEntrantLocations = MapWarmUpManager.consumeEntrantCoords(eventId);
+        if (cachedEntrantLocations == null) {
+            fetchEntrantLocationsIfNeeded();
+        }
 
         if (isFullScreen) {
             setContentView(R.layout.manage_event_map);
@@ -144,41 +154,6 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
         }
     }
 
-    private void mapMarker(String id) {
-        eventRepository.getEventById(id, new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                entrantMap.clear();
-                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                boolean hasPins = false;
-                Map<String, GeoPoint> locations = event.getEntrantCoords();
-                if (locations != null && !locations.isEmpty()) {
-                    for (Map.Entry<String, GeoPoint> entry : locations.entrySet()) {
-                        String email = entry.getKey();
-                        GeoPoint coord = entry.getValue();
-                        if (coord != null) {
-                            LatLng point = new LatLng(coord.getLatitude(), coord.getLongitude());
-                            entrantMap.addMarker(new MarkerOptions().position(point).title(email));
-                            builder.include(point);
-                            hasPins = true;
-                        }
-                    }
-                }
-                if (hasPins) {
-                    LatLngBounds bounds = builder.build();
-                    entrantMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
-                } else {
-                    Toast.makeText(ManageEventMapActivity.this, "No entrant locations yet", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(ManageEventMapActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         entrantMap = googleMap;
@@ -186,9 +161,75 @@ public class ManageEventMapActivity extends AppCompatActivity implements OnMapRe
         if (eventId == null) {
             Toast.makeText(this, "No event to display", Toast.LENGTH_SHORT).show();
         } else {
-            mapMarker(eventId);
+            if (cachedEntrantLocations != null) {
+                renderMarkers(cachedEntrantLocations);
+            } else {
+                fetchEntrantLocationsIfNeeded();
+            }
         }
         enableMyLocation();
+    }
+
+    /**
+     * Fetches entrant coordinates from Firestore only when they are not already cached.
+     *
+     * <p>Prevents duplicate requests by tracking an in flight load and caches results so the
+     * map can render immediately once ready.</p>
+     */
+    private void fetchEntrantLocationsIfNeeded() {
+        if (eventId == null || locationsLoading || cachedEntrantLocations != null) {
+            return;
+        }
+        locationsLoading = true;
+        eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                locationsLoading = false;
+                Map<String, GeoPoint> locations = event.getEntrantCoords();
+                cachedEntrantLocations = locations != null ? locations : java.util.Collections.emptyMap();
+                if (cachedEntrantLocations != null) {
+                    MapWarmUpManager.cacheEntrantCoords(eventId, cachedEntrantLocations);
+                }
+                if (entrantMap != null) {
+                    renderMarkers(cachedEntrantLocations);
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                locationsLoading = false;
+                Toast.makeText(ManageEventMapActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Renders entrant markers on the map and moves the camera to include them.
+     *
+     * @param locations entrant coordinates keyed by entrant email
+     */
+    private void renderMarkers(Map<String, GeoPoint> locations) {
+        if (entrantMap == null || locations == null) {
+            return;
+        }
+        entrantMap.clear();
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        boolean hasPins = false;
+        for (Map.Entry<String, GeoPoint> entry : locations.entrySet()) {
+            GeoPoint coord = entry.getValue();
+            if (coord != null) {
+                LatLng point = new LatLng(coord.getLatitude(), coord.getLongitude());
+                entrantMap.addMarker(new MarkerOptions().position(point).title(entry.getKey()));
+                builder.include(point);
+                hasPins = true;
+            }
+        }
+        if (hasPins) {
+            LatLngBounds bounds = builder.build();
+            entrantMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        } else {
+            Toast.makeText(ManageEventMapActivity.this, "No entrant locations yet", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void enableMyLocation() {

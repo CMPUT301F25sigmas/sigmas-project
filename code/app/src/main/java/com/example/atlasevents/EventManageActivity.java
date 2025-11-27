@@ -814,10 +814,9 @@ public class EventManageActivity extends AppCompatActivity {
         if (currentEvent == null) {
             return;
         }
-        Toast.makeText((Context) this, currentEvent.getId(), Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(this, ManageEventMapActivity.class);
-        intent.putExtra("EVENT_ID", currentEvent.getId());
+        intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
         startActivity(intent);
     }
 }

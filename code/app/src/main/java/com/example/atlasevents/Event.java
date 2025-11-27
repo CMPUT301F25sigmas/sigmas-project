@@ -220,7 +220,9 @@ public class Event implements Serializable {
     public void setRequireGeolocation(boolean bool){this.requireGeolocation = bool;}
     public void setEntrantLimit(int max){this.entrantLimit = max;}
     public void addToEntrantLocation(String email, LatLng coords) {
-        entrantCoords.put(email, coords);
+        if (coords != null) {
+            entrantCoords.put(email, coords);
+        }
     }
     public void removeFromEntrantLocation(Entrant entrant) {
         if (entrantCoords.containsKey(entrant)) {

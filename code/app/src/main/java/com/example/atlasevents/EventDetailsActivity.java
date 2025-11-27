@@ -139,7 +139,7 @@ public class EventDetailsActivity extends AppCompatActivity {
             tryUpdateWaitlistButtons();
         });
         String qrEventId = getIntent().getStringExtra("qrId");
-        String tappedEventId = getIntent().getStringExtra("EventKey");
+        String tappedEventId = getIntent().getStringExtra(EventKey);
         if (qrEventId != null) {
             eventRepository.getEventById(qrEventId, new EventRepository.EventCallback() {
                 @Override
@@ -309,46 +309,45 @@ public class EventDetailsActivity extends AppCompatActivity {
             }
         });
 */
+        Toast.makeText(this, "test2", Toast.LENGTH_SHORT).show();
         int joined = currentEvent.addToWaitlist(currentEntrant);
         if (joined == 1) {
-            /*
+
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                         .addOnSuccessListener(this, location -> {
                             if (location != null) {
-                                LatLng latlngLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                                currentEvent.addToEntrantLocation(currentEntrant, latlngLocation);
+                                double lat = location.getLatitude();
+                                double longi = location.getLongitude();
+                                LatLng latlngLocation = new LatLng(lat, longi);
+                                currentEvent.addToEntrantLocation(currentEntrant.getEmail(), latlngLocation);
                             }
+                            updateWaitList();
+
+                        }).addOnFailureListener(e -> {
+                            Log.e("EventDetails", "Location not found", e);
+                            updateWaitList();
                         });
+            } else {
+                updateWaitList();
             }
-            */
-            eventRepository.updateEvent(currentEvent, success -> {
-                if (success) {
-
-                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                                .addOnSuccessListener(this, location -> {
-                                    if (location != null) {
-                                        double lat = location.getLatitude();
-                                        double longi = location.getLongitude();
-                                        LatLng latlnglocation = new LatLng(lat, longi);
-                                        currentEvent.addToEntrantLocation(currentEntrant.getEmail(), latlnglocation);
-                                    }
-                                });
-                    }
-
-                    Toast.makeText(this, "Joined waitlist successfully", Toast.LENGTH_SHORT).show();
-                    waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
-                    updateWaitlistButtons();
-                } else {
-                    Toast.makeText(this, "Failed to join waitlist", Toast.LENGTH_SHORT).show();
-                }
-            });
         } else if (joined == 0) {
             Toast.makeText(this, "Waitlist limit reached", Toast.LENGTH_SHORT).show();
         } else if (joined == -1) {
             Toast.makeText(this, "Waitlist not open yet or past deadline", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void updateWaitList() {
+        eventRepository.updateEvent(currentEvent, success -> {
+            if (success) {
+                Toast.makeText(this, "Waitlist Joined Successfully", Toast.LENGTH_SHORT).show();
+                waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
+                updateWaitlistButtons();
+            } else {
+                Toast.makeText(this, "Failed to join Waitlist", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**

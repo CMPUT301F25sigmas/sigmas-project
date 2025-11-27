@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -801,6 +802,7 @@ public class EventManageActivity extends AppCompatActivity {
      * Shows the event location on a map.
      */
     private void showEventMap() {
+        /*
         if (currentEvent == null || currentEvent.getAddress() == null) {
             Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
             return;
@@ -808,5 +810,14 @@ public class EventManageActivity extends AppCompatActivity {
 
         // Implement map display functionality
         Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
+         */
+        if (currentEvent == null) {
+            return;
+        }
+        Toast.makeText((Context) this, currentEvent.getId(), Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(this, ManageEventMapActivity.class);
+        intent.putExtra("EVENT_ID", currentEvent.getId());
+        startActivity(intent);
     }
 }

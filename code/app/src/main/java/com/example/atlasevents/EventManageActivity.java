@@ -332,10 +332,24 @@ public class EventManageActivity extends AppCompatActivity {
      * </p>
      */
     private void loadData() {
-        String eventId = getIntent().getSerializableExtra(EventKey).toString();
+        String eventId = getIntent().getStringExtra(EventKey);
+        if (eventId == null) {
+            Object extra = getIntent().getSerializableExtra(EventKey);
+            if (extra != null) {
+                eventId = extra.toString();
+            }
+        }
+
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(this, "Missing event", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Only fetch the event from Firebase; we don't rely on Event methods for lists
+        String finalEventId = eventId;
         db.collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -345,8 +359,16 @@ public class EventManageActivity extends AppCompatActivity {
                         return;
                     }
 
-                    currentEvent = snapshot.toObject(Event.class); // for other Event fields like name
+                    Event event = snapshot.toObject(Event.class); // for other Event fields like name
+                    if (event == null) {
+                        Toast.makeText(this, "Failed to parse event", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    currentEvent = event;
                     eventName = currentEvent.getEventName();
+                    MapWarmUpManager.cacheEntrantCoords(finalEventId, currentEvent.getEntrantCoords());
                     updateEventUI(currentEvent, snapshot);
                     updateLotteryUI(currentEvent);
                     startLotteryTimerIfNeeded(currentEvent);
@@ -360,7 +382,6 @@ public class EventManageActivity extends AppCompatActivity {
                     Toast.makeText(EventManageActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
                     finish();
                 });
-        MapWarmUpManager.cacheEntrantCoords(currentEvent.getId(), currentEvent.getEntrantCoords());
     }
 
 

@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -269,6 +270,8 @@ public class CreateEventActivity extends AppCompatActivity {
         EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         input.setHint("Enter tags separated by commas");
+        // Limit dialog input to 75 characters
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(75) });
         if (!tags.isEmpty()) {
             input.setText(TextUtils.join(", ", tags));
             input.setSelection(input.getText().length());

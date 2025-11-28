@@ -297,7 +297,7 @@ public class Event implements Serializable {
     /**
      * This method converts string date to timestamp
      *
-     * @param event
+     * @param event the event the timestamp is related to
      * @return date
      */
     public static long getEventTimestamp(Event event) {

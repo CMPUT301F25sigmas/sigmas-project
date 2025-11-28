@@ -39,7 +39,6 @@ public class SignInActivity extends AppCompatActivity {
     private EventRepository eventRepo;
     private Button signInbutton;
     private TextView signUpText;
-
     private Session session;
 
 

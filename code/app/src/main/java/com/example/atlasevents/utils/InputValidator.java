@@ -531,7 +531,7 @@ public class InputValidator {
         }
 
         String trimmed = eventName.trim();
-        if (trimmed.length() < MIN_NAME_LENGTH) {
+        if (trimmed.isEmpty()) {
             return ValidationResult.error("Event name must be at least " + MIN_NAME_LENGTH + " character(s)");
         }
 

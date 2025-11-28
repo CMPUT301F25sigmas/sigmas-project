@@ -6,13 +6,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.mindrot.jbcrypt.BCrypt;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity responsible for handling user authentication within the Atlas Events application.

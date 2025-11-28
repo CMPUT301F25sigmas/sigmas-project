@@ -104,6 +104,10 @@ public class SignInActivity extends AppCompatActivity {
         signInbutton.setOnClickListener(view -> {
             String username = usernameField.getText().toString();
             String password = passwordField.getText().toString();
+            InputValidator.ValidationResult usernameRes =InputValidator.validateEmail(username);
+            InputValidator.ValidationResult passwordRes =InputValidator.validatePassword(password);
+            if (!usernameRes.isValid())  { usernameField.setError(usernameRes.errorMessage()); return;}
+            if (!passwordRes.isValid())  { passwordField.setError(passwordRes.errorMessage()); return;}
             //check email and pass in database
             userRepo.getUser(username,
                     user -> {

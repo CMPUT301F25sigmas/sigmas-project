@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -38,6 +39,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.atlasevents.utils.MapWarmUpManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -190,6 +192,7 @@ public class EventManageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_event);
+        MapWarmUpManager.warmUp(getApplicationContext());
 
         // Apply window insets for modern edge-to-edge layout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -357,6 +360,7 @@ public class EventManageActivity extends AppCompatActivity {
                     Toast.makeText(EventManageActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
                     finish();
                 });
+        MapWarmUpManager.cacheEntrantCoords(currentEvent.getId(), currentEvent.getEntrantCoords());
     }
 
 
@@ -904,6 +908,7 @@ public class EventManageActivity extends AppCompatActivity {
      * Shows the event location on a map.
      */
     private void showEventMap() {
+        /*
         if (currentEvent == null || currentEvent.getAddress() == null) {
             Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
             return;
@@ -911,5 +916,13 @@ public class EventManageActivity extends AppCompatActivity {
 
         // Implement map display functionality
         Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
+                 */
+        if (currentEvent == null) {
+            return;
+        }
+
+        Intent intent = new Intent(this, ManageEventMapActivity.class);
+        intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
+        startActivity(intent);
     }
 }

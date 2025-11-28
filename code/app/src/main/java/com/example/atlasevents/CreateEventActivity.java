@@ -1,13 +1,21 @@
 package com.example.atlasevents;
 
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.text.InputType;
+import android.text.TextUtils;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,6 +34,10 @@ import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
 import com.example.atlasevents.utils.TimePickerHelper;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 /**
  * Activity for creating new events in the Atlas Events system.
  * <p>
@@ -49,6 +61,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private String imageURL = "";
+    private final List<String> tags = new ArrayList<>();
+    private LinearLayout tagContainer;
 
     /**
      * The date picker to pick the start date of the event
@@ -162,6 +176,10 @@ public class CreateEventActivity extends AppCompatActivity {
         SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
         EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
         EditText slots = findViewById(R.id.slotsEditText);
+        tagContainer = findViewById(R.id.tagContainer);
+        Button editTagsButton = findViewById(R.id.editTagsButton);
+        editTagsButton.setOnClickListener(v -> showTagEditor());
+        renderTags();
 
         Button imageUploadButton = findViewById(R.id.uploadPosterButton);
         imageUploadButton.setOnClickListener(v -> pickMedia.launch(
@@ -218,6 +236,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                 if (!imageURL.isEmpty()){
                                     event.setImageUrl(imageURL);
                                 }
+                                event.setTags(tags);
                                 event.setSlots(Integer.parseInt(slots.getText().toString()));
 
 
@@ -241,6 +260,97 @@ public class CreateEventActivity extends AppCompatActivity {
     public void loadImage(){
         ImageView poster = findViewById(R.id.posterImageView);
         Glide.with(this).load(imageURL).into(poster);
+    }
+
+    /**
+     * Opens a simple dialog that lets organizers enter comma-separated tags.
+     * Parsed tags are normalized to lowercase and deduplicated before being shown.
+     */
+    private void showTagEditor() {
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("Enter tags separated by commas");
+        // Limit dialog input to 75 characters
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(75) });
+        if (!tags.isEmpty()) {
+            input.setText(TextUtils.join(", ", tags));
+            input.setSelection(input.getText().length());
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit tags")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    List<String> parsed = parseTags(input.getText().toString());
+                    tags.clear();
+                    tags.addAll(parsed);
+                    renderTags();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Updates the horizontal tag row with chip-style labels or a placeholder when empty.
+     */
+    private void renderTags() {
+        if (tagContainer == null) {
+            return;
+        }
+        tagContainer.removeAllViews();
+        if (tags.isEmpty()) {
+            TextView placeholder = new TextView(this);
+            placeholder.setText("No tags added");
+            placeholder.setTextColor(Color.parseColor("#494949"));
+            tagContainer.addView(placeholder);
+            return;
+        }
+
+        int horizontalPadding = toPx(12);
+        int verticalPadding = toPx(6);
+        int chipRadius = toPx(18);
+
+        for (String tag : tags) {
+            TextView chip = new TextView(this);
+            chip.setText(tag);
+            chip.setTextColor(Color.parseColor("#494949"));
+            chip.setPadding(horizontalPadding * 2, verticalPadding, horizontalPadding * 2, verticalPadding);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.parseColor("#E8DEF8"));
+            background.setCornerRadius(chipRadius);
+            chip.setBackground(background);
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, toPx(8), 0);
+            chip.setLayoutParams(params);
+
+            tagContainer.addView(chip);
+        }
+    }
+
+    /**
+     * Normalizes comma-separated tags into a unique, lowercase list for storage/search.
+     */
+    private List<String> parseTags(String raw) {
+        LinkedHashSet<String> parsed = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] pieces = raw.split(",");
+            for (String piece : pieces) {
+                String cleaned = piece.trim().toLowerCase(Locale.ROOT);
+                if (!cleaned.isEmpty()) {
+                    parsed.add(cleaned);
+                }
+            }
+        }
+        return new ArrayList<>(parsed);
+    }
+
+    private int toPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     /**
@@ -303,7 +413,3 @@ public class CreateEventActivity extends AppCompatActivity {
 
 
 }
-
-
-
-

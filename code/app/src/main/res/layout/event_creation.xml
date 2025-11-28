@@ -300,7 +300,7 @@
 
                 <HorizontalScrollView
                     android:id="@+id/tagScrollView"
-                    android:layout_width="320dp"
+                    android:layout_width="295dp"
                     android:layout_height="37dp">
 
                     <LinearLayout
@@ -313,8 +313,9 @@
 
                 <Button
                     android:id="@+id/editTagsButton"
-                    android:layout_width="319dp"
+                    android:layout_width="250dp"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center"
                     android:text="Edit" />
 
             </LinearLayout>
@@ -392,13 +393,13 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <Button
-            android:id="@+id/generateQrCodeButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Generate QR Code"
-            app:icon="@drawable/qr_code"
-            android:layout_marginTop="16dp"/>
+<!--        <Button-->
+<!--            android:id="@+id/generateQrCodeButton"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Generate QR Code"-->
+<!--            app:icon="@drawable/qr_code"-->
+<!--            android:layout_marginTop="16dp"/>-->
 
         <Button
             android:id="@+id/publishEventButton"

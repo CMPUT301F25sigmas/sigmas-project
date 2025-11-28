@@ -29,6 +29,7 @@ public class EntrantSearchActivity extends EntrantBase {
     private LinearLayout emptyState;
     private EventCardAdapter adapter;
     private EventRepository eventRepository;
+    private String currentUserEmail;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
@@ -44,6 +45,7 @@ public class EntrantSearchActivity extends EntrantBase {
         searchView = findViewById(R.id.search_view);
         eventsRecyclerView = findViewById(R.id.events_recycler_view);
         emptyState = findViewById(R.id.empty_view_entrant);
+        currentUserEmail = session != null ? session.getUserEmail() : null;
 
         eventRepository = new EventRepository();
         adapter = new EventCardAdapter(this::openEventDetails);
@@ -119,8 +121,19 @@ public class EntrantSearchActivity extends EntrantBase {
         eventRepository.searchEventsByKeyword(query, new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(ArrayList<Event> events) {
-                adapter.setEvents(events);
-                toggleEmptyState(events.isEmpty());
+                ArrayList<Event> filtered = new ArrayList<>();
+                for (Event event : events) {
+                    String organizerEmail = event != null && event.getOrganizer() != null
+                            ? event.getOrganizer().getEmail()
+                            : null;
+                    if (organizerEmail != null && currentUserEmail != null
+                            && organizerEmail.equalsIgnoreCase(currentUserEmail)) {
+                        continue;
+                    }
+                    filtered.add(event);
+                }
+                adapter.setEvents(filtered);
+                toggleEmptyState(filtered.isEmpty());
             }
 
             @Override

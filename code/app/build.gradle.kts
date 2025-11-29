@@ -80,7 +80,6 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     // For Android instrumented tests (in src/androidTest/java)
-    //androidTestImplementation("org.mockito:mockito-inline:5.2.0")
     androidTestImplementation("org.mockito:mockito-android:5.11.0")
 
     androidTestImplementation ("androidx.test:runner:1.5.2")

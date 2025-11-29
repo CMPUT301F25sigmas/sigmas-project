@@ -38,6 +38,12 @@ public class SignUpActivity extends AppCompatActivity {
 
     private Session session;
 
+    UserRepository userRepo = new UserRepository();
+
+    // Package-private setter for testing
+    void setUserRepository(UserRepository repository) {
+        this.userRepo = repository;
+    }
 
 
     /**
@@ -61,7 +67,6 @@ public class SignUpActivity extends AppCompatActivity {
         });
 
         session = new Session(this);
-        UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         EditText name = findViewById(R.id.name);

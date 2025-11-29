@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -38,6 +39,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.atlasevents.utils.MapWarmUpManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -190,6 +192,7 @@ public class EventManageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_event);
+        MapWarmUpManager.warmUp(getApplicationContext());
 
         // Apply window insets for modern edge-to-edge layout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -329,10 +332,24 @@ public class EventManageActivity extends AppCompatActivity {
      * </p>
      */
     private void loadData() {
-        String eventId = getIntent().getSerializableExtra(EventKey).toString();
+        String eventId = getIntent().getStringExtra(EventKey);
+        if (eventId == null) {
+            Object extra = getIntent().getSerializableExtra(EventKey);
+            if (extra != null) {
+                eventId = extra.toString();
+            }
+        }
+
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(this, "Missing event", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Only fetch the event from Firebase; we don't rely on Event methods for lists
+        String finalEventId = eventId;
         db.collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -342,8 +359,16 @@ public class EventManageActivity extends AppCompatActivity {
                         return;
                     }
 
-                    currentEvent = snapshot.toObject(Event.class); // for other Event fields like name
+                    Event event = snapshot.toObject(Event.class); // for other Event fields like name
+                    if (event == null) {
+                        Toast.makeText(this, "Failed to parse event", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    currentEvent = event;
                     eventName = currentEvent.getEventName();
+                    MapWarmUpManager.cacheEntrantCoords(finalEventId, currentEvent.getEntrantCoords());
                     updateEventUI(currentEvent, snapshot);
                     updateLotteryUI(currentEvent);
                     startLotteryTimerIfNeeded(currentEvent);
@@ -904,6 +929,7 @@ public class EventManageActivity extends AppCompatActivity {
      * Shows the event location on a map.
      */
     private void showEventMap() {
+        /*
         if (currentEvent == null || currentEvent.getAddress() == null) {
             Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
             return;
@@ -911,5 +937,13 @@ public class EventManageActivity extends AppCompatActivity {
 
         // Implement map display functionality
         Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
+                 */
+        if (currentEvent == null) {
+            return;
+        }
+
+        Intent intent = new Intent(this, ManageEventMapActivity.class);
+        intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
+        startActivity(intent);
     }
 }

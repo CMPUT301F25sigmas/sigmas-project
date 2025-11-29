@@ -1,8 +1,9 @@
 package com.example.atlasevents;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,6 +22,10 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -40,6 +46,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
  */
 public class EventDetailsActivity extends AppCompatActivity {
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+
     /**
      * Key used to pass the Event object through Intent extras.
      * This constant should be used when starting this activity to include
@@ -49,10 +57,13 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private EventRepository eventRepository;
     private UserRepository userRepository;
+    private FusedLocationProviderClient fusedLocationClient;
     private Session session;
 
     private Event currentEvent;
     private Entrant currentEntrant;
+    private boolean pendingLocationPermissionForJoin;
+
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
             waitlistCountTextView, dateTextView, timeTextView, locationTextView;
@@ -86,7 +97,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entrant_event_details);
-
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -129,22 +140,44 @@ public class EventDetailsActivity extends AppCompatActivity {
             currentEntrant = entrant;
             tryUpdateWaitlistButtons();
         });
-        eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                currentEvent = event;
-                displayEventDetails(event);
-                tryUpdateWaitlistButtons();
-                loadBlockedStatus();
-            }
+        String qrEventId = getIntent().getStringExtra("qrId");
+        String tappedEventId = getIntent().getStringExtra(EventKey);
+        if (qrEventId != null) {
+            eventRepository.getEventById(qrEventId, new EventRepository.EventCallback() {
+                @Override
+                public void onSuccess(Event event) {
+                    currentEvent = event;
+                    displayEventDetails(event);
+                    tryUpdateWaitlistButtons();
+                    loadBlockedStatus();
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                Log.e("EventDetailsActivity", "Failed to fetch event", e);
-                Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        } else if (tappedEventId != null){
+            //             eventRepository.getEventById(getIntent().getSerializableExtra(EventKey).toString(), new EventRepository.EventCallback() {
+            eventRepository.getEventById(tappedEventId, new EventRepository.EventCallback() {
+                @Override
+                public void onSuccess(Event event) {
+                    currentEvent = event;
+                    displayEventDetails(event);
+                    tryUpdateWaitlistButtons();
+                    loadBlockedStatus();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("EventDetailsActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventDetailsActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        }
     }
 
     /**
@@ -264,22 +297,57 @@ public class EventDetailsActivity extends AppCompatActivity {
     private void joinWaitlist() {
         if (currentEvent == null || currentEntrant == null) return;
 
+        if (currentEvent.getRequireGeolocation()
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            pendingLocationPermissionForJoin = true;
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+            return;
+        }
+
+        attemptJoinWaitlist();
+    }
+
+    private void attemptJoinWaitlist() {
+        if (currentEvent == null || currentEntrant == null) return;
+        pendingLocationPermissionForJoin = false;
+
         int joined = currentEvent.addToWaitlist(currentEntrant);
         if (joined == 1) {
-            eventRepository.updateEvent(currentEvent, success -> {
-                if (success) {
-                    Toast.makeText(this, "Joined waitlist successfully", Toast.LENGTH_SHORT).show();
-                    waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
-                    updateWaitlistButtons();
-                } else {
-                    Toast.makeText(this, "Failed to join waitlist", Toast.LENGTH_SHORT).show();
-                }
-            });
+
+            if (currentEvent.getRequireGeolocation()
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener(this, location -> {
+                            if (location != null) {
+                                GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+                                currentEvent.addToEntrantLocation(currentEntrant.getEmail(), geoPoint);
+                            }
+                            updateWaitList();
+
+                        }).addOnFailureListener(e -> {
+                            Log.e("EventDetails", "Location not found", e);
+                            updateWaitList();
+                        });
+            } else {
+                updateWaitList();
+            }
         } else if (joined == 0) {
             Toast.makeText(this, "Waitlist limit reached", Toast.LENGTH_SHORT).show();
         } else if (joined == -1) {
             Toast.makeText(this, "Waitlist not open yet or past deadline", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void updateWaitList() {
+        eventRepository.updateEvent(currentEvent, success -> {
+            if (success) {
+                Toast.makeText(this, "Waitlist Joined Successfully", Toast.LENGTH_SHORT).show();
+                waitlistCountTextView.setText(String.valueOf(currentEvent.getWaitlist().size()));
+                updateWaitlistButtons();
+            } else {
+                Toast.makeText(this, "Failed to join Waitlist", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -293,6 +361,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (currentEvent == null || currentEntrant == null) return;
 
         currentEvent.removeFromWaitlist(currentEntrant);
+        currentEvent.removeFromEntrantLocation(currentEntrant);
         eventRepository.updateEvent(currentEvent, success -> {
             if (success) {
                 Toast.makeText(this, "Left waitlist successfully", Toast.LENGTH_SHORT).show();
@@ -302,6 +371,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
             }
         });
+
     }
     
     /**
@@ -371,6 +441,21 @@ public class EventDetailsActivity extends AppCompatActivity {
                     optOutCheckBox.setChecked(true);
                 }
             });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (pendingLocationPermissionForJoin) {
+                    attemptJoinWaitlist();
+                }
+            } else if (pendingLocationPermissionForJoin) {
+                pendingLocationPermissionForJoin = false;
+                Toast.makeText(this, "Location permission is required to join this event", Toast.LENGTH_SHORT).show();
+            }
         }
     }
     /**

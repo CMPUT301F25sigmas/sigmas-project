@@ -7,9 +7,11 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -17,6 +19,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.Event;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -53,6 +59,7 @@ public abstract class EntrantBase extends AppCompatActivity {
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
     private ActivityResultLauncher<String> requestPermissionLauncher;
+    protected EventRepository eventRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +75,7 @@ public abstract class EntrantBase extends AppCompatActivity {
         contentContainer = findViewById(R.id.content_container);
         session = new Session(this);
         userRepository = new UserRepository();
+        eventRepository = new EventRepository();
 
         SidebarNavigation();
 
@@ -180,7 +188,35 @@ public abstract class EntrantBase extends AppCompatActivity {
         startActivity(intent);
     }
     protected void openQrReader() {
-        //Need to do
+        IntentIntegrator intentIntegrator = new IntentIntegrator(this);
+        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+        intentIntegrator.setCameraId(0);
+        intentIntegrator.setPrompt("Please Scan the QR Code");
+        intentIntegrator.setOrientationLocked(true);
+        intentIntegrator.initiateScan();
+    }
+    @Override
+    protected void onActivityResult(int askCode, int parsedQrCode, @Nullable Intent data) {
+        super.onActivityResult(askCode, parsedQrCode, data);
+        IntentResult intentResult = IntentIntegrator.parseActivityResult(askCode, parsedQrCode, data);
+        String eventId = intentResult.getContents();
+        qrCodeEventLauncher(eventId);
+    }
+
+    protected void qrCodeEventLauncher(String qrEventId) {
+        eventRepository.getEventById(qrEventId, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                Intent intent = new Intent(EntrantBase.this, EventDetailsActivity.class);
+                intent.putExtra("qrId", event.getId());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+
+            }
+        });
     }
 
     /**

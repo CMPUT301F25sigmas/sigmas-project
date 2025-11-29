@@ -366,6 +366,9 @@ public class Event implements Serializable {
         if (!isRegistrationOpen()) {
             return -1;
         }
+        if (waitList.containsEntrant(entrant)) {
+            return -2;
+        }
         int currentSize = waitList.size();
         if (entrantLimit == -1) {
             waitList.addEntrant(entrant);

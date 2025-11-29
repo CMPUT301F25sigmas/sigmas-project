@@ -20,6 +20,7 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.NotificationManager;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /**
  * Activity displaying the entrant's dashboard with a list of available events.
@@ -188,42 +189,71 @@ public class EntrantDashboardActivity extends EntrantBase {
     /**
      * Filters the list of events based on the current button state.
      *
-     * @param showActive
+     * @param showCurrent shows current status
      * @see #displayEvents(ArrayList)
      */
-    private void filterEvents(boolean showActive) {
+    private void filterEvents(boolean showCurrent) {
         long currentTime = System.currentTimeMillis();
         ArrayList<Event> filtered = new ArrayList<>();
 
-        // Reset both button UI states here (no helpers)
+        // Reset both button UI states
         currentButton.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(this, R.color.background_grey)));
         pastButton.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(this, R.color.background_grey)));
 
-        if (showActive) {
-            // Highlight active button
+        if (showCurrent) {
+            // Highlight current events button
             currentButton.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this, R.color.light_purple)));
 
-            // Condition: Future events = Active
+            // Current events: today's events and future events
             for (Event event : userEvents) {
-                long eventTime = Event.getEventTimestamp(event);
-                if (eventTime > currentTime) {
-                    filtered.add(event);
+                if (event.getDate() != null) {
+                    long eventTime = event.getDate().getTime();
+                    
+                    // For current events, include today's events and future events
+                    if (eventTime >= currentTime) {
+                        filtered.add(event);
+                    } else {
+                        // Check if it's today's event
+                        Calendar eventCal = Calendar.getInstance();
+                        eventCal.setTime(event.getDate());
+                        
+                        Calendar todayCal = Calendar.getInstance();
+                        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                        todayCal.set(Calendar.MINUTE, 0);
+                        todayCal.set(Calendar.SECOND, 0);
+                        todayCal.set(Calendar.MILLISECOND, 0);
+                        
+                        Calendar tomorrowCal = (Calendar) todayCal.clone();
+                        tomorrowCal.add(Calendar.DAY_OF_YEAR, 1);
+                        
+                        if (eventTime >= todayCal.getTimeInMillis() && 
+                            eventTime < tomorrowCal.getTimeInMillis()) {
+                            filtered.add(event);
+                        }
+                    }
                 }
             }
         } else {
-            // Highlight closed button
+            // Highlight past events button
             pastButton.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this, R.color.light_purple)));
 
-            // Condition: Already expired = Closed
+            // Past events: events before today
             for (Event event : userEvents) {
-                long eventTime = Event.getEventTimestamp(event);
-                long eventEnd = eventTime + 24 * 60 * 60 * 1000; // 24 hours
-                if (eventEnd < currentTime) {
-                    filtered.add(event);
+                if (event.getDate() != null) {
+                    // Get start of today
+                    Calendar todayCal = Calendar.getInstance();
+                    todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                    todayCal.set(Calendar.MINUTE, 0);
+                    todayCal.set(Calendar.SECOND, 0);
+                    todayCal.set(Calendar.MILLISECOND, 0);
+                    
+                    if (event.getDate().before(todayCal.getTime())) {
+                        filtered.add(event);
+                    }
                 }
             }
         }

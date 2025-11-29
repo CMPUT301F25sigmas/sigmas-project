@@ -29,53 +29,43 @@ public class FakeUserRepository extends UserRepository{
         users.put(testEntrant.getEmail(), testEntrant);
     }
 
-    public interface OnUserFetchedListener {
-        void onUserFetched(User user);
-    }
+    // Remove the duplicate interface definitions - use the parent's interfaces
+    // The parent UserRepository already defines OnUserFetchedListener, OnOrganizerFetchedListener, etc.
 
-    public interface OnOrganizerFetchedListener {
-        void onOrganizerFetched(Organizer organizer);
-    }
-
-    public interface OnEntrantFetchedListener {
-        void onEntrantFetched(Entrant entrant);
-    }
-
-    public interface OnUserUpdatedListener {
-        enum UpdateStatus { SUCCESS, EMAIL_ALREADY_USED, FAILURE }
-        void onUserUpdated(UpdateStatus status);
-    }
-
+    @Override
     public void addUser(@NonNull User user, @NonNull OnUserUpdatedListener listener) {
-
-            users.put(user.getEmail(), user);
-            listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS);
-
+        // Always return SUCCESS - this is a fake repository for testing
+        users.put(user.getEmail(), user);
+        listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS);
     }
 
-    public void getUser(String email, OnUserFetchedListener listener) {
-        listener.onUserFetched(users.get(email));
+    @Override
+    public void getUser(String name, OnUserFetchedListener listener) {
+        listener.onUserFetched(users.get(name));
     }
 
-    public void getOrganizer(String email, OnOrganizerFetchedListener listener) {
-        User u = users.get(email);
+    @Override
+    public void getOrganizer(String name, OnOrganizerFetchedListener listener) {
+        User u = users.get(name);
         listener.onOrganizerFetched(u instanceof Organizer ? (Organizer) u : null);
     }
 
-    public void getEntrant(String email, OnEntrantFetchedListener listener) {
-        User u = users.get(email);
+    @Override
+    public void getEntrant(String name, OnEntrantFetchedListener listener) {
+        User u = users.get(name);
         listener.onEntrantFetched(u instanceof Entrant ? (Entrant) u : null);
     }
 
-    public void setUser(String oldEmail, User newUser, OnUserUpdatedListener listener) {
-
-        users.remove(oldEmail);
+    @Override
+    public void setUser(@NonNull String email, @NonNull User newUser, @NonNull OnUserUpdatedListener listener) {
+        users.remove(email);
         users.put(newUser.getEmail(), newUser);
         listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS);
     }
 
-    public void deleteUser(String email) {
-        users.remove(email);
+    @Override
+    public void deleteUser(String userEmail) {
+        users.remove(userEmail);
     }
 
     public ArrayList<User> getAllUsers() {

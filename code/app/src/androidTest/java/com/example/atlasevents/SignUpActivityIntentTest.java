@@ -119,7 +119,7 @@ public class SignUpActivityIntentTest {
             e.printStackTrace();
         }
 
-        // Check that the name field has an error (any error)
+        // Check that the email field has an error (any error)
         onView(withId(R.id.email)).check((view, noViewFoundException) -> {
             if (noViewFoundException != null) {
                 throw noViewFoundException;
@@ -149,7 +149,7 @@ public class SignUpActivityIntentTest {
             e.printStackTrace();
         }
 
-        // Check that the name field has an error (any error)
+        // Check that the phone field has an error (any error)
         onView(withId(R.id.phone)).check((view, noViewFoundException) -> {
             if (noViewFoundException != null) {
                 throw noViewFoundException;

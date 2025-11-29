@@ -354,33 +354,122 @@ public class CreateEventActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-    /**
-     * Validates the required inputs for event creation.
-     * <p>
-     * Checks that the event name is not empty and that the number of slots
-     * is provided. Displays appropriate Toast messages to inform the user
-     * of any missing or invalid inputs.
-     * </p>
-     *
-     * @param name The name of the event to validate
-     * @param slots The number of participant slots as a string
-     * @return {@code true} if all inputs are valid, {@code false} otherwise
-     */
-    public boolean inputsValid(EditText name, EditText slots,boolean limitEntrants,String limit) {
+/**
+ * Validates all inputs for event creation including dates and times.
+ * <p>
+ * Checks that the event name is not empty, number of slots is valid,
+ * and all date/time fields are properly selected and in the correct order.
+ * Displays appropriate error messages for any validation failures.
+ * </p>
+ *
+ * @param name The EditText containing the event name
+ * @param slots The EditText containing the number of slots
+ * @param limitEntrants Whether the entrant limit is enabled
+ * @param limit The entrant limit value
+ * @return {@code true} if all inputs are valid, {@code false} otherwise
+ */
+public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants, String limit) {
         boolean valid = true;
+
+        // Get references to the date/time input fields
+        EditText dateEditText = findViewById(R.id.dateEditText);
+        EditText timeEditText = findViewById(R.id.timeEditText);
+        EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+
+        // Clear previous errors
+        name.setError(null);
+        slots.setError(null);
+        dateEditText.setError(null);
+        timeEditText.setError(null);
+        regDateRangeEditText.setError(null);
+
+        // Validate event name
         InputValidator.ValidationResult nameRes = InputValidator.validateEventName(name.getText().toString());
-        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
         if (!nameRes.isValid()) {
             name.setError(nameRes.errorMessage());
-//            Toast.makeText(this,"Event name is required", Toast.LENGTH_LONG).show();
             valid = false;
-        }else if (!slotRes.isValid()) { //check that slots is filled
-//            Toast.makeText(this,"number of participants is required", Toast.LENGTH_LONG).show();
+        }
+
+        // Validate slots
+        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
+        if (!slotRes.isValid()) {
             slots.setError(slotRes.errorMessage());
             valid = false;
-        }else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)){
-            Toast.makeText(this,"Waitlist limit cannot be smaller than number of participants", Toast.LENGTH_LONG).show();
+        }
+        // Only check entrant limit if slots are valid
+        else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)) {
+            slots.setError("Waitlist limit cannot be smaller than number of participants");
             valid = false;
+        }
+
+        // Validate event date
+        InputValidator.ValidationResult dateResult = InputValidator.validateDateSelected(
+                startDatePicker.getStartDate(), "Event date");
+        if (!dateResult.isValid()) {
+            dateEditText.setError(dateResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate event time
+        InputValidator.ValidationResult timeResult = InputValidator.validateTimeSelected(
+                timePicker.hour, timePicker.minute, "Event time");
+        if (!timeResult.isValid()) {
+            timeEditText.setError(timeResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate registration period
+        InputValidator.ValidationResult regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getStartDate(), "Registration start date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getEndDate(), "Registration end date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        // Only validate date relationships if individual dates are valid
+        if (valid) {
+            // Validate registration period is valid (end after start)
+            InputValidator.ValidationResult regPeriodResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getStartDate(),
+                    registrationPeriodPicker.getEndDate(),
+                    "Registration start date",
+                    "Registration end date"
+            );
+            if (!regPeriodResult.isValid()) {
+                regDateRangeEditText.setError(regPeriodResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event date is after registration period
+            InputValidator.ValidationResult eventDateResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getEndDate(),
+                    startDatePicker.getStartDate(),
+                    "Registration end date",
+                    "Event date"
+            );
+            if (!eventDateResult.isValid()) {
+                dateEditText.setError(eventDateResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event time is in the future
+            InputValidator.ValidationResult futureTimeResult = InputValidator.validateFutureTime(
+                    startDatePicker.getStartDate(),
+                    timePicker.hour,
+                    timePicker.minute,
+                    "Event time"
+            );
+            if (!futureTimeResult.isValid()) {
+                timeEditText.setError(futureTimeResult.errorMessage());
+                valid = false;
+            }
         }
 
         return valid;

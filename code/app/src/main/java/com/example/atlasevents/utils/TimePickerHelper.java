@@ -17,8 +17,8 @@ import java.util.Date;
  * </p>
  */
 public class TimePickerHelper {
-    private Integer hour = null;
-    private Integer minute = null;
+    public Integer hour = null;
+    public Integer minute = null;
 
     public interface TimeSelectedCallback {
         void onSelected(int hour, int minute);

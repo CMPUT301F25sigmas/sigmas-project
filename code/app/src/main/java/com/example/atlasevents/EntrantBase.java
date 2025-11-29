@@ -193,14 +193,18 @@ public abstract class EntrantBase extends AppCompatActivity {
         intentIntegrator.setCameraId(0);
         intentIntegrator.setPrompt("Please Scan the QR Code");
         intentIntegrator.setOrientationLocked(true);
+        intentIntegrator.setBeepEnabled(false);
         intentIntegrator.initiateScan();
     }
     @Override
     protected void onActivityResult(int askCode, int parsedQrCode, @Nullable Intent data) {
         super.onActivityResult(askCode, parsedQrCode, data);
         IntentResult intentResult = IntentIntegrator.parseActivityResult(askCode, parsedQrCode, data);
-        String eventId = intentResult.getContents();
-        qrCodeEventLauncher(eventId);
+
+        if (intentResult != null && intentResult.getContents() != null) {
+            String eventId = intentResult.getContents();
+            qrCodeEventLauncher(eventId);
+        }
     }
 
     protected void qrCodeEventLauncher(String qrEventId) {

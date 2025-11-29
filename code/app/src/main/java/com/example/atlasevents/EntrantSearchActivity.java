@@ -68,6 +68,8 @@ public class EntrantSearchActivity extends EntrantBase {
                 return true;
             }
         });
+
+        fetchOpenEvents();
     }
 
     @Override
@@ -75,6 +77,8 @@ public class EntrantSearchActivity extends EntrantBase {
         super.onResume();
         if (lastRequestedQuery.length() >= 2) {
             searchEvents(lastRequestedQuery);
+        } else {
+            fetchOpenEvents();
         }
     }
 
@@ -92,10 +96,9 @@ public class EntrantSearchActivity extends EntrantBase {
     private void triggerSearch(String rawQuery) {
         String query = rawQuery == null ? "" : rawQuery.trim();
         if (query.isEmpty()) {
-            adapter.setEvents(new ArrayList<>());
             lastRequestedQuery = "";
             lastRequestedLength = 0;
-            toggleEmptyState(true);
+            fetchOpenEvents();
             return;
         }
 
@@ -121,25 +124,26 @@ public class EntrantSearchActivity extends EntrantBase {
         eventRepository.searchEventsByKeyword(query, new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(ArrayList<Event> events) {
-                ArrayList<Event> filtered = new ArrayList<>();
-                for (Event event : events) {
-                    String organizerEmail = event != null && event.getOrganizer() != null
-                            ? event.getOrganizer().getEmail()
-                            : null;
-                    if (organizerEmail != null && currentUserEmail != null
-                            && organizerEmail.equalsIgnoreCase(currentUserEmail)) {
-                        continue;
-                    }
-                    filtered.add(event);
-                }
-                adapter.setEvents(filtered);
-                toggleEmptyState(filtered.isEmpty());
+                updateResults(filterOutCurrentUserEvents(events));
             }
 
             @Override
             public void onFailure(Exception e) {
-                adapter.setEvents(new ArrayList<>());
-                toggleEmptyState(true);
+                updateResults(new ArrayList<>());
+            }
+        });
+    }
+
+    private void fetchOpenEvents() {
+        eventRepository.getAvailableEvents(new EventRepository.EventsCallback() {
+            @Override
+            public void onSuccess(ArrayList<Event> events) {
+                updateResults(filterOutCurrentUserEvents(events));
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                updateResults(new ArrayList<>());
             }
         });
     }
@@ -147,6 +151,32 @@ public class EntrantSearchActivity extends EntrantBase {
     private void toggleEmptyState(boolean showEmpty) {
         emptyState.setVisibility(showEmpty ? View.VISIBLE : View.GONE);
         eventsRecyclerView.setVisibility(showEmpty ? View.GONE : View.VISIBLE);
+    }
+
+    private void updateResults(ArrayList<Event> events) {
+        adapter.setEvents(events);
+        toggleEmptyState(events.isEmpty());
+    }
+
+    private ArrayList<Event> filterOutCurrentUserEvents(ArrayList<Event> events) {
+        if (events == null) {
+            return new ArrayList<>();
+        }
+        ArrayList<Event> filtered = new ArrayList<>();
+        for (Event event : events) {
+            if (event == null) {
+                continue;
+            }
+            String organizerEmail = event.getOrganizer() != null
+                    ? event.getOrganizer().getEmail()
+                    : null;
+            if (organizerEmail != null && currentUserEmail != null
+                    && organizerEmail.equalsIgnoreCase(currentUserEmail)) {
+                continue;
+            }
+            filtered.add(event);
+        }
+        return filtered;
     }
 
     private void openEventDetails(Event event) {

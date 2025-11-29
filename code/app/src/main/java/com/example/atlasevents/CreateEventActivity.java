@@ -32,6 +32,7 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.InputValidator;
 import com.example.atlasevents.utils.TimePickerHelper;
 
 import java.util.ArrayList;
@@ -219,7 +220,7 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            if(inputsValid(name.getText().toString(),slots.getText().toString(),limitEntrants.isChecked(), entrantLimit.getText().toString())) { //validate inputs before making event
+                            if(inputsValid(name,slots,limitEntrants.isChecked(), entrantLimit.getText().toString())) { //validate inputs before making event
                                 Event event = new Event(user);
                                 event.setEventName(name.getText().toString()); //get text from edit texts
                                 event.setDate(startDatePicker.getStartDate());
@@ -365,15 +366,19 @@ public class CreateEventActivity extends AppCompatActivity {
      * @param slots The number of participant slots as a string
      * @return {@code true} if all inputs are valid, {@code false} otherwise
      */
-    public boolean inputsValid(String name, String slots,boolean limitEntrants,String limit) {
+    public boolean inputsValid(EditText name, EditText slots,boolean limitEntrants,String limit) {
         boolean valid = true;
-        if (name.isEmpty()) { //check if name is empty
-            Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
+        InputValidator.ValidationResult nameRes = InputValidator.validateEventName(name.getText().toString());
+        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
+        if (!nameRes.isValid()) {
+            name.setError(nameRes.errorMessage());
+//            Toast.makeText(this,"Event name is required", Toast.LENGTH_LONG).show();
             valid = false;
-        }else if (slots.isEmpty()) { //check that slots is filled
-            Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+        }else if (!slotRes.isValid()) { //check that slots is filled
+//            Toast.makeText(this,"number of participants is required", Toast.LENGTH_LONG).show();
+            slots.setError(slotRes.errorMessage());
             valid = false;
-        }else if (limitEntrants && Integer.parseInt(slots) > Integer.parseInt(limit)){
+        }else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)){
             Toast.makeText(this,"Waitlist limit cannot be smaller than number of participants", Toast.LENGTH_LONG).show();
             valid = false;
         }

@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.example.atlasevents.Entrant;
 import com.example.atlasevents.Organizer;
 import com.example.atlasevents.User;
+import com.example.atlasevents.PasswordHasher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,19 +14,23 @@ import java.util.Map;
 public class FakeUserRepository extends UserRepository{
 
     private final Map<String, User> users = new HashMap<>();
+    private final PasswordHasher passwordHasher = new PasswordHasher();
 
     public FakeUserRepository() {
+        // Hash passwords so they work with PasswordHasher.checkPass()
+        String hashedPassword = passwordHasher.passHash("password");
+        
         // optional: prepopulate with a test user
         Organizer testOrganizer = new Organizer();
         testOrganizer.setEmail("organizer@test.com");
         testOrganizer.setName("Test Organizer");
-        testOrganizer.setPassword("password");
+        testOrganizer.setPassword(hashedPassword);  // Store hashed password
         users.put(testOrganizer.getEmail(), testOrganizer);
 
         Entrant testEntrant = new Entrant();
         testEntrant.setEmail("entrant@test.com");
         testEntrant.setName("Test Entrant");
-        testEntrant.setPassword("password");
+        testEntrant.setPassword(hashedPassword);  // Store hashed password
         users.put(testEntrant.getEmail(), testEntrant);
     }
 
@@ -34,7 +39,10 @@ public class FakeUserRepository extends UserRepository{
 
     @Override
     public void addUser(@NonNull User user, @NonNull OnUserUpdatedListener listener) {
-        // Always return SUCCESS - this is a fake repository for testing
+        // Hash the password before storing (matching real repository behavior)
+        String originalPassword = user.getPassword();
+        user.setPassword(passwordHasher.passHash(originalPassword));
+        
         users.put(user.getEmail(), user);
         listener.onUserUpdated(OnUserUpdatedListener.UpdateStatus.SUCCESS);
     }

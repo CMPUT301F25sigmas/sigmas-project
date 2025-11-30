@@ -49,7 +49,7 @@ public class CreateEventTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         
         // Create a spy of the activity
         activitySpy = spy(new CreateEventActivity());

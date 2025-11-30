@@ -6,7 +6,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.example.atlasevents.data.NotificationRepository;
+import com.example.atlasevents.data.InviteRepository;
 import com.example.atlasevents.data.model.Notification;
+import com.example.atlasevents.data.model.Invite;
 import com.example.atlasevents.EntrantList;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -44,11 +46,13 @@ public class LotteryService {
     private static final String TAG = "LotteryService";
     private final FirebaseFirestore db;
     private final NotificationRepository notificationRepo;
+    private final InviteRepository inviteRepo;
 
 
     public LotteryService() {
         this.db = FirebaseFirestore.getInstance();
         this.notificationRepo = new NotificationRepository();
+        this.inviteRepo = new InviteRepository();
     }
 
     /**
@@ -56,10 +60,12 @@ public class LotteryService {
      *
      * @param db Firebase Firestore instance
      * @param notificationRepo Notification repository instance
+     * @param inviteRepo Invite repository instance
      */
-    public LotteryService(FirebaseFirestore db, NotificationRepository notificationRepo) {
+    public LotteryService(FirebaseFirestore db, NotificationRepository notificationRepo, InviteRepository inviteRepo) {
         this.db = db;
         this.notificationRepo = notificationRepo;
+        this.inviteRepo = inviteRepo;
     }
 
     /**
@@ -626,7 +632,7 @@ public class LotteryService {
     private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
         Map<String, Object> map = new HashMap<>();
 
-        // Create the list structure that matches your Firestore schema
+
         List<Map<String, Object>> allEntrantsArray = new ArrayList<>();
         List<Map<String, Object>> waitListArray = new ArrayList<>();
 
@@ -678,6 +684,7 @@ public class LotteryService {
 
     /**
      * Sends invitation notifications to selected entrants.
+     * Creates invites in the separate invites collection instead of using notifications.
      *
      * @param event The event
      * @param selectedEntrants List of selected entrants
@@ -689,40 +696,38 @@ public class LotteryService {
             String organizerEmail = event.getOrganizer() != null ?
                     event.getOrganizer().getEmail() : "Unknown Organizer";
 
-            String title = "Event Invitation: " + eventName;
-            String message = "Congratulations! You have been selected from the waitlist for " +
-                    eventName + ". Please accept or decline this invitation within 24 hours.";
-
-            // Create notification with action type
-            Notification invitationNotification = new Notification(
-                    title, message, event.getId(), organizerEmail, eventName, "Invitation"
-            );
-
             // Set expiration time (24 hours from now)
             long expirationTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
-            invitationNotification.setExpirationTime(expirationTime);
 
-            List<String> selectedEmails = new ArrayList<>();
+            // Create invites for each selected entrant
+            List<Invite> invites = new ArrayList<>();
             for (Entrant entrant : selectedEntrants) {
                 if (entrant.getEmail() != null) {
-                    selectedEmails.add(entrant.getEmail());
+                    Invite invite = new Invite(
+                            event.getId(),
+                            entrant.getEmail(),
+                            eventName,
+                            organizerEmail,
+                            expirationTime
+                    );
+                    invites.add(invite);
 
                     // Schedule auto-decline for each entrant
                     scheduleAutoDecline(event.getId(), entrant.getEmail(), expirationTime);
                 }
             }
 
-            // Send notifications
-            notificationRepo.sendToUsers(selectedEmails, invitationNotification)
-                    .addOnCompleteListener(notificationTask -> {
-                        if (notificationTask.isSuccessful()) {
-                            Log.d(TAG, "Successfully sent invitations to " + selectedEmails.size() + " entrants");
-                            callback.onLotteryCompleted(selectedEmails.size(),
-                                    "Lottery completed. " + selectedEmails.size() + " entrants notified.");
+            // Create invites in Firestore
+            inviteRepo.createInvites(invites)
+                    .addOnCompleteListener(inviteTask -> {
+                        if (inviteTask.isSuccessful()) {
+                            Log.d(TAG, "Successfully created invites for " + invites.size() + " entrants");
+                            callback.onLotteryCompleted(invites.size(),
+                                    "Lottery completed. " + invites.size() + " entrants invited.");
                         } else {
-                            Log.e(TAG, "Failed to send invitation notifications", notificationTask.getException());
-                            callback.onLotteryCompleted(selectedEmails.size(),
-                                    "Lottery completed but some notifications failed.");
+                            Log.e(TAG, "Failed to create invites", inviteTask.getException());
+                            callback.onLotteryCompleted(invites.size(),
+                                    "Lottery completed but some invites failed.");
                         }
                     });
         }
@@ -806,36 +811,59 @@ public class LotteryService {
         Log.d(TAG, "Scheduling auto-decline for " + entrantEmail + " in " + delay + "ms");
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            // Check if entrant is still in invite list (hasn't responded)
-            getEventWithAllLists(eventId).addOnCompleteListener(task -> {
-                if (task.isSuccessful() && task.getResult() != null) {
-                    Event event = task.getResult();
-                    EntrantList inviteList = event.getInviteList();
+            // Check if invite is still pending in the invites collection
+            inviteRepo.getInviteByEventAndRecipient(eventId, entrantEmail)
+                    .addOnCompleteListener(inviteTask -> {
+                        if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                            Invite invite = inviteTask.getResult();
+                            if ("pending".equals(invite.getStatus())) {
+                                // Update invite status to expired
+                                inviteRepo.updateInviteStatus(invite.getInviteId(), "expired")
+                                        .addOnCompleteListener(updateTask -> {
+                                            if (updateTask.isSuccessful()) {
+                                                Log.d(TAG, "Auto-expired invite for: " + entrantEmail);
+                                            } else {
+                                                Log.e(TAG, "Failed to expire invite", updateTask.getException());
+                                            }
+                                        });
 
-                    if (inviteList != null && inviteList.containsEntrant(entrantEmail)) {
-                        // Auto-decline if still in invite list
-                        Log.d(TAG, "Auto-declining invitation for: " + entrantEmail);
-                        handleInvitationResponse(eventId, entrantEmail, false, new InvitationResponseCallback() {
-                            @Override
-                            public void onResponseSuccess(boolean accepted) {
-                                Log.d(TAG, "Auto-decline successful for: " + entrantEmail);
+                                // Check if entrant is still in invite list (hasn't responded)
+                                getEventWithAllLists(eventId).addOnCompleteListener(task -> {
+                                    if (task.isSuccessful() && task.getResult() != null) {
+                                        Event event = task.getResult();
+                                        EntrantList inviteList = event.getInviteList();
+
+                                        if (inviteList != null && inviteList.containsEntrant(entrantEmail)) {
+                                            // Auto-decline if still in invite list
+                                            Log.d(TAG, "Auto-declining invitation for: " + entrantEmail);
+                                            handleInvitationResponse(eventId, entrantEmail, false, new InvitationResponseCallback() {
+                                                @Override
+                                                public void onResponseSuccess(boolean accepted) {
+                                                    Log.d(TAG, "Auto-decline successful for: " + entrantEmail);
+                                                }
+
+                                                @Override
+                                                public void onResponseFailed(Exception exception) {
+                                                    Log.e(TAG, "Auto-decline failed for: " + entrantEmail, exception);
+                                                }
+                                            });
+
+                                            // Send auto-decline notification
+                                            sendAutoDeclineNotification(event, entrantEmail);
+                                        } else {
+                                            Log.d(TAG, "Entrant already responded: " + entrantEmail);
+                                        }
+                                    } else {
+                                        Log.e(TAG, "Failed to check invite list status for auto-decline", task.getException());
+                                    }
+                                });
+                            } else {
+                                Log.d(TAG, "Invite already responded: " + entrantEmail);
                             }
-
-                            @Override
-                            public void onResponseFailed(Exception exception) {
-                                Log.e(TAG, "Auto-decline failed for: " + entrantEmail, exception);
-                            }
-                        });
-
-                        // Send auto-decline notification
-                        sendAutoDeclineNotification(event, entrantEmail);
-                    } else {
-                        Log.d(TAG, "Entrant already responded: " + entrantEmail);
-                    }
-                } else {
-                    Log.e(TAG, "Failed to check invite list status for auto-decline", task.getException());
-                }
-            });
+                        } else {
+                            Log.d(TAG, "Invite not found or already removed: " + entrantEmail);
+                        }
+                    });
         }, delay);
     }
 
@@ -871,6 +899,25 @@ public class LotteryService {
      */
     public void handleInvitationResponse(String eventId, String entrantEmail, boolean accepted, InvitationResponseCallback callback) {
         Log.d(TAG, "Handling invitation response: " + entrantEmail + " accepted: " + accepted);
+
+        // First, update the invite status in the invites collection
+        String inviteStatus = accepted ? "accepted" : "declined";
+        inviteRepo.getInviteByEventAndRecipient(eventId, entrantEmail)
+                .addOnCompleteListener(inviteTask -> {
+                    if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                        Invite invite = inviteTask.getResult();
+                        inviteRepo.updateInviteStatus(invite.getInviteId(), inviteStatus)
+                                .addOnCompleteListener(updateTask -> {
+                                    if (updateTask.isSuccessful()) {
+                                        Log.d(TAG, "Invite status updated to: " + inviteStatus);
+                                    } else {
+                                        Log.e(TAG, "Failed to update invite status", updateTask.getException());
+                                    }
+                                });
+                    } else {
+                        Log.w(TAG, "Invite not found in invites collection for event: " + eventId + ", user: " + entrantEmail);
+                    }
+                });
 
         // Get event details
         getEventWithAllLists(eventId).addOnCompleteListener(task -> {
@@ -1000,6 +1047,26 @@ public class LotteryService {
             if (selectedEntrants.isEmpty()) {
                 callback.onLotteryCompleted(0, "No entrants selected for re-sampling");
                 return;
+            }
+
+            // Expire old pending invites for this event before creating new ones
+            EntrantList oldInviteList = event.getInviteList();
+            if (oldInviteList != null && oldInviteList.size() > 0) {
+                List<Task<Void>> expireTasks = new ArrayList<>();
+                for (int i = 0; i < oldInviteList.size(); i++) {
+                    Entrant entrant = oldInviteList.getEntrant(i);
+                    if (entrant != null && entrant.getEmail() != null) {
+                        inviteRepo.getInviteByEventAndRecipient(eventId, entrant.getEmail())
+                                .addOnCompleteListener(inviteTask -> {
+                                    if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                                        Invite oldInvite = inviteTask.getResult();
+                                        if ("pending".equals(oldInvite.getStatus())) {
+                                            inviteRepo.updateInviteStatus(oldInvite.getInviteId(), "expired");
+                                        }
+                                    }
+                                });
+                    }
+                }
             }
 
             // Clear current invite list and add new selections

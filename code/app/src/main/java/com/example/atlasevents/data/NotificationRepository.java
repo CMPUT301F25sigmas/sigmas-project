@@ -191,6 +191,42 @@ public class NotificationRepository {
      * @see #sendToUsers(List, Notification)
      * @see #extractEmailsFromEntrantList(EntrantList)
      */
+
+//    public Task<Void> sendEventInvitations(List<String> userEmails, Notification invitation) {
+//        Log.d(TAG, "Sending event invitations to " + userEmails.size() + " users");
+//
+//        List<Task<Void>> tasks = new ArrayList<>();
+//
+//        for (String userEmail : userEmails) {
+//            // Bypass opt-out check for event invitations
+//            Task<Void> task = sendNotificationToUser(userEmail, invitation, true);
+//            tasks.add(task);
+//        }
+//
+//        return Tasks.whenAll(tasks);
+//    }
+
+//    /**
+//     * Enhanced send notification method with bypass option
+//     */
+//    private Task<Void> sendNotificationToUser(String userEmail, Notification notification, boolean bypassOptOut) {
+//        if (!bypassOptOut) {
+//            // Check if user has opted out of notifications from this organizer
+//            return isOrganizerBlocked(userEmail, notification.getFromOrganizeremail())
+//                    .continueWithTask(isBlockedTask -> {
+//                        boolean isBlocked = Boolean.TRUE.equals(isBlockedTask.getResult());
+//                        if (isBlocked) {
+//                            Log.d(TAG, "User " + userEmail + " has blocked notifications from " + notification.getFromOrganizeremail());
+//                            return Tasks.forResult(null); // Skip sending
+//                        }
+//                        return storeNotificationForUser(userEmail, notification);
+//                    });
+//        } else {
+//            // Bypass opt-out check (for event invitations)
+//            Log.d(TAG, "Bypassing opt-out for event invitation to: " + userEmail);
+//            return storeNotificationForUser(userEmail, notification);
+//        }
+//    }
     public Task<List<Task<Void>>> sendToInvited(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getInviteList());
         String groupType = "Chosen Entrants";

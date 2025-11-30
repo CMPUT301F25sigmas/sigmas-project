@@ -386,29 +386,6 @@ public class EventManageActivity extends AppCompatActivity {
 
 
     /**
-     * Starts a periodic update for cooldown countdown if lottery is in cooldown
-     */
-    private void startCooldownCountdownIfNeeded(Event event) {
-        if (lotteryService.isInCooldownPeriod(event)) {
-            // Update UI every minute to refresh cooldown countdown
-            new CountDownTimer(Long.MAX_VALUE, 60000) { // Update every minute
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    if (currentEvent != null) {
-                        updateLotteryUI(currentEvent);
-                        startLotteryTimerIfNeeded(currentEvent);
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-                    // Timer runs indefinitely until canceled
-                }
-            }.start();
-        }
-    }
-
-    /**
      * Updates the UI with event details.
      *
      * @param event The event to display
@@ -442,83 +419,14 @@ public class EventManageActivity extends AppCompatActivity {
      */
     private void updateCountDisplays(Event event, DocumentSnapshot snapshot) {
         int waitlistCount = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
-
-        int chosenCount = 0;
-        if (snapshot.contains("inviteList")) {
-            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
-            chosenCount = mapToEntrantList(inviteMap).size();
-        }
-
-        int cancelledCount = 0;
-        if (snapshot.contains("declinedList")) {
-            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
-            cancelledCount = mapToEntrantList(declinedMap).size();
-        }
-
-        int finalEnrolledCount = 0;
-        if (snapshot.contains("acceptedList")) {
-            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
-            finalEnrolledCount = mapToEntrantList(acceptedMap).size();
-        }
+        int chosenCount = event.getInviteList() != null ? event.getInviteList().size() : 0;
+        int cancelledCount = event.getDeclinedList() != null ? event.getDeclinedList().size() : 0;
+        int finalEnrolledCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         waitlistCountTextView.setText(String.valueOf(waitlistCount));
         chosenCountTextView.setText(String.valueOf(chosenCount));
         cancelledCountTextView.setText(String.valueOf(cancelledCount));
         finalEnrolledCountTextView.setText(String.valueOf(finalEnrolledCount));
-    }
-
-
-
-    private int countEntrantsInMap(Map<String, Object> map) {
-        if (map == null) return 0;
-        int count = 0;
-        for (Object o : map.values()) {
-            if (o instanceof Map) {
-                Map<?, ?> entrantMap = (Map<?, ?>) o;
-                // Make sure it has an email field, which is required for a valid entrant
-                if (entrantMap.get("email") != null) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-
-    private EntrantList mapToEntrantList(Map<String, Object> map) {
-        EntrantList list = new EntrantList();
-        if (map == null) return list;
-
-        for (Object o : map.values()) {
-            if (o instanceof Map) {
-                Map<String, Object> entrantMap = (Map<String, Object>) o;
-                Entrant entrant = new Entrant(
-                        (String) entrantMap.get("name"),
-                        (String) entrantMap.get("email"),
-                        (String) entrantMap.get("phoneNumber"),
-                        (String) entrantMap.get("userType")
-                );
-                list.addEntrant(entrant);
-            }
-        }
-        return list;
-    }
-    private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
-        Map<String, Object> map = new HashMap<>();
-        for (int i = 0; i < entrantList.size(); i++) {
-            Entrant entrant = entrantList.getEntrant(i);
-            if (entrant != null && entrant.getEmail() != null) {
-                Map<String, Object> entrantMap = new HashMap<>();
-                entrantMap.put("name", entrant.getName());
-                entrantMap.put("email", entrant.getEmail());
-                entrantMap.put("phoneNumber", entrant.getPhoneNumber());
-                entrantMap.put("userType", entrant.getUserType());
-                // Add other entrant fields as needed
-
-                map.put(entrant.getEmail(), entrantMap);
-            }
-        }
-        return map;
     }
 
 
@@ -531,23 +439,25 @@ public class EventManageActivity extends AppCompatActivity {
         String listTitle = "";
         ArrayList<Entrant> listToDisplay = new ArrayList<>();
 
-        if (chosenVisible.get() && snapshot.contains("inviteList")) {
+        if (chosenVisible.get()) {
             listTitle = "Chosen Entrants";
-            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
-            listToDisplay = mapToEntrantList(inviteMap).getWaitList();
+            if (event.getInviteList() != null) {
+                listToDisplay = event.getInviteList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (cancelledVisible.get() && snapshot.contains("declinedList")) {
+        } else if (cancelledVisible.get()) {
             listTitle = "Cancelled Entrants";
-            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
-            listToDisplay = mapToEntrantList(declinedMap).getWaitList();
+            if (event.getDeclinedList() != null) {
+                listToDisplay = event.getDeclinedList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (enrolledVisible.get() && snapshot.contains("acceptedList")) {
+        } else if (enrolledVisible.get()) {
             listTitle = "Enrolled Entrants";
-            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
-            listToDisplay = mapToEntrantList(acceptedMap).getWaitList();
+            if (event.getAcceptedList() != null) {
+                listToDisplay = event.getAcceptedList().getWaitList();
+            }
             downloadableList = listToDisplay;
         } else if (waitlistVisible.get()) {
-            // Use Event's method for waitlist
             listTitle = "Waiting List";
             if (event.getWaitlist() != null) {
                 listToDisplay = event.getWaitlist().getWaitList();
@@ -582,10 +492,9 @@ public class EventManageActivity extends AppCompatActivity {
         int availableSlots = calculateAvailableSlots(event);
         int waitlistSize = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
-
+        int pendingInvites = event.getInviteList() != null ? event.getInviteList().size() : 0;
         // NEW: Check cooldown period
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
-        long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+
         String entrantLimit = String.valueOf(event.getEntrantLimit());
         if (entrantLimit.equals("-1")){ entrantLimit = "No limit";}
 
@@ -594,31 +503,26 @@ public class EventManageActivity extends AppCompatActivity {
                 "Event: %s\n" +
                         "Waitlist Limit: %s\n" +
                         "Accepted: %d\n" +
-                        "Available Slots: %d\n" +
+                        "Available Slots: %d\n"+
+                        "Pending Invites: %d\n"+
                         "Waitlist Size: %d\n" +
                         "Lottery Available: %s\n" +
-                        "Registration End: %s\n" +
-                        "Cooldown Active: %s" +
-                        (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
+                        "Registration End: %s\n",
                 event.getEventName(),
                 entrantLimit,
                 acceptedCount,
                 availableSlots,
+                pendingInvites,
                 waitlistSize,
                 lotteryAvailable ? "Yes" : "No",
-                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set",
-                inCooldown ? "Yes" : "No",
-                cooldownHoursRemaining
+                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set"
+
         );
 
         lotteryStatusText.setText(statusText);
 
         // NEW: Enhanced lottery button logic with cooldown
-        boolean canDrawLottery = lotteryAvailable &&
-                availableSlots > 0 &&
-                waitlistSize > 0 &&
-                !inCooldown;
-
+        boolean canDrawLottery = lotteryAvailable && availableSlots > 0 && waitlistSize > 0;
         drawLotteryButton.setEnabled(canDrawLottery);
         drawLotteryButton.setAlpha(canDrawLottery ? 1.0f : 0.6f);
 
@@ -626,8 +530,6 @@ public class EventManageActivity extends AppCompatActivity {
         if (!canDrawLottery) {
             if (!lotteryAvailable) {
                 drawLotteryButton.setText("Lottery Not Available");
-            } else if (inCooldown) {
-                drawLotteryButton.setText(String.format("Cooldown: %dh", cooldownHoursRemaining));
             } else if (availableSlots <= 0) {
                 drawLotteryButton.setText("Event Full");
             } else if (waitlistSize <= 0) {
@@ -639,32 +541,22 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
-     * Starts the countdown timer if lottery is not yet available or in cooldown.
+     * Starts the countdown timer if lottery is not yet available.
      *
      * @param event The event to check
      */
     private void startLotteryTimerIfNeeded(Event event) {
         boolean lotteryAvailable = lotteryService.isLotteryAvailable(event);
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
 
-        // Show timer if either registration period hasn't ended OR lottery is in cooldown
-        if (lotteryAvailable && !inCooldown) {
-            lotteryTimerCard.setVisibility(View.GONE);
-            return;
-        }
 
         long timeRemaining;
         String timerPrefix;
 
-        if (inCooldown) {
-            // Show cooldown countdown
-            timeRemaining = lotteryService.getCooldownHoursRemaining(event) * 60 * 60 * 1000;
-            timerPrefix = "Lottery cooldown: ";
-        } else {
+
             // Show registration period countdown
             timeRemaining = lotteryService.getTimeUntilLotteryAvailable(event);
             timerPrefix = "Lottery available in: ";
-        }
+
 
         if (timeRemaining > 0) {
             lotteryTimerCard.setVisibility(View.VISIBLE);
@@ -759,20 +651,33 @@ public class EventManageActivity extends AppCompatActivity {
 
         int availableSlots = calculateAvailableSlots(currentEvent);
         int waitlistSize = currentEvent.getWaitlist() != null ? currentEvent.getWaitlist().size() : 0;
-
-        String message = String.format(
-                "Draw lottery for '%s'?\n\n" +
-                        "Available slots: %d\n" +
-                        "Waitlist size: %d\n\n" +
-                        "Selected entrants will receive invitation notifications.\n\n" +
-                        "Note: Lottery will be locked for 24 hours after drawing.",
-                currentEvent.getEventName(), availableSlots, waitlistSize
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+        int totalToSelect = availableSlots + pendingInvites;
+        String message;
+        if (pendingInvites>0){message= String.format(
+                "Re-sample lottery for '%s'?\n\n" + "Available slots: %d\n" +
+                        "Pending invites: %d\n" + "Total to select: %d\n" +
+                        "Waitlist size: %d\n\n" + "This will:\n" +
+                        "• Cancel %d pending invitations\n" + "• Select %d new entrants from waitlist\n" +
+                        "• Accepted entrants (%d) remain unaffected",
+                currentEvent.getEventName(), availableSlots, pendingInvites, totalToSelect, waitlistSize,
+                pendingInvites, totalToSelect,
+                currentEvent.getAcceptedList() != null ? currentEvent.getAcceptedList().size() : 0
         );
+        } else {
+            message = String.format(
+                    "Draw lottery for '%s'?\n\n" +
+                            "Available slots: %d\n" +
+                            "Waitlist size: %d\n\n" +
+                            "Selected entrants will receive invitation notifications.",
+                    currentEvent.getEventName(), availableSlots, waitlistSize
+            );
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Draw Lottery")
+        builder.setTitle(pendingInvites > 0 ? "Re-sample Lottery" : "Draw Lottery")
                 .setMessage(message)
-                .setPositiveButton("Draw Lottery", (dialog, which) -> {
+                .setPositiveButton(pendingInvites > 0 ? "Re-sample" : "Draw Lottery", (dialog, which) -> {
                     executeLotteryDraw();
                 })
                 .setNegativeButton("Cancel", null)
@@ -787,7 +692,9 @@ public class EventManageActivity extends AppCompatActivity {
 
         setLotteryInProgress(true);
 
-        lotteryService.drawLottery(currentEvent.getId(), new LotteryService.LotteryCallback() {
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+
+        LotteryService.LotteryCallback lotteryCallback = new LotteryService.LotteryCallback() {
             @Override
             public void onLotteryCompleted(int entrantsSelected, String message) {
                 runOnUiThread(() -> {
@@ -806,7 +713,14 @@ public class EventManageActivity extends AppCompatActivity {
                     updateLotteryUI(currentEvent);
                 });
             }
-        });
+        };
+
+        // Use re-sampling if there are pending invites, otherwise use normal lottery
+        if (pendingInvites > 0) {
+            lotteryService.resampleLottery(currentEvent.getId(), lotteryCallback);
+        } else {
+            lotteryService.drawLottery(currentEvent.getId(), lotteryCallback);
+        }
     }
 
     /**

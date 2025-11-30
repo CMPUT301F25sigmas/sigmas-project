@@ -1,9 +1,12 @@
 package com.example.atlasevents;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -18,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.NotificationManager;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,6 +66,7 @@ public class EntrantDashboardActivity extends EntrantBase {
 
     private Button currentButton, pastButton;
     private ArrayList<Event> userEvents = new ArrayList<>();
+    private FirebaseFirestore db;
 
 
 
@@ -70,7 +75,8 @@ public class EntrantDashboardActivity extends EntrantBase {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.entrant_dashboard);
         setActiveNavItem(R.id.events_icon_card);
-
+        // Initialize FirebaseFirestore
+        db = FirebaseFirestore.getInstance();
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
         session = new Session(this);
@@ -92,6 +98,14 @@ public class EntrantDashboardActivity extends EntrantBase {
 
         emptyState.setVisibility(View.GONE);
         eventsScrollView.setVisibility(View.GONE);
+        LinearLayout invitationsIcon = findViewById(R.id.invitations_icon);
+        invitationsIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(EntrantDashboardActivity.this, EventInvitesActivity.class);
+            startActivity(intent);
+        });
+
+        // Update badge count for invitations
+        updateInvitationsBadge();
 
         loadEventsFromFirebase();
     }
@@ -103,6 +117,7 @@ public class EntrantDashboardActivity extends EntrantBase {
     protected void onResume() {
         super.onResume();
         NotificationManager.startListening(this, session.getUserEmail());
+        updateInvitationsBadge();
         loadEventsFromFirebase();
     }
     /***
@@ -185,6 +200,34 @@ public class EntrantDashboardActivity extends EntrantBase {
             eventsContainer.addView(eventCard);
         }
     }
+
+    /**
+     * Updates the invitations badge count
+     */
+    private void updateInvitationsBadge() {
+        String userEmail = session.getUserEmail();
+        if (userEmail == null) return;
+
+        TextView invitationsBadge = findViewById(R.id.invitations_badge);
+
+        db.collection("events")
+                .whereArrayContains("inviteList", userEmail)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int inviteCount = queryDocumentSnapshots.size();
+                    if (inviteCount > 0) {
+                        invitationsBadge.setText(String.valueOf(inviteCount));
+                        invitationsBadge.setVisibility(View.VISIBLE);
+                    } else {
+                        invitationsBadge.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error counting invitations", e);
+                    invitationsBadge.setVisibility(View.GONE);
+                });
+    }
+
 
     /**
      * Filters the list of events based on the current button state.

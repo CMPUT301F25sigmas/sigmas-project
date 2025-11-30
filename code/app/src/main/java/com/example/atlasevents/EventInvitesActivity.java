@@ -21,6 +21,10 @@ import com.example.atlasevents.Event;
 import com.example.atlasevents.LotteryService;
 import com.example.atlasevents.R;
 import com.example.atlasevents.Session;
+import com.example.atlasevents.data.InviteRepository;
+import com.example.atlasevents.data.model.Invite;
+import com.example.atlasevents.data.EventRepository;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -43,6 +47,8 @@ public class EventInvitesActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private Session session;
     private LotteryService lotteryService;
+    private InviteRepository inviteRepo;
+    private EventRepository eventRepository;
     private TextView emptyStateText;
 
     @Override
@@ -60,6 +66,8 @@ public class EventInvitesActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         session = new Session(this);
         lotteryService = new LotteryService();
+        inviteRepo = new InviteRepository();
+        eventRepository = new EventRepository();
 
         // Setup views
         invitesContainer = findViewById(R.id.invitesContainer);
@@ -68,50 +76,57 @@ public class EventInvitesActivity extends AppCompatActivity {
         ImageButton backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
+        // Add debug button to check Firestore data
+        addDebugButton();
+
         // Load invitations
         loadEventInvites();
-        addDebugButton();
     }
-
+    
     /**
-     * Temporary debug button to check Firestore data
+     * Temporary debug method to check what's in Firestore
      */
     private void addDebugButton() {
+        // Only add in debug builds or remove this after fixing
         Button debugButton = new Button(this);
-        debugButton.setText("DEBUG: Check Firestore Data");
-        debugButton.setOnClickListener(v -> debugFirestoreData());
+        debugButton.setText("DEBUG: Check Firestore");
+        debugButton.setOnClickListener(v -> debugFirestoreInvites());
+        // Uncomment to add button to UI for debugging
         invitesContainer.addView(debugButton);
     }
-
+    
     /**
-     * Debug method to check what's actually in Firestore
+     * Debug method to check what invites exist in Firestore
      */
-    private void debugFirestoreData() {
+    private void debugFirestoreInvites() {
         String userEmail = session.getUserEmail();
-        Log.d(TAG, "=== DEBUG: Checking Firestore for user: " + userEmail);
-
-        // Check all events to see inviteList structure
-        db.collection("events").get()
+        Log.d(TAG, "=== DEBUG: Checking Firestore invites for: " + userEmail);
+        
+        // Check all invites for this user
+        db.collection("invites")
+                .whereEqualTo("recipientEmail", userEmail)
+                .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int eventsWithUserInInvites = 0;
+                    Log.d(TAG, "Total invites found: " + queryDocumentSnapshots.size());
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        Map<String, Object> inviteList = (Map<String, Object>) doc.get("inviteList");
-                        if (inviteList != null && inviteList.containsKey(userEmail)) {
-                            eventsWithUserInInvites++;
-                            Log.d(TAG, "Found user in event: " + doc.getId());
-                        }
+                        Log.d(TAG, "Invite ID: " + doc.getId());
+                        Log.d(TAG, "  Event ID: " + doc.get("eventId"));
+                        Log.d(TAG, "  Status: " + doc.get("status"));
+                        Log.d(TAG, "  Event Name: " + doc.get("eventName"));
+                        Log.d(TAG, "  Created At: " + doc.get("createdAt"));
+                        Log.d(TAG, "  Expiration Time: " + doc.get("expirationTime"));
                     }
-                    Toast.makeText(this,
-                            "DEBUG: Found " + eventsWithUserInInvites + " events with invites",
+                    Toast.makeText(this, 
+                            "DEBUG: Found " + queryDocumentSnapshots.size() + " invites. Check Logcat.",
                             Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Debug failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "DEBUG: Failed to query invites", e);
+                    Toast.makeText(this, "DEBUG failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
-
     /**
-     * Loads event invitations for the current user - FIXED VERSION
+     * Loads event invitations for the current user from the invites collection
      */
     private void loadEventInvites() {
         String userEmail = session.getUserEmail();
@@ -122,93 +137,79 @@ public class EventInvitesActivity extends AppCompatActivity {
         }
         Log.d(TAG, "Loading invitations for user: " + userEmail);
 
-        // NEW APPROACH: Get all events and manually check if user is in inviteList Map
-        db.collection("events")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "Found " + queryDocumentSnapshots.size() + " total events");
+        // Load invites from the invites collection
+        inviteRepo.getPendingInvitesForUser(userEmail)
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Exception exception = task.getException();
+                        Log.e(TAG, "Error loading event invitations", exception);
+                        
+                        // Log detailed error information
+                        if (exception != null) {
+                            Log.e(TAG, "Exception message: " + exception.getMessage());
+                            Log.e(TAG, "Exception class: " + exception.getClass().getName());
+                            if (exception.getCause() != null) {
+                                Log.e(TAG, "Cause: " + exception.getCause().getMessage());
+                            }
+                            
+                            // Check if it's a Firestore index error
+                            String errorMsg = exception.getMessage();
+                            if (errorMsg != null && errorMsg.contains("index")) {
+                                Log.e(TAG, "FIRESTORE INDEX REQUIRED! Check Logcat for index creation URL");
+                                showEmptyState("Database index required. Please check logs for setup instructions.");
+                            } else {
+                                showEmptyState("Failed to load invitations: " + exception.getMessage());
+                            }
+                        } else {
+                            showEmptyState("Failed to load invitations");
+                        }
+                        return;
+                    }
 
-                    if (queryDocumentSnapshots.isEmpty()) {
+                    List<Invite> invites = task.getResult();
+                    Log.d(TAG, "Loaded " + (invites != null ? invites.size() : 0) + " invites");
+                    
+                    if (invites == null || invites.isEmpty()) {
                         showEmptyState("No pending event invitations");
                         return;
                     }
 
                     invitesContainer.removeAllViews();
-                    int invitationsFound = 0;
 
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        // Check if user is in the inviteList Map
-                        Map<String, Object> inviteList = (Map<String, Object>) doc.get("inviteList");
-
-                        if (inviteList != null && inviteList.containsKey(userEmail)) {
-                            Event event = doc.toObject(Event.class);
-                            if (event != null) {
-                                event.setId(doc.getId());
-                                addInvitationCard(event, userEmail);
-                                invitationsFound++;
-                                Log.d(TAG, "Added invitation for event: " + event.getEventName());
-                            }
-                        }
+                    // Load event details for each invite
+                    for (Invite invite : invites) {
+                        loadEventForInvite(invite);
                     }
-
-                    Log.d(TAG, "Total invitations found: " + invitationsFound);
-
-                    if (invitationsFound == 0) {
-                        showEmptyState("No pending event invitations");
-                    } else {
-                        emptyStateText.setVisibility(View.GONE);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading event invitations", e);
-                    showEmptyState("Failed to load invitations");
                 });
     }
 
     /**
-     * Loads event invitations for the current user
+     * Loads event details for an invite and displays the invitation card
      */
-//    private void loadEventInvites() {
-//        String userEmail = session.getUserEmail();
-//
-//        if (userEmail == null || userEmail.isEmpty()) {
-//            showEmptyState("Please log in to view invitations");
-//            return;
-//        }
-//        Log.d(TAG, "Loading invitations for user: " + userEmail);
-//
-//        // Query events where this user is in the inviteList
-//        db.collection("events")
-//                .whereArrayContains("inviteList", userEmail)
-//                .get()
-//                .addOnSuccessListener(queryDocumentSnapshots -> {
-//                    if (queryDocumentSnapshots.isEmpty()) {
-//                        showEmptyState("No pending event invitations");
-//                        return;
-//                    }
-//
-//                    invitesContainer.removeAllViews();
-//
-//                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-//                        Event event = doc.toObject(Event.class);
-//                        if (event != null) {
-//                            event.setId(doc.getId());
-//                            addInvitationCard(event, userEmail);
-//                        }
-//                    }
-//
-//                    emptyStateText.setVisibility(View.GONE);
-//                })
-//                .addOnFailureListener(e -> {
-//                    Log.e(TAG, "Error loading event invitations", e);
-//                    showEmptyState("Failed to load invitations");
-//                });
-//    }
+    private void loadEventForInvite(Invite invite) {
+        eventRepository.getEventById(invite.getEventId(), new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                if (event != null) {
+                    event.setId(invite.getEventId()); // Ensure event ID is set
+                    addInvitationCard(event, invite);
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG, "Failed to load event for invite: " + invite.getEventId(), e);
+                // Still show the invite even if event loading fails
+                addInvitationCardFromInvite(invite);
+            }
+        });
+    }
+
 
     /**
      * Creates and adds an invitation card for an event
      */
-    private void addInvitationCard(Event event, String userEmail) {
+    private void addInvitationCard(Event event, Invite invite) {
         View cardView = LayoutInflater.from(this)
                 .inflate(R.layout.notification_invite, invitesContainer, false);
 
@@ -222,18 +223,58 @@ public class EventInvitesActivity extends AppCompatActivity {
         Button declineButton = cardView.findViewById(R.id.declineButton);
 
         // Set event data
-        eventNameTextView.setText(event.getEventName());
-        organizerTextView.setText("Organized by: " + event.getOrganizer().getEmail());
-        messageTextView.setText("You have been invited to this event from the waitlist!");
-
+        if (titleTextView != null) {
+            titleTextView.setText("Event Invitation: " + invite.getEventName());
+        }
+        eventNameTextView.setText(invite.getEventName());
+        organizerTextView.setText("Organized by: " + invite.getOrganizerEmail());
+        messageTextView.setText(invite.getMessage() != null ? invite.getMessage() : 
+                "You have been invited to this event from the waitlist!");
 
         // Set up button listeners
         acceptButton.setOnClickListener(v -> {
-            handleInvitationResponse(event.getId(), userEmail, true, cardView);
+            handleInvitationResponse(event.getId(), invite.getRecipientEmail(), true, cardView);
         });
 
         declineButton.setOnClickListener(v -> {
-            handleInvitationResponse(event.getId(), userEmail, false, cardView);
+            handleInvitationResponse(event.getId(), invite.getRecipientEmail(), false, cardView);
+        });
+
+        invitesContainer.addView(cardView);
+    }
+
+    /**
+     * Creates and adds an invitation card from invite data only (when event loading fails)
+     */
+    private void addInvitationCardFromInvite(Invite invite) {
+        View cardView = LayoutInflater.from(this)
+                .inflate(R.layout.notification_invite, invitesContainer, false);
+
+        // Initialize views
+        TextView tagTextView = cardView.findViewById(R.id.notificationTag);
+        TextView titleTextView = cardView.findViewById(R.id.notificationTitle);
+        TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
+        TextView organizerTextView = cardView.findViewById(R.id.notificationOrganizer);
+        TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
+        Button acceptButton = cardView.findViewById(R.id.acceptButton);
+        Button declineButton = cardView.findViewById(R.id.declineButton);
+
+        // Set invite data
+        if (titleTextView != null) {
+            titleTextView.setText("Event Invitation: " + invite.getEventName());
+        }
+        eventNameTextView.setText(invite.getEventName());
+        organizerTextView.setText("Organized by: " + invite.getOrganizerEmail());
+        messageTextView.setText(invite.getMessage() != null ? invite.getMessage() : 
+                "You have been invited to this event from the waitlist!");
+
+        // Set up button listeners
+        acceptButton.setOnClickListener(v -> {
+            handleInvitationResponse(invite.getEventId(), invite.getRecipientEmail(), true, cardView);
+        });
+
+        declineButton.setOnClickListener(v -> {
+            handleInvitationResponse(invite.getEventId(), invite.getRecipientEmail(), false, cardView);
         });
 
         invitesContainer.addView(cardView);
@@ -258,14 +299,10 @@ public class EventInvitesActivity extends AppCompatActivity {
                             String status = accepted ? "✓ Invitation Accepted" : "✗ Invitation Declined";
 
 
-                            // Remove card after a delay
+                            // Reload invites to refresh the list
                             new Handler().postDelayed(() -> {
-                                invitesContainer.removeView(cardView);
-                                // Check if container is empty
-                                if (invitesContainer.getChildCount() == 0) {
-                                    showEmptyState("No pending event invitations");
-                                }
-                            }, 2000);
+                                loadEventInvites();
+                            }, 1000);
                         });
                     }
 

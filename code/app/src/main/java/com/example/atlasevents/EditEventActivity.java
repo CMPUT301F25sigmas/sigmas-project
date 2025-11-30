@@ -401,7 +401,7 @@ public class EditEventActivity extends AppCompatActivity {
      * </p>
      */
     private void updateEvent() {
-        if(inputsValid(nameEditText,slotsEditText,limitEntrantsSwitch.isChecked(), entrantLimitEditText.getText().toString())) {
+        if(!inputsValid(nameEditText,slotsEditText,limitEntrantsSwitch.isChecked(), entrantLimitEditText.getText().toString())) {
             return;
         }
 

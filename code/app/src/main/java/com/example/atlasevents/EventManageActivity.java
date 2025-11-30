@@ -37,9 +37,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.NotificationRepository;
+import com.example.atlasevents.data.model.Notification;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.atlasevents.utils.MapWarmUpManager;
+import android.widget.EditText;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -89,6 +92,9 @@ public class EventManageActivity extends AppCompatActivity {
 
     /** Service for handling lottery operations. */
     private LotteryService lotteryService;
+
+    /** Repository for sending notifications. */
+    private NotificationRepository notificationRepository;
 
     /** Text view displaying the name of the event. */
     private TextView eventNameTextView;
@@ -203,6 +209,7 @@ public class EventManageActivity extends AppCompatActivity {
 
         eventRepository = new EventRepository();
         lotteryService = new LotteryService();
+        notificationRepository = new NotificationRepository();
 
         initializeViews();
         setupClickListeners();
@@ -272,6 +279,17 @@ public class EventManageActivity extends AppCompatActivity {
         entrantAdapter = new EntrantRecyclerAdapter(entrantList);
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
+
+        // Set up click listener for remove button
+        entrantAdapter.setOnEntrantClickListener(entrant -> {
+            showMoveToCancelledDialog(entrant);
+        });
+
+        // Set up long press listener for sending notifications
+        entrantAdapter.setOnEntrantLongClickListener(entrant -> {
+            showSendNotificationDialog(entrant);
+            return true;
+        });
     }
 
     /**
@@ -469,10 +487,14 @@ public class EventManageActivity extends AppCompatActivity {
         listTitleTextView.setText(listTitle);
         if (!listToDisplay.isEmpty()) {
             entrantAdapter.setEntrants(listToDisplay);
+            // Show remove button for enrolled, invite (chosen), and waitlist (but not cancelled list)
+            boolean showRemove = enrolledVisible.get() || chosenVisible.get() || waitlistVisible.get();
+            entrantAdapter.setShowRemoveButton(showRemove);
             waitingListCard.setVisibility(View.VISIBLE);
             downloadButton.setVisibility(View.VISIBLE);
         } else {
             entrantAdapter.setEntrants(new ArrayList<>());
+            entrantAdapter.setShowRemoveButton(false);
             waitingListCard.setVisibility(View.GONE);
             downloadButton.setVisibility(View.GONE);
             if (!listTitle.isEmpty()) {
@@ -863,5 +885,257 @@ public class EventManageActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ManageEventMapActivity.class);
         intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
         startActivity(intent);
+    }
+
+    /**
+     * Shows a confirmation dialog to move an entrant to cancelled list.
+     *
+     * @param entrant The entrant to move
+     */
+    private void showMoveToCancelledDialog(Entrant entrant) {
+        if (currentEvent == null || entrant == null) {
+            return;
+        }
+
+        // Determine which list the entrant is currently in
+        String sourceList = "current list";
+        if (enrolledVisible.get()) {
+            sourceList = "enrolled list";
+        } else if (chosenVisible.get()) {
+            sourceList = "invite list";
+        } else if (waitlistVisible.get()) {
+            sourceList = "waitlist";
+        }
+
+        String message = String.format(
+                "Move '%s' (%s) from %s to cancelled list?",
+                entrant.getName() != null ? entrant.getName() : "Unknown",
+                entrant.getEmail() != null ? entrant.getEmail() : "Unknown",
+                sourceList
+        );
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Move to Cancelled List")
+                .setMessage(message)
+                .setPositiveButton("Move", (dialog, which) -> {
+                    moveEntrantToCancelled(entrant);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Moves an entrant from the current list (accepted, invite, or waitlist) to the declined (cancelled) list in Firestore.
+     *
+     * @param entrant The entrant to move
+     */
+    private void moveEntrantToCancelled(Entrant entrant) {
+        if (currentEvent == null || entrant == null || currentEvent.getId() == null) {
+            Toast.makeText(this, "Unable to move entrant", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EntrantList sourceList = null;
+        String sourceListName = "";
+        EntrantList acceptedList = currentEvent.getAcceptedList() != null 
+                ? currentEvent.getAcceptedList() 
+                : new EntrantList();
+        EntrantList inviteList = currentEvent.getInviteList() != null 
+                ? currentEvent.getInviteList() 
+                : new EntrantList();
+        EntrantList waitlist = currentEvent.getWaitlist() != null 
+                ? currentEvent.getWaitlist() 
+                : new EntrantList();
+        EntrantList declinedList = currentEvent.getDeclinedList() != null 
+                ? currentEvent.getDeclinedList() 
+                : new EntrantList();
+
+        // Determine which list to remove from based on current visibility
+        if (enrolledVisible.get()) {
+            sourceList = acceptedList;
+            sourceListName = "enrolled list";
+        } else if (chosenVisible.get()) {
+            sourceList = inviteList;
+            sourceListName = "invite list";
+        } else if (waitlistVisible.get()) {
+            sourceList = waitlist;
+            sourceListName = "waitlist";
+        } else {
+            Toast.makeText(this, "Cannot move from this list", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Find the entrant in the source list by email
+        Entrant entrantToMove = null;
+        for (int i = 0; i < sourceList.size(); i++) {
+            Entrant e = sourceList.getEntrant(i);
+            if (e != null && e.getEmail() != null && e.getEmail().equals(entrant.getEmail())) {
+                entrantToMove = e;
+                break;
+            }
+        }
+
+        if (entrantToMove == null) {
+            Toast.makeText(this, "Entrant not found in " + sourceListName, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Remove from source list and add to declined list
+        sourceList.removeEntrant(entrantToMove);
+        declinedList.addEntrant(entrantToMove);
+
+        // Update the event object
+        if (enrolledVisible.get()) {
+            currentEvent.setAcceptedList(acceptedList);
+        } else if (chosenVisible.get()) {
+            currentEvent.setInviteList(inviteList);
+        } else if (waitlistVisible.get()) {
+            currentEvent.setWaitlist(waitlist);
+        }
+        currentEvent.setDeclinedList(declinedList);
+
+        // Convert to Firestore format and build updates
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("declinedList", convertEntrantListToMap(declinedList));
+        
+        if (enrolledVisible.get()) {
+            updates.put("acceptedList", convertEntrantListToMap(acceptedList));
+        } else if (chosenVisible.get()) {
+            updates.put("inviteList", convertEntrantListToMap(inviteList));
+        } else if (waitlistVisible.get()) {
+            updates.put("waitlist", convertEntrantListToMap(waitlist));
+        }
+
+        // Update Firestore
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("events").document(currentEvent.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Moved to cancelled list", Toast.LENGTH_SHORT).show();
+                    // Reload data to reflect changes
+                    loadData();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to move entrant to cancelled list", e);
+                    Toast.makeText(this, "Failed to move entrant: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * Converts EntrantList to a Map for Firestore storage.
+     * This method mirrors the conversion logic from LotteryService.
+     *
+     * @param entrantList The entrant list to convert
+     * @return A Map representation suitable for Firestore
+     */
+    private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
+        Map<String, Object> map = new HashMap<>();
+        List<Map<String, Object>> allEntrantsArray = new ArrayList<>();
+        List<Map<String, Object>> waitListArray = new ArrayList<>();
+
+        for (int i = 0; i < entrantList.size(); i++) {
+            Entrant entrant = entrantList.getEntrant(i);
+            if (entrant != null && entrant.getEmail() != null) {
+                Map<String, Object> entrantMap = new HashMap<>();
+                entrantMap.put("name", entrant.getName());
+                entrantMap.put("email", entrant.getEmail());
+                entrantMap.put("phoneNumber", entrant.getPhoneNumber());
+                entrantMap.put("userType", entrant.getUserType());
+                if (entrant.getPassword() != null) {
+                    entrantMap.put("password", entrant.getPassword());
+                }
+
+                allEntrantsArray.add(entrantMap);
+                waitListArray.add(entrantMap);
+            }
+        }
+
+        map.put("allEntrants", allEntrantsArray);
+        map.put("waitList", waitListArray);
+
+        return map;
+    }
+
+    /**
+     * Shows a dialog to compose and send a notification to a specific entrant.
+     *
+     * @param entrant The entrant to send the notification to
+     */
+    private void showSendNotificationDialog(Entrant entrant) {
+        if (currentEvent == null || entrant == null || entrant.getEmail() == null) {
+            Toast.makeText(this, "Unable to send notification", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create a dialog with an EditText for the message
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Send Notification to " + (entrant.getName() != null ? entrant.getName() : entrant.getEmail()));
+
+        // Create EditText for message input
+        final EditText messageEditText = new EditText(this);
+        messageEditText.setHint("Enter notification message...");
+        messageEditText.setMinLines(3);
+        messageEditText.setMaxLines(5);
+        messageEditText.setPadding(50, 20, 50, 20);
+        builder.setView(messageEditText);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = messageEditText.getText().toString().trim();
+            if (message.isEmpty()) {
+                Toast.makeText(this, "Please enter a message", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            sendNotificationToEntrant(entrant, message);
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    /**
+     * Sends a notification to a specific entrant.
+     *
+     * @param entrant The entrant to send the notification to
+     * @param message The notification message
+     */
+    private void sendNotificationToEntrant(Entrant entrant, String message) {
+        if (currentEvent == null || entrant == null || entrant.getEmail() == null) {
+            Toast.makeText(this, "Unable to send notification", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String organizerEmail = currentEvent.getOrganizer() != null 
+                ? currentEvent.getOrganizer().getEmail() 
+                : null;
+
+        if (organizerEmail == null || organizerEmail.isEmpty()) {
+            Toast.makeText(this, "Organizer information not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String title = "Update about " + currentEvent.getEventName();
+        String groupType = "Individual";
+        
+        Notification notification = new Notification(
+                title,
+                message,
+                currentEvent.getId(),
+                organizerEmail,
+                currentEvent.getEventName(),
+                groupType,
+                1
+        );
+
+        notificationRepository.sendToUser(entrant.getEmail(), notification)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Notification sent to " + 
+                            (entrant.getName() != null ? entrant.getName() : entrant.getEmail()), 
+                            Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to send notification", e);
+                    Toast.makeText(this, "Failed to send notification: " + e.getMessage(), 
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 }

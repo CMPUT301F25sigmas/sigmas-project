@@ -393,5 +393,4 @@ public class Event implements Serializable {
         }
     }
 
-
 }

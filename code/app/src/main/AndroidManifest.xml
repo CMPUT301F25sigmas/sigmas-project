@@ -28,6 +28,9 @@
         <activity 
             android:name=".NotificationHistoryActivity" 
             android:exported="false" />
+        <activity
+            android:name=".EventInvitesActivity"
+            android:exported="false" />
         <activity 
             android:name=".NotificationCenterActivity" 
             android:exported="false" />

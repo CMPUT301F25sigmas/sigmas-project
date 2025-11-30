@@ -101,7 +101,6 @@ public class NotificationHistoryHelper {
                 .document(userEmail)
                 .collection("notifications")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
-                .whereNotEqualTo("type", "EventInvitation") // EXCLUDE event invitations
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     notificationsContainer.removeAllViews();
@@ -117,6 +116,10 @@ public class NotificationHistoryHelper {
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Notification notification = document.toObject(Notification.class);
                         notification.setNotificationId(document.getId());
+                        // Skip event invitations here since they should not show in history
+                        if ("EventInvitation".equals(notification.getType())) {
+                            continue;
+                        }
                         String organizerEmail = notification.getFromOrganizeremail();
                         if (organizerEmail != null && blockedEmails.contains(organizerEmail)) {
                             continue;

@@ -3,6 +3,7 @@ package com.example.atlasevents;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -29,6 +30,40 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
     /** List of entrants currently displayed in the RecyclerView. */
     private final List<Entrant> entrants;
 
+    /** Click listener for entrant remove button. */
+    private OnEntrantClickListener clickListener;
+
+    /** Long press listener for sending notifications. */
+    private OnEntrantLongClickListener longClickListener;
+
+    /** Whether the remove button should be visible. */
+    private boolean showRemoveButton = false;
+
+    /**
+     * Interface for handling entrant remove button clicks.
+     */
+    public interface OnEntrantClickListener {
+        /**
+         * Called when an entrant remove button is clicked.
+         *
+         * @param entrant The entrant that was clicked
+         */
+        void onEntrantClick(Entrant entrant);
+    }
+
+    /**
+     * Interface for handling entrant long press events.
+     */
+    public interface OnEntrantLongClickListener {
+        /**
+         * Called when an entrant item is long pressed.
+         *
+         * @param entrant The entrant that was long pressed
+         * @return true if the event was handled
+         */
+        boolean onEntrantLongClick(Entrant entrant);
+    }
+
     /**
      * Constructs a new adapter for displaying entrants.
      *
@@ -36,6 +71,34 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
      */
     public EntrantRecyclerAdapter(List<Entrant> initialEntrants) {
         this.entrants = initialEntrants != null ? new ArrayList<>(initialEntrants) : new ArrayList<>();
+    }
+
+    /**
+     * Sets the click listener for entrant remove button.
+     *
+     * @param listener The click listener to set
+     */
+    public void setOnEntrantClickListener(OnEntrantClickListener listener) {
+        this.clickListener = listener;
+    }
+
+    /**
+     * Sets the long press listener for entrant items.
+     *
+     * @param listener The long press listener to set
+     */
+    public void setOnEntrantLongClickListener(OnEntrantLongClickListener listener) {
+        this.longClickListener = listener;
+    }
+
+    /**
+     * Sets whether the remove button should be visible.
+     *
+     * @param show Whether to show the remove button
+     */
+    public void setShowRemoveButton(boolean show) {
+        this.showRemoveButton = show;
+        notifyDataSetChanged();
     }
 
     /**
@@ -84,6 +147,24 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
         Entrant entrant = entrants.get(position);
         holder.nameTextView.setText(entrant.getName());
         holder.emailTextView.setText(entrant.getEmail());
+
+        // Show or hide remove button based on flag
+        holder.removeButton.setVisibility(showRemoveButton ? View.VISIBLE : View.GONE);
+
+        // Set click listener on the remove button
+        holder.removeButton.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onEntrantClick(entrant);
+            }
+        });
+
+        // Set long press listener on the item view for sending notifications
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                return longClickListener.onEntrantLongClick(entrant);
+            }
+            return false;
+        });
     }
 
     /**
@@ -109,6 +190,9 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
         /** TextView for displaying the entrant's email. */
         TextView emailTextView;
 
+        /** ImageButton for removing the entrant. */
+        ImageButton removeButton;
+
         /**
          * Creates a new ViewHolder instance and binds the view elements.
          *
@@ -118,6 +202,7 @@ public class EntrantRecyclerAdapter extends RecyclerView.Adapter<EntrantRecycler
             super(itemView);
             nameTextView = itemView.findViewById(R.id.entrantName);
             emailTextView = itemView.findViewById(R.id.entrantEmail);
+            removeButton = itemView.findViewById(R.id.removeButton);
         }
     }
 }

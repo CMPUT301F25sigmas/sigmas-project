@@ -463,6 +463,14 @@ public class EditEventActivity extends AppCompatActivity {
         Glide.with(this).load(imageURL).into(poster);
     }
 
+    /**
+     *
+     * @param name name of the event
+     * @param slots number of accepted participants
+     * @param limitEntrants boolean to check limit waitlist status
+     * @param limit actual limit set on waitlist
+     * @return boolean valid
+     */
     public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants, String limit) {
         boolean valid = true;
 

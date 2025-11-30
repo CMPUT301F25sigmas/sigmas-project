@@ -28,6 +28,9 @@
         <activity 
             android:name=".NotificationHistoryActivity" 
             android:exported="false" />
+        <activity
+            android:name=".EventInvitesActivity"
+            android:exported="false" />
         <activity 
             android:name=".NotificationCenterActivity" 
             android:exported="false" />
@@ -93,7 +96,7 @@
         </activity>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCzJK2RLk8zKHfj_6kOcyMdaZhjoGNUi34" />
+            android:value="${MAPS_API_KEY}" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

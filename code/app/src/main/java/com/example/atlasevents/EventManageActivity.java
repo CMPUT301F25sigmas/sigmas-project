@@ -24,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,7 +38,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.NotificationRepository;
+import com.example.atlasevents.data.model.Notification;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.atlasevents.utils.MapWarmUpManager;
+import android.widget.EditText;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -45,6 +51,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -84,6 +93,9 @@ public class EventManageActivity extends AppCompatActivity {
 
     /** Service for handling lottery operations. */
     private LotteryService lotteryService;
+
+    /** Repository for sending notifications. */
+    private NotificationRepository notificationRepository;
 
     /** Text view displaying the name of the event. */
     private TextView eventNameTextView;
@@ -129,6 +141,9 @@ public class EventManageActivity extends AppCompatActivity {
 
     /** Card view container for the lottery timer section. */
     private CardView lotteryTimerCard;
+
+    /** ScrollView containing the entire page content. */
+    private ScrollView mainScrollView;
 
     /** Local list holding entrants currently displayed. */
     private ArrayList<Entrant> entrantList;
@@ -198,6 +213,7 @@ public class EventManageActivity extends AppCompatActivity {
 
         eventRepository = new EventRepository();
         lotteryService = new LotteryService();
+        notificationRepository = new NotificationRepository();
 
         initializeViews();
         setupClickListeners();
@@ -240,6 +256,7 @@ public class EventManageActivity extends AppCompatActivity {
         lotteryProgressBar = findViewById(R.id.lotteryProgressBar);
         backButton = findViewById(R.id.backButton);
         downloadButton = findViewById(R.id.downloadButton);
+        mainScrollView = findViewById(R.id.main);
 
         entrantList = new ArrayList<>();
         downloadableList = new ArrayList<>();
@@ -267,6 +284,17 @@ public class EventManageActivity extends AppCompatActivity {
         entrantAdapter = new EntrantRecyclerAdapter(entrantList);
         entrantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         entrantsRecyclerView.setAdapter(entrantAdapter);
+
+        // Set up click listener for remove button
+        entrantAdapter.setOnEntrantClickListener(entrant -> {
+            showMoveToCancelledDialog(entrant);
+        });
+
+        // Set up long press listener for sending notifications
+        entrantAdapter.setOnEntrantLongClickListener(entrant -> {
+            showSendNotificationDialog(entrant);
+            return true;
+        });
     }
 
     /**
@@ -327,69 +355,74 @@ public class EventManageActivity extends AppCompatActivity {
      * </p>
      */
     private void loadData() {
-        String eventId = getIntent().getSerializableExtra(EventKey).toString();
-
-        eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                currentEvent = event;
-                eventName = event.getEventName();
-                MapWarmUpManager.cacheEntrantCoords(event.getId(), event.getEntrantCoords());
-                updateEventUI(event);
-                updateLotteryUI(event);
-                startLotteryTimerIfNeeded(event);
-                displayCurrentList(event);
-
-                // Start cooldown countdown if needed
-                startCooldownCountdownIfNeeded(event);
+        String eventId = getIntent().getStringExtra(EventKey);
+        if (eventId == null) {
+            Object extra = getIntent().getSerializableExtra(EventKey);
+            if (extra != null) {
+                eventId = extra.toString();
             }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.e("EventManageActivity", "Failed to fetch event", e);
-                Toast.makeText(EventManageActivity.this,
-                        "Failed to load event", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
-    }
-
-    /**
-     * Starts a periodic update for cooldown countdown if lottery is in cooldown
-     */
-    private void startCooldownCountdownIfNeeded(Event event) {
-        if (lotteryService.isInCooldownPeriod(event)) {
-            // Update UI every minute to refresh cooldown countdown
-            new CountDownTimer(Long.MAX_VALUE, 60000) { // Update every minute
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    if (currentEvent != null) {
-                        updateLotteryUI(currentEvent);
-                        startLotteryTimerIfNeeded(currentEvent);
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-                    // Timer runs indefinitely until canceled
-                }
-            }.start();
         }
+
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(this, "Missing event", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Only fetch the event from Firebase; we don't rely on Event methods for lists
+        String finalEventId = eventId;
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    Event event = snapshot.toObject(Event.class); // for other Event fields like name
+                    if (event == null) {
+                        Toast.makeText(this, "Failed to parse event", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    currentEvent = event;
+                    eventName = currentEvent.getEventName();
+                    MapWarmUpManager.cacheEntrantCoords(finalEventId, currentEvent.getEntrantCoords());
+                    updateEventUI(currentEvent, snapshot);
+                    updateLotteryUI(currentEvent);
+                    startLotteryTimerIfNeeded(currentEvent);
+
+                    //display lists directly from Firebase snapshot
+                    displayCurrentListFromSnapshot(currentEvent, snapshot);
+                    updateCountDisplays(currentEvent, snapshot);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to fetch event", e);
+                    Toast.makeText(EventManageActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
     }
+
 
     /**
      * Updates the UI with event details.
      *
      * @param event The event to display
      */
-    private void updateEventUI(Event event) {
+    private void updateEventUI(Event event, DocumentSnapshot snapshot) {
         // Populate event details
         eventNameTextView.setText(event.getEventName());
         dateTextView.setText(event.getDateFormatted());
         locationTextView.setText(event.getAddress());
 
         // Update count displays
-        updateCountDisplays(event);
+        if (snapshot != null) {
+            updateCountDisplays(event,snapshot);
+        }
 
         // Load event image using Glide
         if (!event.getImageUrl().isEmpty()) {
@@ -401,12 +434,13 @@ public class EventManageActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * Updates the count displays for all entrant lists.
      *
      * @param event The event with entrant lists
      */
-    private void updateCountDisplays(Event event) {
+    private void updateCountDisplays(Event event, DocumentSnapshot snapshot) {
         int waitlistCount = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
         int chosenCount = event.getInviteList() != null ? event.getInviteList().size() : 0;
         int cancelledCount = event.getDeclinedList() != null ? event.getDeclinedList().size() : 0;
@@ -418,43 +452,66 @@ public class EventManageActivity extends AppCompatActivity {
         finalEnrolledCountTextView.setText(String.valueOf(finalEnrolledCount));
     }
 
+
     /**
      * Displays the appropriate entrant list based on visibility settings.
      *
      * @param event The event with entrant lists
      */
-    private void displayCurrentList(Event event) {
+    private void displayCurrentListFromSnapshot(Event event, DocumentSnapshot snapshot) {
         String listTitle = "";
-        ArrayList<Entrant> listToDisplay = null;
+        ArrayList<Entrant> listToDisplay = new ArrayList<>();
 
-        if (chosenVisible.get() && event.getInviteList() != null) {
+        if (chosenVisible.get()) {
             listTitle = "Chosen Entrants";
-            listToDisplay = event.getInviteList().getWaitList();
+            if (event.getInviteList() != null) {
+                listToDisplay = event.getInviteList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (cancelledVisible.get() && event.getDeclinedList() != null) {
+        } else if (cancelledVisible.get()) {
             listTitle = "Cancelled Entrants";
-            listToDisplay = event.getDeclinedList().getWaitList();
+            if (event.getDeclinedList() != null) {
+                listToDisplay = event.getDeclinedList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (enrolledVisible.get() && event.getAcceptedList() != null) {
+        } else if (enrolledVisible.get()) {
             listTitle = "Enrolled Entrants";
-            listToDisplay = event.getAcceptedList().getWaitList();
+            if (event.getAcceptedList() != null) {
+                listToDisplay = event.getAcceptedList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (waitlistVisible.get() && event.getWaitlist() != null) {
+        } else if (waitlistVisible.get()) {
             listTitle = "Waiting List";
-            listToDisplay = event.getWaitlist().getWaitList();
+            if (event.getWaitlist() != null) {
+                listToDisplay = event.getWaitlist().getWaitList();
+            }
             downloadableList = listToDisplay;
         }
 
-        // Update list title
+        // Update UI
         listTitleTextView.setText(listTitle);
-
-        // Display the list if available
-        if (listToDisplay != null && !listToDisplay.isEmpty()) {
+        if (!listToDisplay.isEmpty()) {
             entrantAdapter.setEntrants(listToDisplay);
+            // Show remove button for enrolled, invite (chosen), and waitlist (but not cancelled list)
+            boolean showRemove = enrolledVisible.get() || chosenVisible.get() || waitlistVisible.get();
+            entrantAdapter.setShowRemoveButton(showRemove);
             waitingListCard.setVisibility(View.VISIBLE);
             downloadButton.setVisibility(View.VISIBLE);
+            
+            // Scroll the page to show the list section
+            new Handler().postDelayed(() -> {
+                // Scroll the page (ScrollView) to show the list card
+                if (waitingListCard != null && mainScrollView != null) {
+                    waitingListCard.post(() -> {
+                        // Calculate the position of the card relative to the ScrollView content
+                        int scrollY = waitingListCard.getTop() - 100; // 100px offset from top
+                        mainScrollView.smoothScrollTo(0, Math.max(0, scrollY));
+                    });
+                }
+            }, 100);
         } else {
             entrantAdapter.setEntrants(new ArrayList<>());
+            entrantAdapter.setShowRemoveButton(false);
             waitingListCard.setVisibility(View.GONE);
             downloadButton.setVisibility(View.GONE);
             if (!listTitle.isEmpty()) {
@@ -462,6 +519,7 @@ public class EventManageActivity extends AppCompatActivity {
             }
         }
     }
+
 
     /**
      * Updates the lottery-related UI elements with cooldown support.
@@ -473,41 +531,37 @@ public class EventManageActivity extends AppCompatActivity {
         int availableSlots = calculateAvailableSlots(event);
         int waitlistSize = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
-
+        int pendingInvites = event.getInviteList() != null ? event.getInviteList().size() : 0;
         // NEW: Check cooldown period
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
-        long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+
+        String entrantLimit = String.valueOf(event.getEntrantLimit());
+        if (entrantLimit.equals("-1")){ entrantLimit = "No limit";}
 
         // Update lottery status text with cooldown info
         String statusText = String.format(
                 "Event: %s\n" +
-                        "Entrant Limit: %d\n" +
+                        "Waitlist Limit: %s\n" +
                         "Accepted: %d\n" +
-                        "Available Slots: %d\n" +
+                        "Available Slots: %d\n"+
+                        "Pending Invites: %d\n"+
                         "Waitlist Size: %d\n" +
                         "Lottery Available: %s\n" +
-                        "Registration End: %s\n" +
-                        "Cooldown Active: %s" +
-                        (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
+                        "Registration End: %s\n",
                 event.getEventName(),
-                event.getEntrantLimit(),
+                entrantLimit,
                 acceptedCount,
                 availableSlots,
+                pendingInvites,
                 waitlistSize,
                 lotteryAvailable ? "Yes" : "No",
-                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set",
-                inCooldown ? "Yes" : "No",
-                cooldownHoursRemaining
+                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set"
+
         );
 
         lotteryStatusText.setText(statusText);
 
         // NEW: Enhanced lottery button logic with cooldown
-        boolean canDrawLottery = lotteryAvailable &&
-                availableSlots > 0 &&
-                waitlistSize > 0 &&
-                !inCooldown;
-
+        boolean canDrawLottery = lotteryAvailable && availableSlots > 0 && waitlistSize > 0;
         drawLotteryButton.setEnabled(canDrawLottery);
         drawLotteryButton.setAlpha(canDrawLottery ? 1.0f : 0.6f);
 
@@ -515,8 +569,6 @@ public class EventManageActivity extends AppCompatActivity {
         if (!canDrawLottery) {
             if (!lotteryAvailable) {
                 drawLotteryButton.setText("Lottery Not Available");
-            } else if (inCooldown) {
-                drawLotteryButton.setText(String.format("Cooldown: %dh", cooldownHoursRemaining));
             } else if (availableSlots <= 0) {
                 drawLotteryButton.setText("Event Full");
             } else if (waitlistSize <= 0) {
@@ -528,32 +580,22 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
-     * Starts the countdown timer if lottery is not yet available or in cooldown.
+     * Starts the countdown timer if lottery is not yet available.
      *
      * @param event The event to check
      */
     private void startLotteryTimerIfNeeded(Event event) {
         boolean lotteryAvailable = lotteryService.isLotteryAvailable(event);
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
 
-        // Show timer if either registration period hasn't ended OR lottery is in cooldown
-        if (lotteryAvailable && !inCooldown) {
-            lotteryTimerCard.setVisibility(View.GONE);
-            return;
-        }
 
         long timeRemaining;
         String timerPrefix;
 
-        if (inCooldown) {
-            // Show cooldown countdown
-            timeRemaining = lotteryService.getCooldownHoursRemaining(event) * 60 * 60 * 1000;
-            timerPrefix = "Lottery cooldown: ";
-        } else {
+
             // Show registration period countdown
             timeRemaining = lotteryService.getTimeUntilLotteryAvailable(event);
             timerPrefix = "Lottery available in: ";
-        }
+
 
         if (timeRemaining > 0) {
             lotteryTimerCard.setVisibility(View.VISIBLE);
@@ -634,7 +676,7 @@ public class EventManageActivity extends AppCompatActivity {
      * @return Number of available slots
      */
     private int calculateAvailableSlots(Event event) {
-        int entrantLimit = event.getEntrantLimit();
+        int entrantLimit = event.getSlots();
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         return Math.max(0, entrantLimit - acceptedCount);
@@ -648,20 +690,33 @@ public class EventManageActivity extends AppCompatActivity {
 
         int availableSlots = calculateAvailableSlots(currentEvent);
         int waitlistSize = currentEvent.getWaitlist() != null ? currentEvent.getWaitlist().size() : 0;
-
-        String message = String.format(
-                "Draw lottery for '%s'?\n\n" +
-                        "Available slots: %d\n" +
-                        "Waitlist size: %d\n\n" +
-                        "Selected entrants will receive invitation notifications.\n\n" +
-                        "Note: Lottery will be locked for 24 hours after drawing.",
-                currentEvent.getEventName(), availableSlots, waitlistSize
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+        int totalToSelect = availableSlots + pendingInvites;
+        String message;
+        if (pendingInvites>0){message= String.format(
+                "Re-sample lottery for '%s'?\n\n" + "Available slots: %d\n" +
+                        "Pending invites: %d\n" + "Total to select: %d\n" +
+                        "Waitlist size: %d\n\n" + "This will:\n" +
+                        "• Cancel %d pending invitations\n" + "• Select %d new entrants from waitlist\n" +
+                        "• Accepted entrants (%d) remain unaffected",
+                currentEvent.getEventName(), availableSlots, pendingInvites, totalToSelect, waitlistSize,
+                pendingInvites, totalToSelect,
+                currentEvent.getAcceptedList() != null ? currentEvent.getAcceptedList().size() : 0
         );
+        } else {
+            message = String.format(
+                    "Draw lottery for '%s'?\n\n" +
+                            "Available slots: %d\n" +
+                            "Waitlist size: %d\n\n" +
+                            "Selected entrants will receive invitation notifications.",
+                    currentEvent.getEventName(), availableSlots, waitlistSize
+            );
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Draw Lottery")
+        builder.setTitle(pendingInvites > 0 ? "Re-sample Lottery" : "Draw Lottery")
                 .setMessage(message)
-                .setPositiveButton("Draw Lottery", (dialog, which) -> {
+                .setPositiveButton(pendingInvites > 0 ? "Re-sample" : "Draw Lottery", (dialog, which) -> {
                     executeLotteryDraw();
                 })
                 .setNegativeButton("Cancel", null)
@@ -676,7 +731,9 @@ public class EventManageActivity extends AppCompatActivity {
 
         setLotteryInProgress(true);
 
-        lotteryService.drawLottery(currentEvent.getId(), new LotteryService.LotteryCallback() {
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+
+        LotteryService.LotteryCallback lotteryCallback = new LotteryService.LotteryCallback() {
             @Override
             public void onLotteryCompleted(int entrantsSelected, String message) {
                 runOnUiThread(() -> {
@@ -695,7 +752,14 @@ public class EventManageActivity extends AppCompatActivity {
                     updateLotteryUI(currentEvent);
                 });
             }
-        });
+        };
+
+        // Use re-sampling if there are pending invites, otherwise use normal lottery
+        if (pendingInvites > 0) {
+            lotteryService.resampleLottery(currentEvent.getId(), lotteryCallback);
+        } else {
+            lotteryService.drawLottery(currentEvent.getId(), lotteryCallback);
+        }
     }
 
     /**
@@ -736,16 +800,33 @@ public class EventManageActivity extends AppCompatActivity {
      * Downloads the currently displayed list as a CSV file.
      */
     private void downloadCurrentListAsCSV() {
-        if (downloadableList == null || downloadableList.isEmpty()) {
+        List<Entrant> listToDownload;
+
+        String listType = "";
+        if (waitlistVisible.get()) {
+            listType = "waitlist";
+            // Use the waitlist directly from the Event object
+            listToDownload = currentEvent.getWaitlist() != null
+                    ? currentEvent.getWaitlist().getWaitList()
+                    : new ArrayList<>();
+        } else if (cancelledVisible.get()) {
+            listType = "cancelledList";
+            listToDownload = downloadableList;
+        } else if (enrolledVisible.get()) {
+            listType = "enrolledList";
+            listToDownload = downloadableList;
+        } else if (chosenVisible.get()) {
+            listType = "chosenList";
+            listToDownload = downloadableList;
+        } else {
             Toast.makeText(this, "No data to download", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String listType = "";
-        if (waitlistVisible.get()) listType = "waitList";
-        if (cancelledVisible.get()) listType = "cancelledList";
-        if (enrolledVisible.get()) listType = "enrolledList";
-        if (chosenVisible.get()) listType = "chosenList";
+        if (listToDownload.isEmpty()) {
+            Toast.makeText(this, "No data to download", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         String fileName = eventName + "_" + listType + ".csv";
         ContentResolver resolver = getContentResolver();
@@ -760,17 +841,15 @@ public class EventManageActivity extends AppCompatActivity {
             uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
         }
 
-        try {
-            OutputStream outputStream = resolver.openOutputStream(uri);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        try (OutputStream outputStream = resolver.openOutputStream(uri);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 
-            // Write CSV header
+            // CSV header
             writer.write("Name,Email,Phone Number");
             writer.newLine();
 
             // Write entrant data
-            for (int i = 0; i < downloadableList.size(); i++) {
-                Entrant entrant = downloadableList.get(i);
+            for (Entrant entrant : listToDownload) {
                 writer.write(entrant.getName() != null ? entrant.getName() : "");
                 writer.write(",");
                 writer.write(entrant.getEmail() != null ? entrant.getEmail() : "");
@@ -779,26 +858,28 @@ public class EventManageActivity extends AppCompatActivity {
                 writer.newLine();
             }
 
-            writer.flush();
-            writer.close();
-
             Toast.makeText(this, "Saved to Downloads: " + fileName, Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
+
 
     /**
      * Shows notification options for the organizer.
      */
     private void showNotificationOptions() {
-        if (currentEvent == null) return;
+        if (currentEvent == null || currentEvent.getId() == null) {
+            Toast.makeText(this, "Event not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // Implement notification options based on your existing notification system
-        // This could open a dialog or new activity for sending notifications
-        Toast.makeText(this, "Notification options would open here", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ComposeNotificationActivity.class);
+        intent.putExtra("eventId", currentEvent.getId());
+        intent.putExtra("eventName", currentEvent.getEventName());
+        startActivity(intent);
     }
 
     /**
@@ -813,7 +894,7 @@ public class EventManageActivity extends AppCompatActivity {
 
         // Implement map display functionality
         Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
-         */
+                 */
         if (currentEvent == null) {
             return;
         }
@@ -821,5 +902,257 @@ public class EventManageActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ManageEventMapActivity.class);
         intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
         startActivity(intent);
+    }
+
+    /**
+     * Shows a confirmation dialog to move an entrant to cancelled list.
+     *
+     * @param entrant The entrant to move
+     */
+    private void showMoveToCancelledDialog(Entrant entrant) {
+        if (currentEvent == null || entrant == null) {
+            return;
+        }
+
+        // Determine which list the entrant is currently in
+        String sourceList = "current list";
+        if (enrolledVisible.get()) {
+            sourceList = "enrolled list";
+        } else if (chosenVisible.get()) {
+            sourceList = "invite list";
+        } else if (waitlistVisible.get()) {
+            sourceList = "waitlist";
+        }
+
+        String message = String.format(
+                "Move '%s' (%s) from %s to cancelled list?",
+                entrant.getName() != null ? entrant.getName() : "Unknown",
+                entrant.getEmail() != null ? entrant.getEmail() : "Unknown",
+                sourceList
+        );
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Move to Cancelled List")
+                .setMessage(message)
+                .setPositiveButton("Move", (dialog, which) -> {
+                    moveEntrantToCancelled(entrant);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Moves an entrant from the current list (accepted, invite, or waitlist) to the declined (cancelled) list in Firestore.
+     *
+     * @param entrant The entrant to move
+     */
+    private void moveEntrantToCancelled(Entrant entrant) {
+        if (currentEvent == null || entrant == null || currentEvent.getId() == null) {
+            Toast.makeText(this, "Unable to move entrant", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EntrantList sourceList = null;
+        String sourceListName = "";
+        EntrantList acceptedList = currentEvent.getAcceptedList() != null 
+                ? currentEvent.getAcceptedList() 
+                : new EntrantList();
+        EntrantList inviteList = currentEvent.getInviteList() != null 
+                ? currentEvent.getInviteList() 
+                : new EntrantList();
+        EntrantList waitlist = currentEvent.getWaitlist() != null 
+                ? currentEvent.getWaitlist() 
+                : new EntrantList();
+        EntrantList declinedList = currentEvent.getDeclinedList() != null 
+                ? currentEvent.getDeclinedList() 
+                : new EntrantList();
+
+        // Determine which list to remove from based on current visibility
+        if (enrolledVisible.get()) {
+            sourceList = acceptedList;
+            sourceListName = "enrolled list";
+        } else if (chosenVisible.get()) {
+            sourceList = inviteList;
+            sourceListName = "invite list";
+        } else if (waitlistVisible.get()) {
+            sourceList = waitlist;
+            sourceListName = "waitlist";
+        } else {
+            Toast.makeText(this, "Cannot move from this list", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Find the entrant in the source list by email
+        Entrant entrantToMove = null;
+        for (int i = 0; i < sourceList.size(); i++) {
+            Entrant e = sourceList.getEntrant(i);
+            if (e != null && e.getEmail() != null && e.getEmail().equals(entrant.getEmail())) {
+                entrantToMove = e;
+                break;
+            }
+        }
+
+        if (entrantToMove == null) {
+            Toast.makeText(this, "Entrant not found in " + sourceListName, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Remove from source list and add to declined list
+        sourceList.removeEntrant(entrantToMove);
+        declinedList.addEntrant(entrantToMove);
+
+        // Update the event object
+        if (enrolledVisible.get()) {
+            currentEvent.setAcceptedList(acceptedList);
+        } else if (chosenVisible.get()) {
+            currentEvent.setInviteList(inviteList);
+        } else if (waitlistVisible.get()) {
+            currentEvent.setWaitlist(waitlist);
+        }
+        currentEvent.setDeclinedList(declinedList);
+
+        // Convert to Firestore format and build updates
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("declinedList", convertEntrantListToMap(declinedList));
+        
+        if (enrolledVisible.get()) {
+            updates.put("acceptedList", convertEntrantListToMap(acceptedList));
+        } else if (chosenVisible.get()) {
+            updates.put("inviteList", convertEntrantListToMap(inviteList));
+        } else if (waitlistVisible.get()) {
+            updates.put("waitlist", convertEntrantListToMap(waitlist));
+        }
+
+        // Update Firestore
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("events").document(currentEvent.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Moved to cancelled list", Toast.LENGTH_SHORT).show();
+                    // Reload data to reflect changes
+                    loadData();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to move entrant to cancelled list", e);
+                    Toast.makeText(this, "Failed to move entrant: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * Converts EntrantList to a Map for Firestore storage.
+     * This method mirrors the conversion logic from LotteryService.
+     *
+     * @param entrantList The entrant list to convert
+     * @return A Map representation suitable for Firestore
+     */
+    private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
+        Map<String, Object> map = new HashMap<>();
+        List<Map<String, Object>> allEntrantsArray = new ArrayList<>();
+        List<Map<String, Object>> waitListArray = new ArrayList<>();
+
+        for (int i = 0; i < entrantList.size(); i++) {
+            Entrant entrant = entrantList.getEntrant(i);
+            if (entrant != null && entrant.getEmail() != null) {
+                Map<String, Object> entrantMap = new HashMap<>();
+                entrantMap.put("name", entrant.getName());
+                entrantMap.put("email", entrant.getEmail());
+                entrantMap.put("phoneNumber", entrant.getPhoneNumber());
+                entrantMap.put("userType", entrant.getUserType());
+                if (entrant.getPassword() != null) {
+                    entrantMap.put("password", entrant.getPassword());
+                }
+
+                allEntrantsArray.add(entrantMap);
+                waitListArray.add(entrantMap);
+            }
+        }
+
+        map.put("allEntrants", allEntrantsArray);
+        map.put("waitList", waitListArray);
+
+        return map;
+    }
+
+    /**
+     * Shows a dialog to compose and send a notification to a specific entrant.
+     *
+     * @param entrant The entrant to send the notification to
+     */
+    private void showSendNotificationDialog(Entrant entrant) {
+        if (currentEvent == null || entrant == null || entrant.getEmail() == null) {
+            Toast.makeText(this, "Unable to send notification", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create a dialog with an EditText for the message
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Send Notification to " + (entrant.getName() != null ? entrant.getName() : entrant.getEmail()));
+
+        // Create EditText for message input
+        final EditText messageEditText = new EditText(this);
+        messageEditText.setHint("Enter notification message...");
+        messageEditText.setMinLines(3);
+        messageEditText.setMaxLines(5);
+        messageEditText.setPadding(50, 20, 50, 20);
+        builder.setView(messageEditText);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = messageEditText.getText().toString().trim();
+            if (message.isEmpty()) {
+                Toast.makeText(this, "Please enter a message", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            sendNotificationToEntrant(entrant, message);
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    /**
+     * Sends a notification to a specific entrant.
+     *
+     * @param entrant The entrant to send the notification to
+     * @param message The notification message
+     */
+    private void sendNotificationToEntrant(Entrant entrant, String message) {
+        if (currentEvent == null || entrant == null || entrant.getEmail() == null) {
+            Toast.makeText(this, "Unable to send notification", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String organizerEmail = currentEvent.getOrganizer() != null 
+                ? currentEvent.getOrganizer().getEmail() 
+                : null;
+
+        if (organizerEmail == null || organizerEmail.isEmpty()) {
+            Toast.makeText(this, "Organizer information not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String title = "Update about " + currentEvent.getEventName();
+        String groupType = "Individual";
+        
+        Notification notification = new Notification(
+                title,
+                message,
+                currentEvent.getId(),
+                organizerEmail,
+                currentEvent.getEventName(),
+                groupType,
+                1
+        );
+
+        notificationRepository.sendToUser(entrant.getEmail(), notification)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Notification sent to " + 
+                            (entrant.getName() != null ? entrant.getName() : entrant.getEmail()), 
+                            Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventManageActivity", "Failed to send notification", e);
+                    Toast.makeText(this, "Failed to send notification: " + e.getMessage(), 
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 }

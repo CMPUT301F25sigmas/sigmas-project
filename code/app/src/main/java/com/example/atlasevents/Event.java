@@ -8,12 +8,16 @@ import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.ArrayList;
 
 
 /**
@@ -79,6 +83,8 @@ public class Event implements Serializable {
     private boolean requireGeolocation;
     private int entrantLimit = -1;
     private Date lastLotteryRun;
+    private ArrayList<String> tags;
+    private ArrayList<String> searchKeywords;
 
 
     public Event(){
@@ -87,6 +93,8 @@ public class Event implements Serializable {
         acceptedList = new EntrantList();
         declinedList = new EntrantList();
         imageUrl = "";
+        tags = new ArrayList<>();
+        searchKeywords = new ArrayList<>();
 
     }
     public Event(Organizer organizer) {
@@ -97,6 +105,8 @@ public class Event implements Serializable {
         declinedList = new EntrantList();
         entrantCoords = new HashMap<>();
         imageUrl = "";
+        tags = new ArrayList<>();
+        searchKeywords = new ArrayList<>();
     }
 
     //Getters
@@ -179,6 +189,14 @@ public class Event implements Serializable {
         return imageUrl;
     }
 
+    public ArrayList<String> getTags() {
+        return tags == null ? new ArrayList<>() : new ArrayList<>(tags);
+    }
+
+    public ArrayList<String> getSearchKeywords() {
+        return searchKeywords == null ? new ArrayList<>() : new ArrayList<>(searchKeywords);
+    }
+
     public Date getLastLotteryRun() {
         return lastLotteryRun;
     }
@@ -215,7 +233,27 @@ public class Event implements Serializable {
     public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
     }
-    public void setEventName(String eventName) {this.eventName = eventName;}
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
+        refreshSearchKeywords();
+    }
+
+    public void setTags(List<String> tags) {
+        if (tags == null) {
+            this.tags = new ArrayList<>();
+        } else {
+            this.tags = new ArrayList<>(tags);
+        }
+        refreshSearchKeywords();
+    }
+
+    public void setSearchKeywords(ArrayList<String> searchKeywords) {
+        if (searchKeywords == null) {
+            this.searchKeywords = new ArrayList<>();
+        } else {
+            this.searchKeywords = new ArrayList<>(searchKeywords);
+        }
+    }
 
     public void setLocation(GeoPoint location) {
         this.location = location;
@@ -244,6 +282,45 @@ public class Event implements Serializable {
     }
     public void setLastLotteryRun(Date lastLotteryRun) {
         this.lastLotteryRun = lastLotteryRun;
+    }
+
+    /**
+     * Builds a list of searchable prefixes from the event name and tags to support simple prefix searches.
+     */
+    private void refreshSearchKeywords() {
+        LinkedHashSet<String> keywords = new LinkedHashSet<>();
+        addKeywordPrefixes(keywords, eventName);
+
+        if (tags != null) {
+            for (String tag : tags) {
+                addKeywordPrefixes(keywords, tag);
+            }
+        }
+
+        if (searchKeywords == null) {
+            searchKeywords = new ArrayList<>();
+        } else {
+            searchKeywords.clear();
+        }
+        searchKeywords.addAll(keywords);
+    }
+
+    private void addKeywordPrefixes(LinkedHashSet<String> keywords, String value) {
+        if (value == null) {
+            return;
+        }
+
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return;
+        }
+
+        String[] pieces = normalized.split("\\s+");
+        for (String piece : pieces) {
+            for (int i = 2; i <= piece.length(); i++) {
+                keywords.add(piece.substring(0, i));
+            }
+        }
     }
 
     /**
@@ -297,6 +374,9 @@ public class Event implements Serializable {
         if (!isRegistrationOpen()) {
             return -1;
         }
+        if (waitList.containsEntrant(entrant)) {
+            return -2;
+        }
         int currentSize = waitList.size();
         if (entrantLimit == -1) {
             waitList.addEntrant(entrant);
@@ -318,37 +398,6 @@ public class Event implements Serializable {
     public void removeFromWaitlist(Entrant entrant){
         if(waitList.containsEntrant(entrant)) {
             waitList.removeEntrant(entrant);
-        }
-    }
-
-    /**
-     * This method converts string date to timestamp
-     *
-     * @param event
-     * @return date
-     */
-    public static long getEventTimestamp(Event event) {
-        if (event.getDate() == null || event.getTime() == null) return 0;
-
-        try {
-            SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-            Date time = timeFormat.parse(event.getTime());
-
-            Calendar calDate = Calendar.getInstance();
-            calDate.setTime(event.getDate());
-
-            Calendar calTime = Calendar.getInstance();
-            calTime.setTime(time);
-
-            calDate.set(Calendar.HOUR_OF_DAY, calTime.get(Calendar.HOUR_OF_DAY));
-            calDate.set(Calendar.MINUTE, calTime.get(Calendar.MINUTE));
-            calDate.set(Calendar.SECOND, 0);
-            calDate.set(Calendar.MILLISECOND, 0);
-
-            return calDate.getTimeInMillis();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
         }
     }
 

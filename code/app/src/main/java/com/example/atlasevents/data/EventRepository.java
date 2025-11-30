@@ -10,6 +10,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 
 /**
  * Repository class for handling CRUD operations on {@link Event} objects in Firebase Firestore.
@@ -199,18 +202,50 @@ public class EventRepository {
                     Log.d("EventRepository", "Total events in Firebase: " + queryDocumentSnapshots.size());
 
                     ArrayList<Event> events = new ArrayList<>();
+
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
+
                         Event event = document.toObject(Event.class);
-                        if (event != null && event.getWaitlist().containsEntrant(entrantEmail)) {
+                        if (event == null) continue;
+
+                        boolean matches = false;
+
+
+                        if (event.getWaitlist() != null &&
+                                event.getWaitlist().containsEntrant(entrantEmail)) {
+                            matches = true;
+                        }
+
+                        if (!matches && document.contains("inviteList")) {
+                            Map<String, Object> inviteMap =
+                                    (Map<String, Object>) document.get("inviteList");
+
+                            if (inviteMap != null && inviteMap.containsKey(entrantEmail)) {
+                                matches = true;
+                            }
+                        }
+
+                        if (!matches && document.contains("acceptedList")) {
+                            Map<String, Object> acceptedMap =
+                                    (Map<String, Object>) document.get("acceptedList");
+
+                            if (acceptedMap != null && acceptedMap.containsKey(entrantEmail)) {
+                                matches = true;
+                            }
+                        }
+
+                        if (matches) {
                             events.add(event);
                             Log.d("EventRepository", "Added event: " + event.getEventName());
                         }
                     }
+
                     Log.d("EventRepository", "Filtered events count: " + events.size());
                     callback.onSuccess(events);
                 })
                 .addOnFailureListener(callback::onFailure);
     }
+
 
     /**
      * Updates an existing event in Firestore.
@@ -276,6 +311,59 @@ public class EventRepository {
                         }
                     }
                     callback.onSuccess(events);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Searches events using the precomputed searchKeywords field (name and tags prefixes).
+     * The query is normalized to lowercase and must be at least two characters long.
+     *
+     * @param searchQuery partial search text from the UI
+     * @param callback callback to deliver matching events
+     */
+    public void searchEventsByKeyword(String searchQuery, EventsCallback callback) {
+        if (searchQuery == null) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        String normalized = searchQuery.trim().toLowerCase(Locale.ROOT);
+        String prefixQuery = searchQuery.trim();
+        if (normalized.length() < 2) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection("events")
+                .whereArrayContains("searchKeywords", normalized)
+                .get()
+                .addOnSuccessListener(keywordSnapshots -> {
+                    LinkedHashMap<String, Event> combined = new LinkedHashMap<>();
+                    for (DocumentSnapshot document : keywordSnapshots) {
+                        Event event = document.toObject(Event.class);
+                        if (event != null) {
+                            String key = event.getId() != null ? event.getId() : document.getId();
+                            combined.put(key, event);
+                        }
+                    }
+
+                    db.collection("events")
+                            .orderBy("eventName")
+                            .startAt(prefixQuery)
+                            .endAt(prefixQuery + "\uf8ff")
+                            .get()
+                            .addOnSuccessListener(nameSnapshots -> {
+                                for (DocumentSnapshot document : nameSnapshots) {
+                                    Event event = document.toObject(Event.class);
+                                    if (event != null) {
+                                        String key = event.getId() != null ? event.getId() : document.getId();
+                                        combined.put(key, event);
+                                    }
+                                }
+                                callback.onSuccess(new ArrayList<>(combined.values()));
+                            })
+                            .addOnFailureListener(callback::onFailure);
                 })
                 .addOnFailureListener(callback::onFailure);
     }

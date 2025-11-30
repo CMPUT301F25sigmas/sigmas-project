@@ -6,14 +6,22 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.text.InputType;
+import android.text.TextUtils;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -30,6 +38,7 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
 import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.InputValidator;
 import com.example.atlasevents.utils.TimePickerHelper;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
@@ -45,6 +54,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 /**
  * Activity for creating new events in the Atlas Events system.
  * <p>
@@ -62,15 +75,17 @@ public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
     Session session;
-    private boolean eventSaved = false;
+    boolean eventSaved = false;
 
     ImageUploader uploader;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private ActivityResultLauncher<Intent> placesAutocompleteLauncher;
-    private String imageURL = "";
+    String imageURL = "";
     private LatLng selectedLatLng;
     private String resolvedAddress;
+    private final List<String> tags = new ArrayList<>();
+    private LinearLayout tagContainer;
 
     /**
      * The date picker to pick the start date of the event
@@ -205,6 +220,10 @@ public class CreateEventActivity extends AppCompatActivity {
         SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
         EditText entrantLimit = findViewById(R.id.maxEntrantsEditText);
         EditText slots = findViewById(R.id.slotsEditText);
+        tagContainer = findViewById(R.id.tagContainer);
+        Button editTagsButton = findViewById(R.id.editTagsButton);
+        editTagsButton.setOnClickListener(v -> showTagEditor());
+        renderTags();
 
         Button imageUploadButton = findViewById(R.id.uploadPosterButton);
         imageUploadButton.setOnClickListener(v -> pickMedia.launch(
@@ -244,7 +263,7 @@ public class CreateEventActivity extends AppCompatActivity {
             userRepo.getOrganizer(username,
                     user -> {
                         if (user != null) {
-                            if(inputsValid(name.getText().toString(),slots.getText().toString(),limitEntrants.isChecked(), entrantLimit.getText().toString(), location.getText().toString())) { //validate inputs before making event
+                            if(inputsValid(name,slots,limitEntrants.isChecked(), entrantLimit.getText().toString())) { //validate inputs before making event
                                 Event event = new Event(user);
                                 event.setEventName(name.getText().toString()); //get text from edit texts
                                 event.setDate(startDatePicker.getStartDate());
@@ -264,6 +283,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                 if (!imageURL.isEmpty()){
                                     event.setImageUrl(imageURL);
                                 }
+                                event.setTags(tags);
                                 event.setSlots(Integer.parseInt(slots.getText().toString()));
 
 
@@ -290,24 +310,165 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Validates the required inputs for event creation.
-     * <p>
-     * Checks that the event name is not empty and that the number of slots
-     * is provided. Displays appropriate Toast messages to inform the user
-     * of any missing or invalid inputs.
-     * </p>
-     *
-     * @param name The name of the event to validate
-     * @param slots The number of participant slots as a string
-     * @return {@code true} if all inputs are valid, {@code false} otherwise
+     * Opens a simple dialog that lets organizers enter comma-separated tags.
+     * Parsed tags are normalized to lowercase and deduplicated before being shown.
      */
-    public boolean inputsValid(String name, String slots,boolean limitEntrants,String limit, String address) {
+    private void showTagEditor() {
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("Enter tags separated by commas");
+        // Limit dialog input to 75 characters
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(75) });
+        if (!tags.isEmpty()) {
+            input.setText(TextUtils.join(", ", tags));
+            input.setSelection(input.getText().length());
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit tags")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    List<String> parsed = parseTags(input.getText().toString());
+                    tags.clear();
+                    tags.addAll(parsed);
+                    renderTags();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Updates the horizontal tag row with chip-style labels or a placeholder when empty.
+     */
+    private void renderTags() {
+        if (tagContainer == null) {
+            return;
+        }
+        tagContainer.removeAllViews();
+        if (tags.isEmpty()) {
+            TextView placeholder = new TextView(this);
+            placeholder.setText("No tags added");
+            placeholder.setTextColor(Color.parseColor("#494949"));
+            tagContainer.addView(placeholder);
+            return;
+        }
+
+        int horizontalPadding = toPx(12);
+        int verticalPadding = toPx(6);
+        int chipRadius = toPx(18);
+
+        for (String tag : tags) {
+            TextView chip = new TextView(this);
+            chip.setText(tag);
+            chip.setTextColor(Color.parseColor("#494949"));
+            chip.setPadding(horizontalPadding * 2, verticalPadding, horizontalPadding * 2, verticalPadding);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.parseColor("#E8DEF8"));
+            background.setCornerRadius(chipRadius);
+            chip.setBackground(background);
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, toPx(8), 0);
+            chip.setLayoutParams(params);
+
+            tagContainer.addView(chip);
+        }
+    }
+
+    /**
+     * Normalizes comma-separated tags into a unique, lowercase list for storage/search.
+     */
+    List<String> parseTags(String raw) {
+        LinkedHashSet<String> parsed = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] pieces = raw.split(",");
+            for (String piece : pieces) {
+                String cleaned = piece.trim().toLowerCase(Locale.ROOT);
+                if (!cleaned.isEmpty()) {
+                    parsed.add(cleaned);
+                }
+            }
+        }
+        return new ArrayList<>(parsed);
+    }
+
+    private int toPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+/**
+ * Validates all inputs for event creation including dates and times.
+ * <p>
+ * Checks that the event name is not empty, number of slots is valid,
+ * and all date/time fields are properly selected and in the correct order.
+ * Displays appropriate error messages for any validation failures.
+ * </p>
+ *
+ * @param name The EditText containing the event name
+ * @param slots The EditText containing the number of slots
+ * @param limitEntrants Whether the entrant limit is enabled
+ * @param limit The entrant limit value
+ * @return {@code true} if all inputs are valid, {@code false} otherwise
+ */
+public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants, String limit) {
         boolean valid = true;
-        if (name.isEmpty()) { //check if name is empty
-            Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
+
+        // Get references to the date/time input fields
+        EditText dateEditText = findViewById(R.id.dateEditText);
+        EditText timeEditText = findViewById(R.id.timeEditText);
+        EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+
+        // Clear previous errors
+        name.setError(null);
+        slots.setError(null);
+        dateEditText.setError(null);
+        timeEditText.setError(null);
+        regDateRangeEditText.setError(null);
+
+        // Validate event name
+        InputValidator.ValidationResult nameRes = InputValidator.validateEventName(name.getText().toString());
+        if (!nameRes.isValid()) {
+            name.setError(nameRes.errorMessage());
             valid = false;
-        }else if (slots.isEmpty()) { //check that slots is filled
-            Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+        }
+
+        // Validate slots
+        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
+        if (!slotRes.isValid()) {
+            slots.setError(slotRes.errorMessage());
+            valid = false;
+        }
+        // Only check entrant limit if slots are valid
+        else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)) {
+            slots.setError("Waitlist limit cannot be smaller than number of participants");
+            valid = false;
+        }
+
+        // Validate event date
+        InputValidator.ValidationResult dateResult = InputValidator.validateDateSelected(
+                startDatePicker.getStartDate(), "Event date");
+        if (!dateResult.isValid()) {
+            dateEditText.setError(dateResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate event time
+        InputValidator.ValidationResult timeResult = InputValidator.validateTimeSelected(
+                timePicker.hour, timePicker.minute, "Event time");
+        if (!timeResult.isValid()) {
+            timeEditText.setError(timeResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate registration period
+        InputValidator.ValidationResult regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getStartDate(), "Registration start date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
             valid = false;
         }else if (address.isEmpty() || selectedLatLng == null) {
             Toast.makeText(this, "Select a location", Toast.LENGTH_SHORT).show();
@@ -315,9 +476,52 @@ public class CreateEventActivity extends AppCompatActivity {
         }else if (limitEntrants && limit.isEmpty()){
             Toast.makeText(this,"Enter a waitlist limit", Toast.LENGTH_LONG).show();
             valid = false;
-        }else if (limitEntrants && Integer.parseInt(slots) > Integer.parseInt(limit)){
-            Toast.makeText(this,"Waitlist limit cannot be smaller than number of participants", Toast.LENGTH_LONG).show();
+        }
+
+        regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getEndDate(), "Registration end date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
             valid = false;
+        }
+
+        // Only validate date relationships if individual dates are valid
+        if (valid) {
+            // Validate registration period is valid (end after start)
+            InputValidator.ValidationResult regPeriodResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getStartDate(),
+                    registrationPeriodPicker.getEndDate(),
+                    "Registration start date",
+                    "Registration end date"
+            );
+            if (!regPeriodResult.isValid()) {
+                regDateRangeEditText.setError(regPeriodResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event date is after registration period
+            InputValidator.ValidationResult eventDateResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getEndDate(),
+                    startDatePicker.getStartDate(),
+                    "Registration end date",
+                    "Event date"
+            );
+            if (!eventDateResult.isValid()) {
+                dateEditText.setError(eventDateResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event time is in the future
+            InputValidator.ValidationResult futureTimeResult = InputValidator.validateFutureTime(
+                    startDatePicker.getStartDate(),
+                    timePicker.hour,
+                    timePicker.minute,
+                    "Event time"
+            );
+            if (!futureTimeResult.isValid()) {
+                timeEditText.setError(futureTimeResult.errorMessage());
+                valid = false;
+            }
         }
 
         return valid;

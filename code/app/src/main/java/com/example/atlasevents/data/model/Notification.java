@@ -44,6 +44,7 @@ public class Notification {
 
     private boolean responded;
     private boolean accepted;
+    private int recipientCount;
 
     /**
      * Default constructor required for Firestore data mapping.
@@ -62,6 +63,21 @@ public class Notification {
      * @param groupType The category or group this notification belongs to (e.g., "Waiting List", "Chosen Entrants")
      */
     public Notification(String title, String message, String eventId, String fromOrganizeremail, String eventName, String groupType) {
+        this(title, message, eventId, fromOrganizeremail, eventName, groupType, 0);
+    }
+
+    /**
+     * Constructs a new Notification with all required fields and recipient count.
+     *
+     * @param title The title/heading of the notification
+     * @param message The detailed message content of the notification
+     * @param eventId The unique identifier of the related event
+     * @param fromOrganizeremail The email of the organizer who sent the notification
+     * @param eventName The display name of the related event
+     * @param groupType The category or group this notification belongs to (e.g., "Waiting List", "Chosen Entrants")
+     * @param recipientCount Number of recipients this notification targeted
+     */
+    public Notification(String title, String message, String eventId, String fromOrganizeremail, String eventName, String groupType, int recipientCount) {
         this.title = title;
         this.message = message;
         this.eventId = eventId;
@@ -69,7 +85,9 @@ public class Notification {
         this.eventName = eventName;
         this.read = false;
         this.groupType = groupType;
+        this.recipientCount = recipientCount;
     }
+
     /**
      * Gets the unique identifier for this notification.
      *
@@ -234,5 +252,17 @@ public class Notification {
     public boolean isAccepted() { return accepted; }
     public void setAccepted(boolean accepted) { this.accepted = accepted; }
 
-}
+    /**
+     * Gets the number of recipients for this notification.
+     *
+     * @return The recipient count
+     */
+    public int getRecipientCount() { return recipientCount; }
 
+    /**
+     * Sets the number of recipients for this notification.
+     *
+     * @param recipientCount The recipient count to set
+     */
+    public void setRecipientCount(int recipientCount) { this.recipientCount = recipientCount; }
+}

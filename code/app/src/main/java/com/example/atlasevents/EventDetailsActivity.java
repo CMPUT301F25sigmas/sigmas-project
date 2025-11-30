@@ -36,6 +36,8 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import java.util.Date;
+
 /**
  * Activity for displaying detailed information about an event.
  * <p>
@@ -578,13 +580,17 @@ public class EventDetailsActivity extends AppCompatActivity implements OnMapRead
 
         int entrantLimit = currentEvent.getEntrantLimit();
         boolean requireGeolocation = currentEvent.getRequireGeolocation();
+        Date registrationEnd = currentEvent.getRegEndDate();
+        Date registrationStart = currentEvent.getRegStartDate();
 
         String entrantLimitText = entrantLimit == -1 ? "No limit" : String.valueOf(entrantLimit);
         String geolocationText = requireGeolocation ? "Yes" : "No";
+        String registrationStartString = registrationStart.toString();
+        String registrationEndString = registrationEnd.toString();
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Event Criteria")
-                .setMessage("Maximum Entrants: " + entrantLimitText +
+                .setMessage("Registration Start: "+ registrationStartString +"\n\nRegistration End: " + registrationEndString + "\n\nMaximum Entrants: " + entrantLimitText +
                         "\n\nGeolocation Required: " + geolocationText +
                         (requireGeolocation ?
                                 "\n\nNote: This event requires location sharing to participate." :

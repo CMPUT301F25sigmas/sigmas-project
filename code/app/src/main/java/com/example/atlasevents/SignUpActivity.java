@@ -15,28 +15,36 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity for registering new users within the Atlas Events application.
  * <p>
- * This activity allows users to create either an {@link Entrant} or {@link Organizer}
- * account by entering their personal details including name, email, password, and phone number.
- * Once registration succeeds, a new session is created and the user is redirected
- * to their respective dashboard.
+ * This activity allows users to create a regular account (able to join or organize events)
+ * or an {@link Admin} account by entering their personal details including name, email,
+ * password, and phone number. Once registration succeeds, a new session is created and the
+ * user is redirected to their dashboard.
  * </p>
  * <p>
- * The activity also ensures that only one user type checkbox can be active at a time
- * and provides input validation feedback through toast messages.
+ * The flow defaults to a regular user; checking the admin box provisions an admin account.
+ * Input validation feedback is provided through toast messages.
  * </p>
  *
  * @see UserRepository
  * @see Session
  * @see EntrantDashboardActivity
- * @see OrganizerDashboardActivity
  */
 public class SignUpActivity extends AppCompatActivity {
 
     private Session session;
+
+    UserRepository userRepo = new UserRepository();
+
+    // Package-private setter for testing
+    void setUserRepository(UserRepository repository) {
+        this.userRepo = repository;
+    }
+
 
     /**
      * Called when the activity is first created.
@@ -59,7 +67,6 @@ public class SignUpActivity extends AppCompatActivity {
         });
 
         session = new Session(this);
-        UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         EditText name = findViewById(R.id.name);
@@ -68,34 +75,10 @@ public class SignUpActivity extends AppCompatActivity {
         EditText password = findViewById(R.id.newPassword);
 
         CheckBox adminCheck = findViewById(R.id.adminCheckBox);
-        CheckBox orgCheck = findViewById(R.id.organizerCheckBox);
-        CheckBox entrantCheck = findViewById(R.id.entrantCheckBox);
-
-        adminCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                orgCheck.setChecked(false);
-                entrantCheck.setChecked(false);
-            }
-        });
-
-        orgCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                adminCheck.setChecked(false);
-                entrantCheck.setChecked(false);
-            }
-        });
-
-        entrantCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                adminCheck.setChecked(false);
-                orgCheck.setChecked(false);
-            }
-        });
 
 
-        cancelButton.setOnClickListener(view ->{
-            finish();
-        });
+        cancelButton.setOnClickListener(view ->{finish();});
+
 
         createButton.setOnClickListener(view -> {
             String userName = name.getText().toString();
@@ -103,47 +86,19 @@ public class SignUpActivity extends AppCompatActivity {
             String userPassword = password.getText().toString();
             String userPhone = phone.getText().toString();
 
-            if (entrantCheck.isChecked()) {
-                Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);
-                userRepo.addUser(newUser, status -> {
-                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
-                        Log.d("Firestore", "User added successfully");
-                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignUpActivity.this, EntrantDashboardActivity.class);
-                        session.setUserEmail(newUser.getEmail());
-                        Bundle bundle = new Bundle();
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                        finish();
-                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
-                        Log.e("Firestore", "Email already exists");
-                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.e("Firestore", "Failed to add user");
-                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            } else if(orgCheck.isChecked()) {
-                Organizer newUser = new Organizer(userName, userEmail, userPassword, userPhone);
-                userRepo.addUser(newUser, status -> {
-                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
-                        Log.d("Firestore", "User added successfully");
-                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignUpActivity.this, OrganizerDashboardActivity.class);
-                        session.setUserEmail(newUser.getEmail());
-                        Bundle bundle = new Bundle();
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                        finish();
-                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
-                        Log.e("Firestore", "Email already exists");
-                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.e("Firestore", "Failed to add user");
-                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            } else if(adminCheck.isChecked()) {
+            InputValidator.ValidationResult nameRes  = InputValidator.validateName(userName);
+            InputValidator.ValidationResult emailRes = InputValidator.validateEmail(userEmail);
+            InputValidator.ValidationResult passRes  = InputValidator.validatePassword(userPassword);
+            InputValidator.ValidationResult phoneRes = InputValidator.validatePhone(userPhone, false);
+
+            if (!nameRes.isValid())  { name.setError(nameRes.errorMessage()); return;}
+            if (!emailRes.isValid()) { email.setError(emailRes.errorMessage());return;}
+            if (!phoneRes.isValid()) { phone.setError(phoneRes.errorMessage());return;}
+            if (!passRes.isValid())  { password.setError(passRes.errorMessage());return;}
+
+
+
+            if(adminCheck.isChecked()) {
                 Admin newUser = new Admin(userName, userEmail, userPassword, userPhone);
                 userRepo.addUser(newUser, status -> {
                     if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
@@ -164,8 +119,29 @@ public class SignUpActivity extends AppCompatActivity {
                     }
                 });
             }
+            else {
+                Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);
+                userRepo.addUser(newUser, status -> {
+                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
+                        Log.d("Firestore", "User added successfully");
+                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(SignUpActivity.this, EntrantDashboardActivity.class);
+                        session.setUserEmail(newUser.getEmail());
+                        Bundle bundle = new Bundle();
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        finish();
+                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                        Log.e("Firestore", "Email already exists");
+                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("Firestore", "Failed to add user");
+                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         });
 
-
     }
+
 }

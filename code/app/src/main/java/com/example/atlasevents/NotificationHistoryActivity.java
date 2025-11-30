@@ -40,6 +40,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
     private Session session;
     private UserRepository userRepository;
     private NotificationHistoryHelper notificationHelper;
+    private boolean showOrganizerSent;
 
     /**
      * Called when the activity is created.
@@ -69,6 +70,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         
         // Initialize the helper
         notificationHelper = new NotificationHistoryHelper(this, db, notificationsContainer);
+        showOrganizerSent = getIntent().getBooleanExtra("organizerHistory", false);
         
         // Setup back button to return to previous screen
         ImageButton backButton = findViewById(R.id.backButton);
@@ -123,7 +125,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
             if ("Admin".equals(userType)) {
                 // Admin sees ALL notification logs from the system
                 notificationHelper.loadAdminAllNotificationLogs(callback);
-            } else if ("Organizer".equals(userType)) {
+            } else if ("Organizer".equals(userType) || showOrganizerSent) {
                 // Organizer sees only notifications they sent
                 notificationHelper.loadOrganizerSentNotifications(userEmail, callback);
             } else {

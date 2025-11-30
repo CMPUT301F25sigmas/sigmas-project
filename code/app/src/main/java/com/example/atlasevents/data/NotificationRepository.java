@@ -67,6 +67,11 @@ public class NotificationRepository {
 
     // send to a single user (if they haven't opted out)
     public Task<Void> sendToUser(@NonNull String userEmail, @NonNull Notification notification) {
+        return sendToUserInternal(userEmail, notification, true);
+    }
+
+    // Internal helper so bulk sends can skip per-recipient logging
+    private Task<Void> sendToUserInternal(@NonNull String userEmail, @NonNull Notification notification, boolean logIndividually) {
         DocumentReference userRef = db.collection("users").document(userEmail);
 
         return userRef.get().continueWithTask(task -> {
@@ -76,7 +81,10 @@ public class NotificationRepository {
             Boolean enabled = userDoc.getBoolean("notificationsEnabled");
             if (enabled != null && !enabled) {
                 // user has opted out; still write log for admin but don't push notification into their subcollection
-                return logNotification(userEmail, notification, "OPTED_OUT");
+                if (logIndividually) {
+                    return logNotification(userEmail, notification, "OPTED_OUT");
+                }
+                return Tasks.forResult(null);
             }
             // create notification doc under users/{email}/notifications
             CollectionReference notifCol = userRef.collection("notifications");
@@ -92,12 +100,16 @@ public class NotificationRepository {
             data.put("createdAt", FieldValue.serverTimestamp());
             data.put("groupType", notification.getGroupType());
             data.put("eventName", notification.getEventName());
+            data.put("recipientCount", notification.getRecipientCount());
 
 
             // perform write and then log
             return notifDoc.set(data).continueWithTask(setTask -> {
                 if (!setTask.isSuccessful()) throw setTask.getException();
-                return logNotification(userEmail, notification, "SENT");
+                if (logIndividually) {
+                    return logNotification(userEmail, notification, "SENT");
+                }
+                return Tasks.forResult(null);
             });
         }).addOnFailureListener(e -> Log.w(TAG, "sendToUser failure", e));
     }
@@ -105,28 +117,41 @@ public class NotificationRepository {
     // send to multiple users (fire off parallel tasks)
     /**
      * Sends a notification to multiple users in parallel.
-     * Creates individual send tasks for each user and returns a combined task that completes when all are done.
+     * I stash the recipient count on the template then fan out copies so each write stays independent.
      *
      * @param userEmails List of email addresses to send the notification to
      * @param notification The notification object to send (will be copied for each user)
      * @return A Task containing a list of individual send tasks that complete when all notifications are processed
      * @see #sendToUser(String, Notification)
-     * @see Tasks.whenAll(tasks)
+     * @see Tasks#whenAll(java.util.Collection)
      */
     public Task<List<Task<Void>>> sendToUsers(@NonNull List<String> userEmails, @NonNull Notification notification) {
         List<Task<Void>> tasks = new ArrayList<>();
+        notification.setRecipientCount(userEmails.size()); // Set recipient count
         for (String email : userEmails) {
-            Notification copy = new Notification(notification.getTitle(), notification.getMessage(), notification.getEventId(), notification.getFromOrganizeremail(), notification.getEventName(), notification.getGroupType());
-            tasks.add(sendToUser(email, copy));
+            Notification copy = new Notification(notification.getTitle(), notification.getMessage(), notification.getEventId(), notification.getFromOrganizeremail(), notification.getEventName(), notification.getGroupType(), notification.getRecipientCount());
+            tasks.add(sendToUserInternal(email, copy, false));
         }
-        // return wrapper task that completes when all children complete
-        return Tasks.whenAll(tasks).continueWith(t -> tasks);
+        return Tasks.whenAll(tasks).continueWithTask(t -> {
+            String organizerEmail = notification.getFromOrganizeremail();
+            String status = t.isSuccessful() ? "SENT" : "FAILED";
+            return logBatchNotification(organizerEmail, notification, userEmails, status)
+                    .continueWith(logTask -> {
+                        if (!logTask.isSuccessful()) {
+                            throw logTask.getException();
+                        }
+                        if (!t.isSuccessful()) {
+                            throw t.getException();
+                        }
+                        return tasks;
+                    });
+        });
     }
 
     // helper: log notification for admin reviews
     /**
      * Logs a notification activity for administrative review and auditing purposes.
-     * Creates a document in the notification_logs collection regardless of delivery status.
+     * I always write a log, even if the user opted out, so admins have traceability.
      *
      * @param recipientEmail The email address of the intended recipient
      * @param notification The notification that was attempted to be sent
@@ -145,8 +170,40 @@ public class NotificationRepository {
         log.put("createdAt", FieldValue.serverTimestamp());
         log.put("groupType", notification.getGroupType());
         log.put("eventName", notification.getEventName());
+        log.put("recipientCount", notification.getRecipientCount());
 
-        return db.collection("notification_logs").document().set(log);
+        String organizerEmail = notification.getFromOrganizeremail();
+        if (organizerEmail == null || organizerEmail.isEmpty()) {
+            organizerEmail = "unknown_sender";
+        }
+        return db.collection("notification_logs")
+                .document(organizerEmail)
+                .collection("logs")
+                .document()
+                .set(log);
+    }
+
+    // aggregate log for bulk sends so organizer history shows one entry
+    private Task<Void> logBatchNotification(String organizerEmail, Notification notification, List<String> recipients, String status) {
+        Map<String,Object> log = new HashMap<>();
+        log.put("recipient", recipients.size() == 1 ? recipients.get(0) : "Batch");
+        log.put("recipients", new ArrayList<>(recipients));
+        log.put("title", notification.getTitle());
+        log.put("message", notification.getMessage());
+        log.put("eventId", notification.getEventId());
+        log.put("fromOrganizer", organizerEmail != null && !organizerEmail.isEmpty() ? organizerEmail : "unknown_sender");
+        log.put("status", status);
+        log.put("createdAt", FieldValue.serverTimestamp());
+        log.put("groupType", notification.getGroupType());
+        log.put("eventName", notification.getEventName());
+        log.put("recipientCount", notification.getRecipientCount());
+
+        String organizerDoc = organizerEmail == null || organizerEmail.isEmpty() ? "unknown_sender" : organizerEmail;
+        return db.collection("notification_logs")
+                .document(organizerDoc)
+                .collection("logs")
+                .document()
+                .set(log);
     }
 
     // Organizer convenience methods (these gather emails from event lists then call sendToUsers)
@@ -166,7 +223,7 @@ public class NotificationRepository {
     public Task<List<Task<Void>>> sendToWaitlist(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getWaitlist());
         String groupType = "Waiting List";
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType, emails.size());
         return sendToUsers(emails, notif);
     }
     /**
@@ -181,10 +238,46 @@ public class NotificationRepository {
      * @see #sendToUsers(List, Notification)
      * @see #extractEmailsFromEntrantList(EntrantList)
      */
+
+//    public Task<Void> sendEventInvitations(List<String> userEmails, Notification invitation) {
+//        Log.d(TAG, "Sending event invitations to " + userEmails.size() + " users");
+//
+//        List<Task<Void>> tasks = new ArrayList<>();
+//
+//        for (String userEmail : userEmails) {
+//            // Bypass opt-out check for event invitations
+//            Task<Void> task = sendNotificationToUser(userEmail, invitation, true);
+//            tasks.add(task);
+//        }
+//
+//        return Tasks.whenAll(tasks);
+//    }
+
+//    /**
+//     * Enhanced send notification method with bypass option
+//     */
+//    private Task<Void> sendNotificationToUser(String userEmail, Notification notification, boolean bypassOptOut) {
+//        if (!bypassOptOut) {
+//            // Check if user has opted out of notifications from this organizer
+//            return isOrganizerBlocked(userEmail, notification.getFromOrganizeremail())
+//                    .continueWithTask(isBlockedTask -> {
+//                        boolean isBlocked = Boolean.TRUE.equals(isBlockedTask.getResult());
+//                        if (isBlocked) {
+//                            Log.d(TAG, "User " + userEmail + " has blocked notifications from " + notification.getFromOrganizeremail());
+//                            return Tasks.forResult(null); // Skip sending
+//                        }
+//                        return storeNotificationForUser(userEmail, notification);
+//                    });
+//        } else {
+//            // Bypass opt-out check (for event invitations)
+//            Log.d(TAG, "Bypassing opt-out for event invitation to: " + userEmail);
+//            return storeNotificationForUser(userEmail, notification);
+//        }
+//    }
     public Task<List<Task<Void>>> sendToInvited(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getInviteList());
         String groupType = "Chosen Entrants";
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType, emails.size());
         return sendToUsers(emails, notif);
     }
     /**
@@ -202,20 +295,10 @@ public class NotificationRepository {
     public Task<List<Task<Void>>> sendToCancelled(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getDeclinedList());
         String groupType = "Cancelled Entrants";
-        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType);
+        Notification notif = new Notification(title, message, event.getId(), event.getOrganizer().getEmail(), event.getEventName(), groupType, emails.size());
         return sendToUsers(emails, notif);
     }
 
-    // small utility to get emails out of your EntrantList
-    /**
-     * Extracts email addresses from an EntrantList.
-     * Utility method that iterates through entrants and collects non-null email addresses.
-     *
-     * @param list The EntrantList to extract emails from
-     * @return A list of email addresses, empty if the input is null or empty
-     * @see EntrantList
-     * @see Entrant
-     */
     private List<String> extractEmailsFromEntrantList(EntrantList list) {
         List<String> out = new ArrayList<>();
         if (list == null || list.size() == 0) return out;
@@ -226,18 +309,9 @@ public class NotificationRepository {
         }
         return out;
     }
-    // for admin to review logs
-    /**
-     * Retrieves notification logs for administrative review.
-     * Fetches logs from Firestore ordered by creation timestamp (newest first).
-     *
-     * @param callback The callback to handle the results or failures
-     * @throws NullPointerException if callback is null
-     * @see NotificationLogsCallback
-     * @see FirebaseFirestore
-     */
+
     public void getNotificationLogs(@NonNull NotificationLogsCallback callback) {
-        db.collection("notification_logs")
+        db.collectionGroup("logs")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(qs -> {
@@ -249,23 +323,9 @@ public class NotificationRepository {
                 })
                 .addOnFailureListener(e -> callback.onFailure(e));
     }
-    /**
-     * Callback interface for handling notification logs retrieval results.
-     *
-     * @see #getNotificationLogs(NotificationLogsCallback)
-     */
+
     public interface NotificationLogsCallback {
-        /**
-         * Callback interface for handling notification logs retrieval results.
-         *
-         * @see #getNotificationLogs(NotificationLogsCallback)
-         */
         void onSuccess(List<Map<String,Object>> logs);
-        /**
-         * Called when notification logs retrieval fails.
-         *
-         * @param e The exception that caused the failure
-         */
         void onFailure(Exception e);
     }
 

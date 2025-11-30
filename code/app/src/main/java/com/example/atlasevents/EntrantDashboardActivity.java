@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.InviteRepository;
 import com.example.atlasevents.utils.NotificationManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -51,6 +52,7 @@ public class EntrantDashboardActivity extends EntrantBase {
      * Repository for fetching event data from Firebase.
      */
     private EventRepository eventRepository;
+    private InviteRepository inviteRepository;
     private Session session;
 
 
@@ -79,6 +81,7 @@ public class EntrantDashboardActivity extends EntrantBase {
         db = FirebaseFirestore.getInstance();
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
+        inviteRepository = new InviteRepository();
         session = new Session(this);
 
         // Set up notification icon click listener
@@ -202,7 +205,7 @@ public class EntrantDashboardActivity extends EntrantBase {
     }
 
     /**
-     * Updates the invitations badge count
+     * Updates the invitations badge count from the invites collection
      */
     private void updateInvitationsBadge() {
         String userEmail = session.getUserEmail();
@@ -210,21 +213,20 @@ public class EntrantDashboardActivity extends EntrantBase {
 
         TextView invitationsBadge = findViewById(R.id.invitations_badge);
 
-        db.collection("events")
-                .whereArrayContains("inviteList", userEmail)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int inviteCount = queryDocumentSnapshots.size();
-                    if (inviteCount > 0) {
-                        invitationsBadge.setText(String.valueOf(inviteCount));
-                        invitationsBadge.setVisibility(View.VISIBLE);
+        inviteRepository.countPendingInvitesForUser(userEmail)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        int inviteCount = task.getResult();
+                        if (inviteCount > 0) {
+                            invitationsBadge.setText(String.valueOf(inviteCount));
+                            invitationsBadge.setVisibility(View.VISIBLE);
+                        } else {
+                            invitationsBadge.setVisibility(View.GONE);
+                        }
                     } else {
+                        Log.e(TAG, "Error counting invitations", task.getException());
                         invitationsBadge.setVisibility(View.GONE);
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error counting invitations", e);
-                    invitationsBadge.setVisibility(View.GONE);
                 });
     }
 

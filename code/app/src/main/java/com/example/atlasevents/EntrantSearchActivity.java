@@ -123,7 +123,7 @@ public class EntrantSearchActivity extends EntrantBase {
         eventRepository.searchEventsByKeyword(query, new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(ArrayList<Event> events) {
-                updateResults(filterOutCurrentUserEvents(events));
+                updateResults(filterEligibleEvents(events));
             }
 
             @Override
@@ -137,7 +137,7 @@ public class EntrantSearchActivity extends EntrantBase {
         eventRepository.getAvailableEvents(new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(ArrayList<Event> events) {
-                updateResults(filterOutCurrentUserEvents(events));
+                updateResults(filterEligibleEvents(events));
             }
 
             @Override
@@ -175,6 +175,27 @@ public class EntrantSearchActivity extends EntrantBase {
             filtered.add(event);
         }
         return filtered;
+    }
+
+    // Keep only events not organized by the user and whose registration window hasn't ended
+    private ArrayList<Event> filterEligibleEvents(ArrayList<Event> events) {
+        ArrayList<Event> organizerFiltered = filterOutCurrentUserEvents(events);
+        ArrayList<Event> eligible = new ArrayList<>();
+        long now = System.currentTimeMillis();
+
+        for (Event event : organizerFiltered) {
+            if (event == null) {
+                continue;
+            }
+            // If reg end is missing, skip to avoid showing stale events
+            if (event.getRegEndDate() == null) {
+                continue;
+            }
+            if (event.getRegEndDate().getTime() >= now) {
+                eligible.add(event);
+            }
+        }
+        return eligible;
     }
 
     private void openEventDetails(Event event) {

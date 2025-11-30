@@ -56,25 +56,9 @@ public class SignUpActivityIntentTest {
         Intents.release();
     }
 
-    // Add a helper matcher to check if EditText has any error
-    private static Matcher<View> hasError() {
-        return new TypeSafeMatcher<View>() {
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("has error");
-            }
-
-            @Override
-            public boolean matchesSafely(View view) {
-                if (!(view instanceof EditText)) {
-                    return false;
-                }
-                EditText editText = (EditText) view;
-                return editText.getError() != null;
-            }
-        };
-    }
-
+    /**
+     * test the cancel button closes the activity
+     */
     @Test
     public void testCancelButton() {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SignUpActivity.class);
@@ -141,15 +125,9 @@ public class SignUpActivityIntentTest {
             e.printStackTrace();
         }
 
-        // Check that the phone field has an error (any error)
-        onView(withId(R.id.phone)).check((view, noViewFoundException) -> {
-            if (noViewFoundException != null) {
-                throw noViewFoundException;
-            }
-            assert view instanceof EditText : "Expected EditText";
-            EditText editText = (EditText) view;
-            assert editText.getError() != null : "Expected an error message but got null";
-        });
+        // Assert that EntrantDashboardActivity was launched
+        intended(hasComponent(EntrantDashboardActivity.class.getName()));
+
     }
 
     @Test
@@ -208,7 +186,7 @@ public class SignUpActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
+        FakeUserRepository fakeRepo = new FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {

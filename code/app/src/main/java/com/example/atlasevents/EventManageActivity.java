@@ -832,11 +832,15 @@ public class EventManageActivity extends AppCompatActivity {
      * Shows notification options for the organizer.
      */
     private void showNotificationOptions() {
-        if (currentEvent == null) return;
+        if (currentEvent == null || currentEvent.getId() == null) {
+            Toast.makeText(this, "Event not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // Implement notification options based on your existing notification system
-        // This could open a dialog or new activity for sending notifications
-        Toast.makeText(this, "Notification options would open here", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ComposeNotificationActivity.class);
+        intent.putExtra("eventId", currentEvent.getId());
+        intent.putExtra("eventName", currentEvent.getEventName());
+        startActivity(intent);
     }
 
     /**

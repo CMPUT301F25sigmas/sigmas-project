@@ -393,35 +393,5 @@ public class Event implements Serializable {
         }
     }
 
-    /**
-     * This method converts string date to timestamp
-     *
-     * @param event the event the timestamp is related to
-     * @return date
-     */
-    public static long getEventTimestamp(Event event) {
-        if (event.getDate() == null || event.getTime() == null) return 0;
-
-        try {
-            SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-            Date time = timeFormat.parse(event.getTime());
-
-            Calendar calDate = Calendar.getInstance();
-            calDate.setTime(event.getDate());
-
-            Calendar calTime = Calendar.getInstance();
-            calTime.setTime(time);
-
-            calDate.set(Calendar.HOUR_OF_DAY, calTime.get(Calendar.HOUR_OF_DAY));
-            calDate.set(Calendar.MINUTE, calTime.get(Calendar.MINUTE));
-            calDate.set(Calendar.SECOND, 0);
-            calDate.set(Calendar.MILLISECOND, 0);
-
-            return calDate.getTimeInMillis();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
 
 }

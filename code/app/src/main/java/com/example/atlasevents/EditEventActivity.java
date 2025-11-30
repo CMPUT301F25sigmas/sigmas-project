@@ -31,6 +31,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.InputValidator;
 import com.example.atlasevents.utils.TimePickerHelper;
 
 import java.util.ArrayList;
@@ -400,7 +401,7 @@ public class EditEventActivity extends AppCompatActivity {
      * </p>
      */
     private void updateEvent() {
-        if (!inputsValid(nameEditText.getText().toString(), slotsEditText.getText().toString())) {
+        if(inputsValid(nameEditText,slotsEditText,limitEntrantsSwitch.isChecked(), entrantLimitEditText.getText().toString())) {
             return;
         }
 
@@ -462,15 +463,110 @@ public class EditEventActivity extends AppCompatActivity {
         Glide.with(this).load(imageURL).into(poster);
     }
 
-    public boolean inputsValid(String name, String slots) {
+    public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants, String limit) {
         boolean valid = true;
-        if (name.isEmpty()) {
-            Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
-            valid = false;
-        } else if (slots.isEmpty()) {
-            Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+
+        // Get references to the date/time input fields
+        EditText dateEditText = findViewById(R.id.dateEditText);
+        EditText timeEditText = findViewById(R.id.timeEditText);
+        EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+
+        // Clear previous errors
+        name.setError(null);
+        slots.setError(null);
+        dateEditText.setError(null);
+        timeEditText.setError(null);
+        regDateRangeEditText.setError(null);
+
+        // Validate event name
+        InputValidator.ValidationResult nameRes = InputValidator.validateEventName(name.getText().toString());
+        if (!nameRes.isValid()) {
+            name.setError(nameRes.errorMessage());
             valid = false;
         }
+
+        // Validate slots
+        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
+        if (!slotRes.isValid()) {
+            slots.setError(slotRes.errorMessage());
+            valid = false;
+        }
+        // Only check entrant limit if slots are valid
+        else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)) {
+            slots.setError("Waitlist limit cannot be smaller than number of participants");
+            valid = false;
+        }
+
+        // Validate event date
+        InputValidator.ValidationResult dateResult = InputValidator.validateDateSelected(
+                startDatePicker.getStartDate(), "Event date");
+        if (!dateResult.isValid()) {
+            dateEditText.setError(dateResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate event time
+        InputValidator.ValidationResult timeResult = InputValidator.validateTimeSelected(
+                timePicker.hour, timePicker.minute, "Event time");
+        if (!timeResult.isValid()) {
+            timeEditText.setError(timeResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate registration period
+        InputValidator.ValidationResult regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getStartDate(), "Registration start date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getEndDate(), "Registration end date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        // Only validate date relationships if individual dates are valid
+        if (valid) {
+            // Validate registration period is valid (end after start)
+            InputValidator.ValidationResult regPeriodResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getStartDate(),
+                    registrationPeriodPicker.getEndDate(),
+                    "Registration start date",
+                    "Registration end date"
+            );
+            if (!regPeriodResult.isValid()) {
+                regDateRangeEditText.setError(regPeriodResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event date is after registration period
+            InputValidator.ValidationResult eventDateResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getEndDate(),
+                    startDatePicker.getStartDate(),
+                    "Registration end date",
+                    "Event date"
+            );
+            if (!eventDateResult.isValid()) {
+                dateEditText.setError(eventDateResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event time is in the future
+            InputValidator.ValidationResult futureTimeResult = InputValidator.validateFutureTime(
+                    startDatePicker.getStartDate(),
+                    timePicker.hour,
+                    timePicker.minute,
+                    "Event time"
+            );
+            if (!futureTimeResult.isValid()) {
+                timeEditText.setError(futureTimeResult.errorMessage());
+                valid = false;
+            }
+        }
+
         return valid;
     }
 

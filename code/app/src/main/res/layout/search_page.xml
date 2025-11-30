@@ -31,6 +31,11 @@
         android:id="@+id/textView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        android:textSize="20dp"
+        android:textStyle="bold"
         android:text="Upcoming Events" />
 
     <androidx.cardview.widget.CardView
@@ -43,7 +48,8 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingTop="12dp">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/events_recycler_view"

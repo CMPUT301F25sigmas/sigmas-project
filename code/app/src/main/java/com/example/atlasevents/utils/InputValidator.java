@@ -1,5 +1,6 @@
 package com.example.atlasevents.utils;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Pattern;
 
@@ -75,15 +76,119 @@ public class InputValidator {
         }
 
     /**
-     * Validates a name field.
-     * <p>
-     * Checks that the name is not empty, within length limits, and contains
-     * only valid characters (letters, spaces, hyphens, apostrophes).
-     * </p>
+     * Validates that a date has been selected and is not in the past.
      *
-     * @param name The name to validate
+     * @param date The date to validate
+     * @param fieldName The name of the date field (for error messages)
      * @return ValidationResult indicating success or failure with error message
      */
+    public static ValidationResult validateDateSelected(Date date, String fieldName) {
+        if (date == null) {
+            return ValidationResult.error(fieldName + " is required");
+        }
+
+        // Create current date without time component for comparison
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        // Compare the dates (ignoring time)
+        Calendar selectedDate = Calendar.getInstance();
+        selectedDate.setTime(date);
+        selectedDate.set(Calendar.HOUR_OF_DAY, 0);
+        selectedDate.set(Calendar.MINUTE, 0);
+        selectedDate.set(Calendar.SECOND, 0);
+        selectedDate.set(Calendar.MILLISECOND, 0);
+
+        if (selectedDate.before(today)) {
+            return ValidationResult.error(fieldName + " cannot be in the past");
+        }
+
+        return ValidationResult.success();
+    }
+
+    /**
+     * Validates that a time has been selected.
+     *
+     * @param hour The hour to validate (0-23)
+     * @param minute The minute to validate (0-59)
+     * @param fieldName The name of the time field (for error messages)
+     * @return ValidationResult indicating success or failure with error message
+     */
+    public static ValidationResult validateTimeSelected(Integer hour, Integer minute, String fieldName) {
+        if (hour == null || minute == null) {
+            return ValidationResult.error(fieldName + " is required");
+        }
+        return ValidationResult.success();
+    }
+
+    /**
+     * Validates that an end date is after a start date.
+     *
+     * @param startDate The start date
+     * @param endDate The end date to validate
+     * @param startFieldName The name of the start date field (for error messages)
+     * @param endFieldName The name of the end date field (for error messages)
+     * @return ValidationResult indicating success or failure with error message
+     */
+    public static ValidationResult validateEndDateAfterStartDate(Date startDate, Date endDate, 
+                                                               String startFieldName, String endFieldName) {
+        if (startDate != null && endDate != null) {
+            if (endDate.before(startDate)) {
+                return ValidationResult.error(endFieldName + " must be after " + startFieldName);
+            }
+        }
+        return ValidationResult.success();
+    }
+
+    /**
+     * Validates that a date is in the future.
+     *
+     * @param date The date to validate
+     * @param fieldName The name of the date field (for error messages)
+     * @return ValidationResult indicating success or failure with error message
+     */
+    public static ValidationResult validateFutureDate(Date date, String fieldName) {
+        if (date != null) {
+            Date now = new Date();
+            if (date.before(now)) {
+                return ValidationResult.error(fieldName + " must be in the future");
+            }
+        }
+        return ValidationResult.success();
+    }
+
+    /**
+     * Validates that a time is in the future relative to a reference date.
+     *
+     * @param date The reference date
+     * @param hour The hour to validate (0-23)
+     * @param minute The minute to validate (0-59)
+     * @param fieldName The name of the time field (for error messages)
+     * @return ValidationResult indicating success or failure with error message
+     */
+    public static ValidationResult validateFutureTime(Date date, Integer hour, Integer minute, String fieldName) {
+        if (date != null && hour != null && minute != null) {
+            Calendar eventCal = Calendar.getInstance();
+            eventCal.setTime(date);
+            eventCal.set(Calendar.HOUR_OF_DAY, hour);
+            eventCal.set(Calendar.MINUTE, minute);
+            eventCal.set(Calendar.SECOND, 0);
+            eventCal.set(Calendar.MILLISECOND, 0);
+
+            Calendar nowCal = Calendar.getInstance();
+            nowCal.set(Calendar.SECOND, 0);
+            nowCal.set(Calendar.MILLISECOND, 0);
+
+            if (eventCal.before(nowCal)) {
+                return ValidationResult.error(fieldName + " must be in the future");
+            }
+        }
+        return ValidationResult.success();
+    }
+
     public static ValidationResult validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return ValidationResult.error("Name is required");

@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author CMPUT301F25sigmas
  * @version 2.0
- * @see notificationhistoryactivity
+ * @see NotificationHistoryActivity
  * @see NotificationRepository
  * @see LotteryService
  */
@@ -96,12 +96,12 @@ public class NotificationHistoryHelper {
      * @param callback Callback for success/failure handling
      * @param markAsReadCallback Callback for mark-as-read actions
      */
-    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback,
-                                                 MarkAsReadCallback markAsReadCallback) {
+    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback, MarkAsReadCallback markAsReadCallback) {
         fetchBlockedOrganizers(userEmail, blockedEmails -> db.collection("users")
                 .document(userEmail)
                 .collection("notifications")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
+                .whereNotEqualTo("type", "EventInvitation") // EXCLUDE event invitations
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     notificationsContainer.removeAllViews();

@@ -6,8 +6,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -18,16 +19,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.atlasevents.data.UserRepository;
 import com.example.atlasevents.data.EventRepository;
+import com.example.atlasevents.data.UserRepository;
 import com.example.atlasevents.Event;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
+import com.example.atlasevents.utils.NotificationHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.example.atlasevents.utils.NotificationHelper;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.List;
 
@@ -96,6 +97,7 @@ public abstract class EntrantBase extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 // Permission already granted, start listener directly
                 startNotificationBadgeListener();
+                startEventInvitesBadgeListener();
             } else {
                 // Request permission
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
@@ -103,6 +105,7 @@ public abstract class EntrantBase extends AppCompatActivity {
         } else {
             // For older Android versions, permission is granted at install time, so start listener directly
             startNotificationBadgeListener();
+            startEventInvitesBadgeListener();
         }
     }
 
@@ -127,6 +130,7 @@ public abstract class EntrantBase extends AppCompatActivity {
         findViewById(R.id.search_icon).setOnClickListener(v -> openSearch());
         findViewById(R.id.notifications_icon).setOnClickListener(v -> openNotifications());
         findViewById(R.id.qr_reader_icon).setOnClickListener(v -> openQrReader());
+        findViewById(R.id.invitations_icon).setOnClickListener(v -> openEventInvites());
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
 
@@ -193,14 +197,18 @@ public abstract class EntrantBase extends AppCompatActivity {
         intentIntegrator.setCameraId(0);
         intentIntegrator.setPrompt("Please Scan the QR Code");
         intentIntegrator.setOrientationLocked(true);
+        intentIntegrator.setBeepEnabled(false);
         intentIntegrator.initiateScan();
     }
     @Override
     protected void onActivityResult(int askCode, int parsedQrCode, @Nullable Intent data) {
         super.onActivityResult(askCode, parsedQrCode, data);
         IntentResult intentResult = IntentIntegrator.parseActivityResult(askCode, parsedQrCode, data);
-        String eventId = intentResult.getContents();
-        qrCodeEventLauncher(eventId);
+
+        if (intentResult != null && intentResult.getContents() != null) {
+            String eventId = intentResult.getContents();
+            qrCodeEventLauncher(eventId);
+        }
     }
 
     protected void qrCodeEventLauncher(String qrEventId) {
@@ -218,7 +226,56 @@ public abstract class EntrantBase extends AppCompatActivity {
             }
         });
     }
+    /**
+     * Opens the event invitations screen.
+     * <p>
+     * Navigates to {@link EventInvitesActivity} to show pending event invitations.
+     * </p>
+     */
+    protected void openEventInvites() {
+        Intent intent = new Intent(this, EventInvitesActivity.class);
+        startActivity(intent);
+        // Don't finish current activity so user can come back
+    }
+    /**
+     * Starts the event invites badge count listener
+     */
+    private void startEventInvitesBadgeListener() {
+        String email = session.getUserEmail();
+        if (email == null) {
+            return;
+        }
 
+        // Listen for events where user is in inviteList
+        firestore.collection("events")
+                .whereArrayContains("inviteList", email)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null) {
+                        updateEventInvitesBadge(0);
+                        return;
+                    }
+
+                    int inviteCount = snapshot.size();
+                    updateEventInvitesBadge(inviteCount);
+                });
+    }
+
+    /**
+     * Updates the event invites badge count
+     */
+    private void updateEventInvitesBadge(int count) {
+        TextView invitesBadge = findViewById(R.id.invitations_badge);
+        if (invitesBadge == null) {
+            return;
+        }
+
+        if (count > 0) {
+            invitesBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+            invitesBadge.setVisibility(View.VISIBLE);
+        } else {
+            invitesBadge.setVisibility(View.GONE);
+        }
+    }
     /**
      * Starts the unread-count listener and asks for notification permission on Tiramisu+.
      * I call this when the screen comes into view so the badge is always fresh.

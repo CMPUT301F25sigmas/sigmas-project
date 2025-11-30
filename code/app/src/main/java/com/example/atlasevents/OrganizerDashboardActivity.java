@@ -26,6 +26,7 @@ import com.example.atlasevents.utils.NotificationManager;
 import com.example.atlasevents.data.UserRepository;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
 
 
@@ -244,52 +245,67 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         ArrayList<Event> filtered = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
 
+        // Reset all buttons first
+        resetButtonStates();
+        
+        // Set the active button color
         switch (filterType) {
             case ALL:
-                resetButtonStates();
                 allButton.setBackgroundTintList(ColorStateList.valueOf(
                         ContextCompat.getColor(this, R.color.light_purple)));
                 filtered = new ArrayList<>(allEvents);
                 break;
 
             case ACTIVE:
-                // Active = event hasn't started yet
-                resetButtonStates();
+                // Active = event registration is open and event hasn't started yet
                 activeButton.setBackgroundTintList(ColorStateList.valueOf(
                         ContextCompat.getColor(this, R.color.light_purple)));
                 for (Event event : allEvents) {
-                    long eventTime = Event.getEventTimestamp(event);
-                    if (eventTime > currentTime) {
+                    if (event.getDate() != null && event.getDate().getTime() > currentTime) {
                         filtered.add(event);
                     }
                 }
                 break;
 
             case ONGOING:
-                // Ongoing = currently happening (within the event day/time)
-                resetButtonStates();
+                // Ongoing = event has started but not yet ended (using event date as the day of the event)
                 ongoingButton.setBackgroundTintList(ColorStateList.valueOf(
                         ContextCompat.getColor(this, R.color.light_purple)));
                 for (Event event : allEvents) {
-                    long eventTime = Event.getEventTimestamp(event);
-                    // Assuming event lasts for the day it's scheduled
-                    long eventEndTime = eventTime + (24 * 60 * 60 * 1000); // +24 hours
-                    if (eventTime <= currentTime && eventEndTime >= currentTime) {
-                        filtered.add(event);
+                    if (event.getDate() != null) {
+                        long eventTime = event.getDate().getTime();
+                        // Consider an event as ongoing for the entire day
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(event.getDate());
+                        cal.set(Calendar.HOUR_OF_DAY, 23);
+                        cal.set(Calendar.MINUTE, 59);
+                        cal.set(Calendar.SECOND, 59);
+                        long endOfDay = cal.getTimeInMillis();
+                        
+                        if (eventTime <= currentTime && currentTime <= endOfDay) {
+                            filtered.add(event);
+                        }
                     }
                 }
                 break;
 
             case CLOSED:
-                // Closed = event has ended
-                resetButtonStates();
+                // Closed = event has passed (after the event day)
                 closedButton.setBackgroundTintList(ColorStateList.valueOf(
                         ContextCompat.getColor(this, R.color.light_purple)));
                 for (Event event : allEvents) {
-                    long eventTime = Event.getEventTimestamp(event);
-                    long eventEndTime = eventTime + (24 * 60 * 60 * 1000); // +24 hours
-                    if (eventEndTime < currentTime) {
-                        filtered.add(event);
+                    if (event.getDate() != null) {
+                        // Consider event as closed if it's past the event day
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(event.getDate());
+                        cal.set(Calendar.HOUR_OF_DAY, 23);
+                        cal.set(Calendar.MINUTE, 59);
+                        cal.set(Calendar.SECOND, 59);
+                        long endOfDay = cal.getTimeInMillis();
+                        
+                        if (endOfDay < currentTime) {
+                            filtered.add(event);
+                        }
                     }
                 }
                 break;

@@ -56,12 +56,12 @@ public class CreateEventActivity extends AppCompatActivity {
     UserRepository userRepo = new UserRepository();
     EventRepository eventRepo = new EventRepository();
     Session session;
-    private boolean eventSaved = false;
+    boolean eventSaved = false;
 
     ImageUploader uploader;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
-    private String imageURL = "";
+    String imageURL = "";
     private final List<String> tags = new ArrayList<>();
     private LinearLayout tagContainer;
 
@@ -335,7 +335,7 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * Normalizes comma-separated tags into a unique, lowercase list for storage/search.
      */
-    private List<String> parseTags(String raw) {
+    List<String> parseTags(String raw) {
         LinkedHashSet<String> parsed = new LinkedHashSet<>();
         if (!TextUtils.isEmpty(raw)) {
             String[] pieces = raw.split(",");

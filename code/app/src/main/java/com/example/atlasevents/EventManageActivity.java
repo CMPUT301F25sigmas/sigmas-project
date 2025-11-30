@@ -24,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -141,6 +142,9 @@ public class EventManageActivity extends AppCompatActivity {
     /** Card view container for the lottery timer section. */
     private CardView lotteryTimerCard;
 
+    /** ScrollView containing the entire page content. */
+    private ScrollView mainScrollView;
+
     /** Local list holding entrants currently displayed. */
     private ArrayList<Entrant> entrantList;
 
@@ -252,6 +256,7 @@ public class EventManageActivity extends AppCompatActivity {
         lotteryProgressBar = findViewById(R.id.lotteryProgressBar);
         backButton = findViewById(R.id.backButton);
         downloadButton = findViewById(R.id.downloadButton);
+        mainScrollView = findViewById(R.id.main);
 
         entrantList = new ArrayList<>();
         downloadableList = new ArrayList<>();
@@ -492,6 +497,18 @@ public class EventManageActivity extends AppCompatActivity {
             entrantAdapter.setShowRemoveButton(showRemove);
             waitingListCard.setVisibility(View.VISIBLE);
             downloadButton.setVisibility(View.VISIBLE);
+            
+            // Scroll the page to show the list section
+            new Handler().postDelayed(() -> {
+                // Scroll the page (ScrollView) to show the list card
+                if (waitingListCard != null && mainScrollView != null) {
+                    waitingListCard.post(() -> {
+                        // Calculate the position of the card relative to the ScrollView content
+                        int scrollY = waitingListCard.getTop() - 100; // 100px offset from top
+                        mainScrollView.smoothScrollTo(0, Math.max(0, scrollY));
+                    });
+                }
+            }, 100);
         } else {
             entrantAdapter.setEntrants(new ArrayList<>());
             entrantAdapter.setShowRemoveButton(false);

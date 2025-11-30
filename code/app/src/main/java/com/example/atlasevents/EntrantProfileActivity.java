@@ -9,6 +9,7 @@ import android.widget.Toast;
 import com.example.atlasevents.EntrantBase;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity for displaying and editing entrant profile information.
@@ -132,11 +133,25 @@ public class EntrantProfileActivity extends EntrantBase {
      * </p>
      */
     private void saveChanges() {
+        String userName = nameEdit.getText().toString();
+        String userEmail = emailEdit.getText().toString();
+        String userPassword = passwordEdit.getText().toString();
+        String userPhone = phoneEdit.getText().toString();
+        InputValidator.ValidationResult nameRes  = InputValidator.validateName(userName);
+        InputValidator.ValidationResult emailRes = InputValidator.validateEmail(userEmail);
+        InputValidator.ValidationResult passRes  = InputValidator.validatePasswordOptional(userPassword);
+        InputValidator.ValidationResult phoneRes = InputValidator.validatePhone(userPhone, false);
+
+        if (!nameRes.isValid())  { nameEdit.setError(nameRes.errorMessage()); return;}
+        if (!emailRes.isValid()) { emailEdit.setError(emailRes.errorMessage());return;}
+        if (!phoneRes.isValid()) { phoneEdit.setError(phoneRes.errorMessage());return;}
+        if (!passRes.isValid())  { passwordEdit.setError(passRes.errorMessage());return;}
         Entrant newUser = new Entrant(
-                nameEdit.getText().toString(),
-                emailEdit.getText().toString(),
-                passwordEdit.getText().toString(),
-                phoneEdit.getText().toString());
+                userName,
+                userEmail,
+                userPassword,
+                userPhone);
+
 
         userRepository.setUser(originalEmail, newUser, status -> {
             if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {

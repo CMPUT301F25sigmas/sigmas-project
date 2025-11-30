@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -38,6 +39,7 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.atlasevents.utils.MapWarmUpManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -190,6 +192,7 @@ public class EventManageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_event);
+        MapWarmUpManager.warmUp(getApplicationContext());
 
         // Apply window insets for modern edge-to-edge layout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -329,10 +332,24 @@ public class EventManageActivity extends AppCompatActivity {
      * </p>
      */
     private void loadData() {
-        String eventId = getIntent().getSerializableExtra(EventKey).toString();
+        String eventId = getIntent().getStringExtra(EventKey);
+        if (eventId == null) {
+            Object extra = getIntent().getSerializableExtra(EventKey);
+            if (extra != null) {
+                eventId = extra.toString();
+            }
+        }
+
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(this, "Missing event", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Only fetch the event from Firebase; we don't rely on Event methods for lists
+        String finalEventId = eventId;
         db.collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -342,8 +359,16 @@ public class EventManageActivity extends AppCompatActivity {
                         return;
                     }
 
-                    currentEvent = snapshot.toObject(Event.class); // for other Event fields like name
+                    Event event = snapshot.toObject(Event.class); // for other Event fields like name
+                    if (event == null) {
+                        Toast.makeText(this, "Failed to parse event", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    currentEvent = event;
                     eventName = currentEvent.getEventName();
+                    MapWarmUpManager.cacheEntrantCoords(finalEventId, currentEvent.getEntrantCoords());
                     updateEventUI(currentEvent, snapshot);
                     updateLotteryUI(currentEvent);
                     startLotteryTimerIfNeeded(currentEvent);
@@ -359,29 +384,6 @@ public class EventManageActivity extends AppCompatActivity {
                 });
     }
 
-
-    /**
-     * Starts a periodic update for cooldown countdown if lottery is in cooldown
-     */
-    private void startCooldownCountdownIfNeeded(Event event) {
-        if (lotteryService.isInCooldownPeriod(event)) {
-            // Update UI every minute to refresh cooldown countdown
-            new CountDownTimer(Long.MAX_VALUE, 60000) { // Update every minute
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    if (currentEvent != null) {
-                        updateLotteryUI(currentEvent);
-                        startLotteryTimerIfNeeded(currentEvent);
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-                    // Timer runs indefinitely until canceled
-                }
-            }.start();
-        }
-    }
 
     /**
      * Updates the UI with event details.
@@ -557,10 +559,9 @@ public class EventManageActivity extends AppCompatActivity {
         int availableSlots = calculateAvailableSlots(event);
         int waitlistSize = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
         int acceptedCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
-
+        int pendingInvites = event.getInviteList() != null ? event.getInviteList().size() : 0;
         // NEW: Check cooldown period
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
-        long cooldownHoursRemaining = lotteryService.getCooldownHoursRemaining(event);
+
         String entrantLimit = String.valueOf(event.getEntrantLimit());
         if (entrantLimit.equals("-1")){ entrantLimit = "No limit";}
 
@@ -569,31 +570,26 @@ public class EventManageActivity extends AppCompatActivity {
                 "Event: %s\n" +
                         "Waitlist Limit: %s\n" +
                         "Accepted: %d\n" +
-                        "Available Slots: %d\n" +
+                        "Available Slots: %d\n"+
+                        "Pending Invites: %d\n"+
                         "Waitlist Size: %d\n" +
                         "Lottery Available: %s\n" +
-                        "Registration End: %s\n" +
-                        "Cooldown Active: %s" +
-                        (inCooldown ? "\nCooldown Ends In: %d hours" : ""),
+                        "Registration End: %s\n",
                 event.getEventName(),
                 entrantLimit,
                 acceptedCount,
                 availableSlots,
+                pendingInvites,
                 waitlistSize,
                 lotteryAvailable ? "Yes" : "No",
-                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set",
-                inCooldown ? "Yes" : "No",
-                cooldownHoursRemaining
+                event.getRegEndDate() != null ? event.getRegEndDate() : "Not set"
+
         );
 
         lotteryStatusText.setText(statusText);
 
         // NEW: Enhanced lottery button logic with cooldown
-        boolean canDrawLottery = lotteryAvailable &&
-                availableSlots > 0 &&
-                waitlistSize > 0 &&
-                !inCooldown;
-
+        boolean canDrawLottery = lotteryAvailable && availableSlots > 0 && waitlistSize > 0;
         drawLotteryButton.setEnabled(canDrawLottery);
         drawLotteryButton.setAlpha(canDrawLottery ? 1.0f : 0.6f);
 
@@ -601,8 +597,6 @@ public class EventManageActivity extends AppCompatActivity {
         if (!canDrawLottery) {
             if (!lotteryAvailable) {
                 drawLotteryButton.setText("Lottery Not Available");
-            } else if (inCooldown) {
-                drawLotteryButton.setText(String.format("Cooldown: %dh", cooldownHoursRemaining));
             } else if (availableSlots <= 0) {
                 drawLotteryButton.setText("Event Full");
             } else if (waitlistSize <= 0) {
@@ -614,32 +608,22 @@ public class EventManageActivity extends AppCompatActivity {
     }
 
     /**
-     * Starts the countdown timer if lottery is not yet available or in cooldown.
+     * Starts the countdown timer if lottery is not yet available.
      *
      * @param event The event to check
      */
     private void startLotteryTimerIfNeeded(Event event) {
         boolean lotteryAvailable = lotteryService.isLotteryAvailable(event);
-        boolean inCooldown = lotteryService.isInCooldownPeriod(event);
 
-        // Show timer if either registration period hasn't ended OR lottery is in cooldown
-        if (lotteryAvailable && !inCooldown) {
-            lotteryTimerCard.setVisibility(View.GONE);
-            return;
-        }
 
         long timeRemaining;
         String timerPrefix;
 
-        if (inCooldown) {
-            // Show cooldown countdown
-            timeRemaining = lotteryService.getCooldownHoursRemaining(event) * 60 * 60 * 1000;
-            timerPrefix = "Lottery cooldown: ";
-        } else {
+
             // Show registration period countdown
             timeRemaining = lotteryService.getTimeUntilLotteryAvailable(event);
             timerPrefix = "Lottery available in: ";
-        }
+
 
         if (timeRemaining > 0) {
             lotteryTimerCard.setVisibility(View.VISIBLE);
@@ -734,20 +718,33 @@ public class EventManageActivity extends AppCompatActivity {
 
         int availableSlots = calculateAvailableSlots(currentEvent);
         int waitlistSize = currentEvent.getWaitlist() != null ? currentEvent.getWaitlist().size() : 0;
-
-        String message = String.format(
-                "Draw lottery for '%s'?\n\n" +
-                        "Available slots: %d\n" +
-                        "Waitlist size: %d\n\n" +
-                        "Selected entrants will receive invitation notifications.\n\n" +
-                        "Note: Lottery will be locked for 24 hours after drawing.",
-                currentEvent.getEventName(), availableSlots, waitlistSize
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+        int totalToSelect = availableSlots + pendingInvites;
+        String message;
+        if (pendingInvites>0){message= String.format(
+                "Re-sample lottery for '%s'?\n\n" + "Available slots: %d\n" +
+                        "Pending invites: %d\n" + "Total to select: %d\n" +
+                        "Waitlist size: %d\n\n" + "This will:\n" +
+                        "• Cancel %d pending invitations\n" + "• Select %d new entrants from waitlist\n" +
+                        "• Accepted entrants (%d) remain unaffected",
+                currentEvent.getEventName(), availableSlots, pendingInvites, totalToSelect, waitlistSize,
+                pendingInvites, totalToSelect,
+                currentEvent.getAcceptedList() != null ? currentEvent.getAcceptedList().size() : 0
         );
+        } else {
+            message = String.format(
+                    "Draw lottery for '%s'?\n\n" +
+                            "Available slots: %d\n" +
+                            "Waitlist size: %d\n\n" +
+                            "Selected entrants will receive invitation notifications.",
+                    currentEvent.getEventName(), availableSlots, waitlistSize
+            );
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Draw Lottery")
+        builder.setTitle(pendingInvites > 0 ? "Re-sample Lottery" : "Draw Lottery")
                 .setMessage(message)
-                .setPositiveButton("Draw Lottery", (dialog, which) -> {
+                .setPositiveButton(pendingInvites > 0 ? "Re-sample" : "Draw Lottery", (dialog, which) -> {
                     executeLotteryDraw();
                 })
                 .setNegativeButton("Cancel", null)
@@ -762,7 +759,9 @@ public class EventManageActivity extends AppCompatActivity {
 
         setLotteryInProgress(true);
 
-        lotteryService.drawLottery(currentEvent.getId(), new LotteryService.LotteryCallback() {
+        int pendingInvites = currentEvent.getInviteList() != null ? currentEvent.getInviteList().size() : 0;
+
+        LotteryService.LotteryCallback lotteryCallback = new LotteryService.LotteryCallback() {
             @Override
             public void onLotteryCompleted(int entrantsSelected, String message) {
                 runOnUiThread(() -> {
@@ -781,7 +780,14 @@ public class EventManageActivity extends AppCompatActivity {
                     updateLotteryUI(currentEvent);
                 });
             }
-        });
+        };
+
+        // Use re-sampling if there are pending invites, otherwise use normal lottery
+        if (pendingInvites > 0) {
+            lotteryService.resampleLottery(currentEvent.getId(), lotteryCallback);
+        } else {
+            lotteryService.drawLottery(currentEvent.getId(), lotteryCallback);
+        }
     }
 
     /**
@@ -904,6 +910,7 @@ public class EventManageActivity extends AppCompatActivity {
      * Shows the event location on a map.
      */
     private void showEventMap() {
+        /*
         if (currentEvent == null || currentEvent.getAddress() == null) {
             Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
             return;
@@ -911,5 +918,13 @@ public class EventManageActivity extends AppCompatActivity {
 
         // Implement map display functionality
         Toast.makeText(this, "Map would open for: " + currentEvent.getAddress(), Toast.LENGTH_SHORT).show();
+                 */
+        if (currentEvent == null) {
+            return;
+        }
+
+        Intent intent = new Intent(this, ManageEventMapActivity.class);
+        intent.putExtra(ManageEventMapActivity.EXTRA_EVENT_ID, currentEvent.getId());
+        startActivity(intent);
     }
 }

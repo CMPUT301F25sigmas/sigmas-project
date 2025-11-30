@@ -6,13 +6,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.mindrot.jbcrypt.BCrypt;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity responsible for handling user authentication within the Atlas Events application.
@@ -39,7 +39,6 @@ public class SignInActivity extends AppCompatActivity {
     private EventRepository eventRepo;
     private Button signInbutton;
     private TextView signUpText;
-
     private Session session;
 
 
@@ -105,6 +104,10 @@ public class SignInActivity extends AppCompatActivity {
         signInbutton.setOnClickListener(view -> {
             String username = usernameField.getText().toString();
             String password = passwordField.getText().toString();
+            InputValidator.ValidationResult usernameRes =InputValidator.validateEmail(username);
+            InputValidator.ValidationResult passwordRes =InputValidator.validatePassword(password);
+            if (!usernameRes.isValid())  { usernameField.setError(usernameRes.errorMessage()); return;}
+            if (!passwordRes.isValid())  { passwordField.setError(passwordRes.errorMessage()); return;}
             //check email and pass in database
             userRepo.getUser(username,
                     user -> {

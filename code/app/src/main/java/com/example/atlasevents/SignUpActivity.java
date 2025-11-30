@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity for registering new users within the Atlas Events application.
@@ -37,6 +38,14 @@ public class SignUpActivity extends AppCompatActivity {
 
     private Session session;
 
+    UserRepository userRepo = new UserRepository();
+
+    // Package-private setter for testing
+    void setUserRepository(UserRepository repository) {
+        this.userRepo = repository;
+    }
+
+
     /**
      * Called when the activity is first created.
      * <p>
@@ -58,7 +67,6 @@ public class SignUpActivity extends AppCompatActivity {
         });
 
         session = new Session(this);
-        UserRepository userRepo = new UserRepository();
         Button createButton = findViewById(R.id.createButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         EditText name = findViewById(R.id.name);
@@ -69,15 +77,26 @@ public class SignUpActivity extends AppCompatActivity {
         CheckBox adminCheck = findViewById(R.id.adminCheckBox);
 
 
-        cancelButton.setOnClickListener(view ->{
-            finish();
-        });
+        cancelButton.setOnClickListener(view ->{finish();});
+
 
         createButton.setOnClickListener(view -> {
             String userName = name.getText().toString();
             String userEmail = email.getText().toString();
             String userPassword = password.getText().toString();
             String userPhone = phone.getText().toString();
+
+            InputValidator.ValidationResult nameRes  = InputValidator.validateName(userName);
+            InputValidator.ValidationResult emailRes = InputValidator.validateEmail(userEmail);
+            InputValidator.ValidationResult passRes  = InputValidator.validatePassword(userPassword);
+            InputValidator.ValidationResult phoneRes = InputValidator.validatePhone(userPhone, false);
+
+            if (!nameRes.isValid())  { name.setError(nameRes.errorMessage()); return;}
+            if (!emailRes.isValid()) { email.setError(emailRes.errorMessage());return;}
+            if (!phoneRes.isValid()) { phone.setError(phoneRes.errorMessage());return;}
+            if (!passRes.isValid())  { password.setError(passRes.errorMessage());return;}
+
+
 
             if(adminCheck.isChecked()) {
                 Admin newUser = new Admin(userName, userEmail, userPassword, userPhone);
@@ -123,6 +142,6 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
 
-
     }
+
 }

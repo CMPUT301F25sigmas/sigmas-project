@@ -1,9 +1,12 @@
 package com.example.atlasevents;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -18,8 +21,10 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.NotificationManager;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /**
  * Activity displaying the entrant's dashboard with a list of available events.
@@ -61,6 +66,7 @@ public class EntrantDashboardActivity extends EntrantBase {
 
     private Button currentButton, pastButton;
     private ArrayList<Event> userEvents = new ArrayList<>();
+    private FirebaseFirestore db;
 
 
 
@@ -69,7 +75,8 @@ public class EntrantDashboardActivity extends EntrantBase {
         super.onCreate(savedInstanceState);
         setContentLayout(R.layout.entrant_dashboard);
         setActiveNavItem(R.id.events_icon_card);
-
+        // Initialize FirebaseFirestore
+        db = FirebaseFirestore.getInstance();
         eventsContainer = findViewById(R.id.events_container_organizer);
         eventRepository = new EventRepository();
         session = new Session(this);
@@ -91,6 +98,14 @@ public class EntrantDashboardActivity extends EntrantBase {
 
         emptyState.setVisibility(View.GONE);
         eventsScrollView.setVisibility(View.GONE);
+        LinearLayout invitationsIcon = findViewById(R.id.invitations_icon);
+        invitationsIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(EntrantDashboardActivity.this, EventInvitesActivity.class);
+            startActivity(intent);
+        });
+
+        // Update badge count for invitations
+        updateInvitationsBadge();
 
         loadEventsFromFirebase();
     }
@@ -102,6 +117,7 @@ public class EntrantDashboardActivity extends EntrantBase {
     protected void onResume() {
         super.onResume();
         NotificationManager.startListening(this, session.getUserEmail());
+        updateInvitationsBadge();
         loadEventsFromFirebase();
     }
     /***
@@ -186,44 +202,101 @@ public class EntrantDashboardActivity extends EntrantBase {
     }
 
     /**
+     * Updates the invitations badge count
+     */
+    private void updateInvitationsBadge() {
+        String userEmail = session.getUserEmail();
+        if (userEmail == null) return;
+
+        TextView invitationsBadge = findViewById(R.id.invitations_badge);
+
+        db.collection("events")
+                .whereArrayContains("inviteList", userEmail)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int inviteCount = queryDocumentSnapshots.size();
+                    if (inviteCount > 0) {
+                        invitationsBadge.setText(String.valueOf(inviteCount));
+                        invitationsBadge.setVisibility(View.VISIBLE);
+                    } else {
+                        invitationsBadge.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error counting invitations", e);
+                    invitationsBadge.setVisibility(View.GONE);
+                });
+    }
+
+
+    /**
      * Filters the list of events based on the current button state.
      *
-     * @param showActive
+     * @param showCurrent shows current status
      * @see #displayEvents(ArrayList)
      */
-    private void filterEvents(boolean showActive) {
+    private void filterEvents(boolean showCurrent) {
         long currentTime = System.currentTimeMillis();
         ArrayList<Event> filtered = new ArrayList<>();
 
-        // Reset both button UI states here (no helpers)
+        // Reset both button UI states
         currentButton.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(this, R.color.background_grey)));
         pastButton.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(this, R.color.background_grey)));
 
-        if (showActive) {
-            // Highlight active button
+        if (showCurrent) {
+            // Highlight current events button
             currentButton.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this, R.color.light_purple)));
 
-            // Condition: Future events = Active
+            // Current events: today's events and future events
             for (Event event : userEvents) {
-                long eventTime = Event.getEventTimestamp(event);
-                if (eventTime > currentTime) {
-                    filtered.add(event);
+                if (event.getDate() != null) {
+                    long eventTime = event.getDate().getTime();
+                    
+                    // For current events, include today's events and future events
+                    if (eventTime >= currentTime) {
+                        filtered.add(event);
+                    } else {
+                        // Check if it's today's event
+                        Calendar eventCal = Calendar.getInstance();
+                        eventCal.setTime(event.getDate());
+                        
+                        Calendar todayCal = Calendar.getInstance();
+                        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                        todayCal.set(Calendar.MINUTE, 0);
+                        todayCal.set(Calendar.SECOND, 0);
+                        todayCal.set(Calendar.MILLISECOND, 0);
+                        
+                        Calendar tomorrowCal = (Calendar) todayCal.clone();
+                        tomorrowCal.add(Calendar.DAY_OF_YEAR, 1);
+                        
+                        if (eventTime >= todayCal.getTimeInMillis() && 
+                            eventTime < tomorrowCal.getTimeInMillis()) {
+                            filtered.add(event);
+                        }
+                    }
                 }
             }
         } else {
-            // Highlight closed button
+            // Highlight past events button
             pastButton.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this, R.color.light_purple)));
 
-            // Condition: Already expired = Closed
+            // Past events: events before today
             for (Event event : userEvents) {
-                long eventTime = Event.getEventTimestamp(event);
-                long eventEnd = eventTime + 24 * 60 * 60 * 1000; // 24 hours
-                if (eventEnd < currentTime) {
-                    filtered.add(event);
+                if (event.getDate() != null) {
+                    // Get start of today
+                    Calendar todayCal = Calendar.getInstance();
+                    todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                    todayCal.set(Calendar.MINUTE, 0);
+                    todayCal.set(Calendar.SECOND, 0);
+                    todayCal.set(Calendar.MILLISECOND, 0);
+                    
+                    if (event.getDate().before(todayCal.getTime())) {
+                        filtered.add(event);
+                    }
                 }
             }
         }

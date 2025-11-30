@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.atlasevents.data.UserRepository;
+import com.example.atlasevents.utils.InputValidator;
 
 /**
  * Activity for managing an organizer's profile information.
@@ -86,7 +87,7 @@ public class OrganizerProfileActivity extends OrganizerBase {
     /**
      * Saves any modifications made by the organizer to Firebase.
      * <p>
-     * Updates the user's data through {@link UserRepository#setUser(String, Object, UserRepository.OnUserUpdatedListener)}
+     * Updates the user's data through {@link UserRepository#}
      * and provides user feedback via Toast messages.
      * </p>
      * <p>
@@ -94,12 +95,24 @@ public class OrganizerProfileActivity extends OrganizerBase {
      * </p>
      */
     private void saveChanges() {
-        Organizer newUser = new Organizer(
-                nameEdit.getText().toString(),
-                emailEdit.getText().toString(),
-                passwordEdit.getText().toString(),
-                phoneEdit.getText().toString());
+        String userName = nameEdit.getText().toString();
+        String userEmail = emailEdit.getText().toString();
+        String userPassword = passwordEdit.getText().toString();
+        String userPhone = phoneEdit.getText().toString();
+        InputValidator.ValidationResult nameRes  = InputValidator.validateName(userName);
+        InputValidator.ValidationResult emailRes = InputValidator.validateEmail(userEmail);
+        InputValidator.ValidationResult passRes  = InputValidator.validatePasswordOptional(userPassword);
+        InputValidator.ValidationResult phoneRes = InputValidator.validatePhone(userPhone, false);
 
+        if (!nameRes.isValid())  { nameEdit.setError(nameRes.errorMessage()); return;}
+        if (!emailRes.isValid()) { emailEdit.setError(emailRes.errorMessage());return;}
+        if (!phoneRes.isValid()) { phoneEdit.setError(phoneRes.errorMessage());return;}
+        if (!passRes.isValid())  { passwordEdit.setError(passRes.errorMessage());return;}
+        Organizer newUser = new Organizer(
+                userName,
+                userEmail,
+                userPassword,
+                userPhone);
         userRepository.setUser(originalEmail, newUser, status -> {
             if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
                 Toast.makeText(this, "Changes saved successfully!", Toast.LENGTH_SHORT).show();

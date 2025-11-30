@@ -1,21 +1,19 @@
 package com.example.atlasevents;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
-import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+
+import java.util.Objects;
 
 /**
  * Activity for displaying detailed information about a user.
@@ -40,7 +38,7 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
     public static final String UserKey = "com.example.atlasevents.USER";
 
     private UserRepository userRepository;
-    private TextView pageTitle, userNameTextView, userEmailTextView, userPhoneTextView;
+    private TextView userNameTextView, userEmailTextView, userPhoneTextView;
     private ImageView backArrow, deleteButton;
 
     /**
@@ -77,7 +75,6 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
 
         userRepository = new UserRepository();
 
-        pageTitle = findViewById(R.id.page_title);
         userNameTextView = findViewById(R.id.userName);
         userEmailTextView = findViewById(R.id.userEmail);
         userPhoneTextView = findViewById(R.id.userPhone);
@@ -85,7 +82,7 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
         backArrow = findViewById(R.id.back_arrow);
         deleteButton = findViewById(R.id.delete_icon);
 
-        userRepository.getUser(getIntent().getSerializableExtra(UserKey).toString(), this::displayUserDetails);
+        userRepository.getUser(Objects.requireNonNull(getIntent().getSerializableExtra(UserKey)).toString(), this::displayUserDetails);
         setupListeners();
     }
 
@@ -98,7 +95,6 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
      * @param user The {@link User} object containing user information.
      */
     private void displayUserDetails(User user) {
-        pageTitle.setText(user.getUserType());
         userNameTextView.setText(user.getName());
         userEmailTextView.setText(user.getEmail());
         if(!user.getPhoneNumber().isEmpty()){
@@ -114,8 +110,6 @@ public class UserDetailsAdminActivity extends AppCompatActivity {
      */
     private void setupListeners() {
         backArrow.setOnClickListener(view -> finish());
-        deleteButton.setOnClickListener(view -> {
-            userRepository.deleteUser(getIntent().getSerializableExtra(UserKey).toString());
-        });
+        deleteButton.setOnClickListener(view -> userRepository.deleteUser(Objects.requireNonNull(getIntent().getSerializableExtra(UserKey)).toString()));
     }
 }

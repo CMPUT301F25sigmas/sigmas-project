@@ -1,12 +1,20 @@
 package com.example.atlasevents;
 
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -24,6 +32,11 @@ import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
 import com.example.atlasevents.utils.TimePickerHelper;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Activity for editing existing event details.
@@ -130,6 +143,11 @@ public class EditEventActivity extends AppCompatActivity {
     private EditText slotsEditText;
 
     /**
+     * Container for displaying tag chips.
+     */
+    private LinearLayout tagContainer;
+
+    /**
      * Button to save and update the event.
      */
     private Button updateButton;
@@ -155,6 +173,8 @@ public class EditEventActivity extends AppCompatActivity {
      * Empty string if the event had no image.
      */
     private String oldImageURL = "";
+
+    private final List<String> tags = new ArrayList<>();
 
     /**
      * The date picker to pick the start date of the event
@@ -234,6 +254,10 @@ public class EditEventActivity extends AppCompatActivity {
         entrantLimitEditText = findViewById(R.id.maxEntrantsEditText);
         slotsEditText = findViewById(R.id.slotsEditText);
         updateButton = findViewById(R.id.publishEventButton);
+        tagContainer = findViewById(R.id.tagContainer);
+        Button editTagsButton = findViewById(R.id.editTagsButton);
+        editTagsButton.setOnClickListener(v -> showTagEditor());
+        renderTags();
         updateButton.setText("Update Event");
 
         entrantLimitEditText.setVisibility(View.GONE);
@@ -351,6 +375,10 @@ public class EditEventActivity extends AppCompatActivity {
                     loadImage(oldImageURL);
                     imageDeleteButton.setVisibility(View.VISIBLE);
                 }
+
+                tags.clear();
+                tags.addAll(parseTags(TextUtils.join(", ", event.getTags())));
+                renderTags();
             }
 
             @Override
@@ -385,6 +413,7 @@ public class EditEventActivity extends AppCompatActivity {
         currentEvent.setDescription(descriptionEditText.getText().toString());
         currentEvent.setRequireGeolocation(requireGeoLocationSwitch.isChecked());
         currentEvent.setSlots(Integer.parseInt(slotsEditText.getText().toString()));
+        currentEvent.setTags(tags);
 
         if (limitEntrantsSwitch.isChecked()) {
             String limit = entrantLimitEditText.getText().toString();
@@ -443,6 +472,95 @@ public class EditEventActivity extends AppCompatActivity {
             valid = false;
         }
         return valid;
+    }
+
+    /**
+     * Opens a dialog that lets organizers enter comma-separated tags for the event.
+     */
+    private void showTagEditor() {
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("Enter tags separated by commas");
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(75) });
+        if (!tags.isEmpty()) {
+            input.setText(TextUtils.join(", ", tags));
+            input.setSelection(input.getText().length());
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit tags")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    List<String> parsed = parseTags(input.getText().toString());
+                    tags.clear();
+                    tags.addAll(parsed);
+                    renderTags();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Renders chip-style labels for each tag or shows a placeholder if none exist.
+     */
+    private void renderTags() {
+        if (tagContainer == null) {
+            return;
+        }
+        tagContainer.removeAllViews();
+        if (tags.isEmpty()) {
+            TextView placeholder = new TextView(this);
+            placeholder.setText("No tags added");
+            placeholder.setTextColor(Color.parseColor("#494949"));
+            tagContainer.addView(placeholder);
+            return;
+        }
+
+        int horizontalPadding = toPx(12);
+        int verticalPadding = toPx(6);
+        int chipRadius = toPx(18);
+
+        for (String tag : tags) {
+            TextView chip = new TextView(this);
+            chip.setText(tag);
+            chip.setTextColor(Color.parseColor("#494949"));
+            chip.setPadding(horizontalPadding * 2, verticalPadding, horizontalPadding * 2, verticalPadding);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.parseColor("#E8DEF8"));
+            background.setCornerRadius(chipRadius);
+            chip.setBackground(background);
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, toPx(8), 0);
+            chip.setLayoutParams(params);
+
+            tagContainer.addView(chip);
+        }
+    }
+
+    /**
+     * Normalizes comma-separated tags into a unique, lowercase list for storage/search.
+     */
+    private List<String> parseTags(String raw) {
+        LinkedHashSet<String> parsed = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] pieces = raw.split(",");
+            for (String piece : pieces) {
+                String cleaned = piece.trim().toLowerCase(Locale.ROOT);
+                if (!cleaned.isEmpty()) {
+                    parsed.add(cleaned);
+                }
+            }
+        }
+        return new ArrayList<>(parsed);
+    }
+
+    private int toPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     /**

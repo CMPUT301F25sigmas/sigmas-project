@@ -419,83 +419,14 @@ public class EventManageActivity extends AppCompatActivity {
      */
     private void updateCountDisplays(Event event, DocumentSnapshot snapshot) {
         int waitlistCount = event.getWaitlist() != null ? event.getWaitlist().size() : 0;
-
-        int chosenCount = 0;
-        if (snapshot.contains("inviteList")) {
-            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
-            chosenCount = mapToEntrantList(inviteMap).size();
-        }
-
-        int cancelledCount = 0;
-        if (snapshot.contains("declinedList")) {
-            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
-            cancelledCount = mapToEntrantList(declinedMap).size();
-        }
-
-        int finalEnrolledCount = 0;
-        if (snapshot.contains("acceptedList")) {
-            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
-            finalEnrolledCount = mapToEntrantList(acceptedMap).size();
-        }
+        int chosenCount = event.getInviteList() != null ? event.getInviteList().size() : 0;
+        int cancelledCount = event.getDeclinedList() != null ? event.getDeclinedList().size() : 0;
+        int finalEnrolledCount = event.getAcceptedList() != null ? event.getAcceptedList().size() : 0;
 
         waitlistCountTextView.setText(String.valueOf(waitlistCount));
         chosenCountTextView.setText(String.valueOf(chosenCount));
         cancelledCountTextView.setText(String.valueOf(cancelledCount));
         finalEnrolledCountTextView.setText(String.valueOf(finalEnrolledCount));
-    }
-
-
-
-    private int countEntrantsInMap(Map<String, Object> map) {
-        if (map == null) return 0;
-        int count = 0;
-        for (Object o : map.values()) {
-            if (o instanceof Map) {
-                Map<?, ?> entrantMap = (Map<?, ?>) o;
-                // Make sure it has an email field, which is required for a valid entrant
-                if (entrantMap.get("email") != null) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-
-    private EntrantList mapToEntrantList(Map<String, Object> map) {
-        EntrantList list = new EntrantList();
-        if (map == null) return list;
-
-        for (Object o : map.values()) {
-            if (o instanceof Map) {
-                Map<String, Object> entrantMap = (Map<String, Object>) o;
-                Entrant entrant = new Entrant(
-                        (String) entrantMap.get("name"),
-                        (String) entrantMap.get("email"),
-                        (String) entrantMap.get("phoneNumber"),
-                        (String) entrantMap.get("userType")
-                );
-                list.addEntrant(entrant);
-            }
-        }
-        return list;
-    }
-    private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
-        Map<String, Object> map = new HashMap<>();
-        for (int i = 0; i < entrantList.size(); i++) {
-            Entrant entrant = entrantList.getEntrant(i);
-            if (entrant != null && entrant.getEmail() != null) {
-                Map<String, Object> entrantMap = new HashMap<>();
-                entrantMap.put("name", entrant.getName());
-                entrantMap.put("email", entrant.getEmail());
-                entrantMap.put("phoneNumber", entrant.getPhoneNumber());
-                entrantMap.put("userType", entrant.getUserType());
-                // Add other entrant fields as needed
-
-                map.put(entrant.getEmail(), entrantMap);
-            }
-        }
-        return map;
     }
 
 
@@ -508,23 +439,25 @@ public class EventManageActivity extends AppCompatActivity {
         String listTitle = "";
         ArrayList<Entrant> listToDisplay = new ArrayList<>();
 
-        if (chosenVisible.get() && snapshot.contains("inviteList")) {
+        if (chosenVisible.get()) {
             listTitle = "Chosen Entrants";
-            Map<String, Object> inviteMap = (Map<String, Object>) snapshot.get("inviteList");
-            listToDisplay = mapToEntrantList(inviteMap).getWaitList();
+            if (event.getInviteList() != null) {
+                listToDisplay = event.getInviteList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (cancelledVisible.get() && snapshot.contains("declinedList")) {
+        } else if (cancelledVisible.get()) {
             listTitle = "Cancelled Entrants";
-            Map<String, Object> declinedMap = (Map<String, Object>) snapshot.get("declinedList");
-            listToDisplay = mapToEntrantList(declinedMap).getWaitList();
+            if (event.getDeclinedList() != null) {
+                listToDisplay = event.getDeclinedList().getWaitList();
+            }
             downloadableList = listToDisplay;
-        } else if (enrolledVisible.get() && snapshot.contains("acceptedList")) {
+        } else if (enrolledVisible.get()) {
             listTitle = "Enrolled Entrants";
-            Map<String, Object> acceptedMap = (Map<String, Object>) snapshot.get("acceptedList");
-            listToDisplay = mapToEntrantList(acceptedMap).getWaitList();
+            if (event.getAcceptedList() != null) {
+                listToDisplay = event.getAcceptedList().getWaitList();
+            }
             downloadableList = listToDisplay;
         } else if (waitlistVisible.get()) {
-            // Use Event's method for waitlist
             listTitle = "Waiting List";
             if (event.getWaitlist() != null) {
                 listToDisplay = event.getWaitlist().getWaitList();

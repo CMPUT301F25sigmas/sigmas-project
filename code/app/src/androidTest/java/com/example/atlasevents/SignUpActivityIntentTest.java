@@ -8,32 +8,24 @@ import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
-import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 
 // For Espresso view matchers and actions
-import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.hasErrorText;
 
 // For root matchers (Toast detection)
-import static androidx.test.espresso.matcher.RootMatchers.withDecorView;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.example.atlasevents.data.FakeUserRepository;
 
 import org.junit.After;
 import org.junit.Before;
@@ -216,7 +208,7 @@ public class SignUpActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        FakeUserRepository fakeRepo = new FakeUserRepository();
+        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {

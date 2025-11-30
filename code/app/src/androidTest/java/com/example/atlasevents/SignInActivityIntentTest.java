@@ -8,33 +8,25 @@ import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
-import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 
 // For Espresso view matchers and actions
-import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.hasErrorText;
 
 // For root matchers (Toast detection)
-import static androidx.test.espresso.matcher.RootMatchers.isPlatformPopup;
-import static androidx.test.espresso.matcher.RootMatchers.withDecorView;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.example.atlasevents.data.FakeUserRepository;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,7 +35,7 @@ import org.junit.runner.RunWith;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+
 import android.widget.EditText;
 import android.view.View;
 import org.hamcrest.Description;
@@ -108,7 +100,19 @@ public class SignInActivityIntentTest {
             }
         };
     }
+    @Test
+    public void testJoinNowButton(){
+        // Launch SignInActivity
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SignInActivity.class);
+        ActivityScenario<SignInActivity> scenario = ActivityScenario.launch(intent);
 
+        onView(withId(R.id.joinNow)).perform(click());
+
+        intended(hasComponent(SignUpActivity.class.getName()));
+
+
+
+    }
     @Test
     public void testSignInAndNavigatesHome() throws InterruptedException {
         // Launch SignInActivity
@@ -117,7 +121,7 @@ public class SignInActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        FakeUserRepository fakeRepo = new FakeUserRepository();
+        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {
@@ -171,7 +175,7 @@ public class SignInActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        FakeUserRepository fakeRepo = new FakeUserRepository();
+        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {
@@ -210,7 +214,7 @@ public class SignInActivityIntentTest {
 
         // Inject FakeUserRepository
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        FakeUserRepository fakeRepo = new FakeUserRepository();
+        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
         
         // Store decor view for alternative approach
         final View[] decorView = new View[1];

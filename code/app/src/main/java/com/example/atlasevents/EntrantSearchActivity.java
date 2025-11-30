@@ -24,7 +24,6 @@ public class EntrantSearchActivity extends EntrantBase {
 
     private static final long SEARCH_DEBOUNCE_MS = 350L;
 
-    private SearchView searchView;
     private RecyclerView eventsRecyclerView;
     private LinearLayout emptyState;
     private EventCardAdapter adapter;
@@ -42,7 +41,7 @@ public class EntrantSearchActivity extends EntrantBase {
         setContentLayout(R.layout.search_page);
         setActiveNavItem(R.id.search_icon_card);
 
-        searchView = findViewById(R.id.search_view);
+        SearchView searchView = findViewById(R.id.search_view);
         eventsRecyclerView = findViewById(R.id.events_recycler_view);
         emptyState = findViewById(R.id.empty_view_entrant);
         currentUserEmail = session != null ? session.getUserEmail() : null;
@@ -94,7 +93,7 @@ public class EntrantSearchActivity extends EntrantBase {
      * Enforces a two-keystroke threshold between Firestore calls while still debouncing typing.
      */
     private void triggerSearch(String rawQuery) {
-        String query = rawQuery == null ? "" : rawQuery.trim();
+        String query = rawQuery == null ? "" : rawQuery.trim().toLowerCase();
         if (query.isEmpty()) {
             lastRequestedQuery = "";
             lastRequestedLength = 0;
@@ -170,8 +169,7 @@ public class EntrantSearchActivity extends EntrantBase {
             String organizerEmail = event.getOrganizer() != null
                     ? event.getOrganizer().getEmail()
                     : null;
-            if (organizerEmail != null && currentUserEmail != null
-                    && organizerEmail.equalsIgnoreCase(currentUserEmail)) {
+            if (organizerEmail != null && organizerEmail.equalsIgnoreCase(currentUserEmail)) {
                 continue;
             }
             filtered.add(event);

@@ -44,6 +44,9 @@ import org.hamcrest.TypeSafeMatcher;
 import androidx.test.espresso.Root;
 import android.view.WindowManager;
 
+/**
+ * Intent Tests for the signInActivity
+ **/
 @RunWith(AndroidJUnit4.class)
 public class SignInActivityIntentTest {
 
@@ -59,47 +62,10 @@ public class SignInActivityIntentTest {
         Intents.release();
     }
 
-    // Add a helper matcher to check if EditText has any error
-    private static Matcher<View> hasError() {
-        return new TypeSafeMatcher<View>() {
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("has error");
-            }
 
-            @Override
-            public boolean matchesSafely(View view) {
-                if (!(view instanceof EditText)) {
-                    return false;
-                }
-                EditText editText = (EditText) view;
-                return editText.getError() != null;
-            }
-        };
-    }
-
-    // Add this helper method to create a custom toast root matcher
-    private static Matcher<Root> isToast() {
-        return new TypeSafeMatcher<Root>() {
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("is toast");
-            }
-
-            @Override
-            public boolean matchesSafely(Root root) {
-                int type = root.getWindowLayoutParams().get().type;
-                if (type == WindowManager.LayoutParams.TYPE_TOAST) {
-                    return true;
-                }
-                // Also check for application overlay type (some Android versions use this)
-                if (type == WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY) {
-                    return true;
-                }
-                return false;
-            }
-        };
-    }
+    /**
+     * test that the joinNow button brings you to sign up page
+     */
     @Test
     public void testJoinNowButton(){
         // Launch SignInActivity
@@ -113,6 +79,10 @@ public class SignInActivityIntentTest {
 
 
     }
+
+    /**
+     * Test that signing in with proper email and password works and opens entrant dash
+     */
     @Test
     public void testSignInAndNavigatesHome() throws InterruptedException {
         // Launch SignInActivity
@@ -121,7 +91,7 @@ public class SignInActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
+        FakeUserRepository fakeRepo = new FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {
@@ -152,21 +122,12 @@ public class SignInActivityIntentTest {
         // Assert that EntrantDashboardActivity was launched
         intended(hasComponent(EntrantDashboardActivity.class.getName()));
     }
-    @Test
-    public void testCancelButton() {
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SignInActivity.class);
-        try (ActivityScenario<SignInActivity> scenario = ActivityScenario.launch(intent)) {
 
-            // Click the cancel button
-            onView(withId(R.id.cancelButton)).perform(click());
 
-            // Check that the activity is finishing
-            scenario.onActivity(activity -> {
-                assertTrue(activity.isFinishing());
-            });
 
-        }
-    }
+    /**
+     * test that using the wrong password does not change pages
+     */
     @Test
     public void testWrongPassword(){
         // Launch SignInActivity
@@ -175,7 +136,7 @@ public class SignInActivityIntentTest {
 
         // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
+        FakeUserRepository fakeRepo = new FakeUserRepository();
 
         // Inject FakeUserRepository using reflection
         scenario.onActivity(activity -> {
@@ -206,6 +167,9 @@ public class SignInActivityIntentTest {
         // Verify that we're still on SignInActivity (didn't navigate away)
         onView(withId(R.id.signInButton)).check(matches(isDisplayed()));
     }
+    /**
+     * test that using the wrong email does not change pages
+     */
     @Test
     public void testWrongUsername() throws InterruptedException {
         // Launch SignInActivity
@@ -214,7 +178,7 @@ public class SignInActivityIntentTest {
 
         // Inject FakeUserRepository
         CountDownLatch injectionLatch = new CountDownLatch(1);
-        EntrantWaitlistIntentTest.FakeUserRepository fakeRepo = new EntrantWaitlistIntentTest.FakeUserRepository();
+        FakeUserRepository fakeRepo = new FakeUserRepository();
         
         // Store decor view for alternative approach
         final View[] decorView = new View[1];

@@ -40,7 +40,7 @@ public class LotteryInstrumentedTest {
         testEvent = new Event();
         testEvent.setId(TEST_EVENT_ID);
         testEvent.setEventName(TEST_EVENT_NAME);
-        testEvent.setEntrantLimit(5);
+        testEvent.setSlots(5);
 
         Organizer organizer = new Organizer();
         organizer.setEmail("organizer@test.com");
@@ -76,9 +76,17 @@ public class LotteryInstrumentedTest {
         cal.add(Calendar.DAY_OF_YEAR, -1);
         testEvent.setRegEndDate(cal.getTime());
 
+        // Debug: Check what values we have
+        System.out.println("DEBUG: Event slots: " + testEvent.getSlots());
+        System.out.println("DEBUG: Event entrantLimit: " + testEvent.getEntrantLimit());
+        System.out.println("DEBUG: Registration end date: " + testEvent.getRegEndDate());
+
         // Act
         boolean available = lotteryService.isLotteryAvailable(testEvent);
         int slots = lotteryService.calculateAvailableSlots(testEvent);
+
+        System.out.println("DEBUG: Lottery available: " + available);
+        System.out.println("DEBUG: Calculated slots: " + slots);
 
         // Assert
         assertTrue("Lottery should be available after registration end date", available);
@@ -90,16 +98,21 @@ public class LotteryInstrumentedTest {
      */
     @Test
     public void testEventObject_CreationAndManipulation() {
-        // Arrange
-        testEvent.setEntrantLimit(10);
+        // Arrange - Set both to see which one works
+        testEvent.setSlots(10);
+        // testEvent.setEntrantLimit(10);
 
-        // Act
-        int limit = testEvent.getEntrantLimit();
+        // Act - Try both getters
+        int slots = testEvent.getSlots();
+        // int limit = testEvent.getEntrantLimit();
         String name = testEvent.getEventName();
         String id = testEvent.getId();
 
         // Assert
-        assertEquals("Event limit should be set correctly", 10, limit);
+        System.out.println("DEBUG: Event slots value: " + slots);
+        // System.out.println("DEBUG: Event entrantLimit value: " + limit);
+
+        assertEquals("Event slots should be set correctly", 10, slots);
         assertEquals("Event name should be set correctly", TEST_EVENT_NAME, name);
         assertEquals("Event ID should be set correctly", TEST_EVENT_ID, id);
     }

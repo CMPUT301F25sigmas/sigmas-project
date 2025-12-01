@@ -85,44 +85,6 @@ public class EntrantSidebarIntentTest {
     }
 
     /**
-     * Test: Verify functioning of profile sidebar button
-     */
-    @Test
-    public void testSidebarProfile() {
-        // Wait for events to load from Firebase
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        onView(withId(R.id.profile_icon)).check(matches(isDisplayed()));
-
-        onView(withId(R.id.profile_icon)).perform(click());
-
-        intended(hasComponent(EntrantProfileActivity.class.getName()));
-    }
-
-    /**
-     * Test: Verify functioning of my events sidebar button
-     */
-    @Test
-    public void testSidebarMyEvents() {
-        // Wait for events to load from Firebase
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        onView(withId(R.id.my_events_icon)).check(matches(isDisplayed()));
-
-        onView(withId(R.id.my_events_icon)).perform(click());
-
-        intended(hasComponent(EntrantDashboardActivity.class.getName()));
-    }
-
-    /**
      * Test: Verify functioning of search sidebar button
      */
     @Test

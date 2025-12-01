@@ -10,6 +10,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -220,8 +221,18 @@ public class EventRepository {
                             Map<String, Object> inviteMap =
                                     (Map<String, Object>) document.get("inviteList");
 
-                            if (inviteMap != null && inviteMap.containsKey(entrantEmail)) {
-                                matches = true;
+                            if (inviteMap != null && inviteMap.containsKey("allEntrants")) {
+                                List<Map<String, Object>> allEntrants =
+                                        (List<Map<String, Object>>) inviteMap.get("allEntrants");
+
+                                if (allEntrants != null) {
+                                    for (Map<String, Object> entrant : allEntrants) {
+                                        if (entrantEmail.equals(entrant.get("email"))) {
+                                            matches = true;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -229,8 +240,18 @@ public class EventRepository {
                             Map<String, Object> acceptedMap =
                                     (Map<String, Object>) document.get("acceptedList");
 
-                            if (acceptedMap != null && acceptedMap.containsKey(entrantEmail)) {
-                                matches = true;
+                            if (acceptedMap != null && acceptedMap.containsKey("allEntrants")) {
+                                List<Map<String, Object>> allEntrants =
+                                        (List<Map<String, Object>>) acceptedMap.get("allEntrants");
+
+                                if (allEntrants != null) {
+                                    for (Map<String, Object> entrant : allEntrants) {
+                                        if (entrantEmail.equals(entrant.get("email"))) {
+                                            matches = true;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         }
 

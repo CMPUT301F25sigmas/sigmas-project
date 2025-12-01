@@ -245,6 +245,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
 
 
     void filterEvents(FilterType filterType) {
+        emptyStateFiltered.setVisibility(View.GONE);
         ArrayList<Event> filtered = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
 

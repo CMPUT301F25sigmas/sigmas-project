@@ -421,6 +421,8 @@ public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants,
         EditText dateEditText = findViewById(R.id.dateEditText);
         EditText timeEditText = findViewById(R.id.timeEditText);
         EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+        EditText locationEditText = findViewById(R.id.locEditText);
+        String address = locationEditText.getText().toString().trim();
 
         // Clear previous errors
         name.setError(null);

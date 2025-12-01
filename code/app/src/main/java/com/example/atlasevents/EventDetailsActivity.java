@@ -299,8 +299,20 @@ public class EventDetailsActivity extends AppCompatActivity implements OnMapRead
     private void updateWaitlistButtons() {
         if (currentEvent == null || currentEntrant == null) return;
         boolean inWaitlist = currentEvent.getWaitlist().containsEntrant(currentEntrant);
+        boolean inAcceptedList = currentEvent.getAcceptedList().containsEntrant(currentEntrant);
+        boolean inInvitedList = currentEvent.getInviteList().containsEntrant(currentEntrant);
 
-        if (inWaitlist) {
+        if (inAcceptedList){
+            joinWaitlistButton.setVisibility(View.GONE);
+            leaveWaitlistButton.setVisibility(View.GONE);
+            findViewById(R.id.acceptedWaitlistButton).setVisibility(View.VISIBLE);
+        }
+        else if (inInvitedList){
+            joinWaitlistButton.setVisibility(View.GONE);
+            leaveWaitlistButton.setVisibility(View.GONE);
+            findViewById(R.id.invitedWaitlistButton).setVisibility(View.VISIBLE);
+        }
+        else if (inWaitlist) {
             joinWaitlistButton.setVisibility(View.GONE);
             leaveWaitlistButton.setVisibility(View.VISIBLE);
         } else {

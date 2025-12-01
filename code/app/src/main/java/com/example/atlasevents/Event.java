@@ -4,7 +4,6 @@ package com.example.atlasevents;
 import android.util.Log;
 
 import com.example.atlasevents.data.EventRepository;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
@@ -75,6 +74,7 @@ public class Event implements Serializable {
     private HashMap<String, GeoPoint> entrantCoords;
     private String Description;
     private String address;
+    private GeoPoint location;
     private Date date;
     private Date regStartDate;
     private Date regEndDate;
@@ -173,6 +173,9 @@ public class Event implements Serializable {
     public Map<String, GeoPoint> getEntrantCoords() {return entrantCoords; }
     public String getEventName() { return eventName;}
 
+    public GeoPoint getLocation() {
+        return location;
+    }
 
     public String getId() {
         return id;
@@ -250,6 +253,10 @@ public class Event implements Serializable {
         } else {
             this.searchKeywords = new ArrayList<>(searchKeywords);
         }
+    }
+
+    public void setLocation(GeoPoint location) {
+        this.location = location;
     }
 
     public void setId(String id) {

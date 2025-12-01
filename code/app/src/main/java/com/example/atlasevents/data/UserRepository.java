@@ -1,5 +1,9 @@
 package com.example.atlasevents.data;
 
+import static android.content.ContentValues.TAG;
+
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.example.atlasevents.Entrant;
@@ -158,6 +162,7 @@ public class UserRepository {
      * @param callback The {@link UsersCallback} to handle success or failure.
      */
     public void getUsers(String type, UsersCallback callback) {
+
         db.collection("users")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {

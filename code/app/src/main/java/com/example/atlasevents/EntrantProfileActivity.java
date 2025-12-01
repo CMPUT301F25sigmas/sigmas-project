@@ -1,6 +1,9 @@
 package com.example.atlasevents;
 
+import static android.content.ContentValues.TAG;
+
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -73,7 +76,19 @@ public class EntrantProfileActivity extends EntrantBase {
      * </p>
      */
     private void loadUserDetails() {
+        String userEmail = session.getUserEmail();
+        if (userEmail == null || userEmail.isEmpty()) {
+            Log.e(TAG, "User email is null or empty");}
+
         userRepository.getUser(session.getUserEmail(), user -> {
+            if (user == null) {
+                Log.e(TAG, "User not found in database");
+                // Handle null user - show error or use default values
+                nameEdit.setText("User not found");
+                emailEdit.setText(userEmail);
+                phoneEdit.setText("");
+                return;
+            }
             originalEmail = user.getEmail();
             nameEdit.setText(user.getName());
             emailEdit.setText(user.getEmail());

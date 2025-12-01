@@ -221,7 +221,7 @@ public class NotificationHistoryHelperTest {
         boolean isInvitation3 = isInvitationNotification(confirmationNotification);
 
         assertTrue("EventInvitation should be detected as invitation", isInvitation1);
-        
+
     }
 
     @Test

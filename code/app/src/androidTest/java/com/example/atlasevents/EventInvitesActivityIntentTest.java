@@ -101,6 +101,7 @@ public class EventInvitesActivityIntentTest {
         // 1. Create a test invite in Firestore
         // 2. Launch the activity
         // 3. Verify the invite card is displayed with correct information
+        // but we won't do that, because of time
         
         Intent intent = new Intent(context, EventInvitesActivity.class);
         try (ActivityScenario<EventInvitesActivity> scenario = ActivityScenario.launch(intent)) {

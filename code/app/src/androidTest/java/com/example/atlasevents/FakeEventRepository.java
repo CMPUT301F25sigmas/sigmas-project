@@ -1,6 +1,7 @@
 package com.example.atlasevents;
 
 import androidx.annotation.NonNull;
+import androidx.test.espresso.idling.CountingIdlingResource;
 
 import com.example.atlasevents.data.EventRepository;
 import com.google.android.gms.tasks.Task;
@@ -19,8 +20,12 @@ import java.util.UUID;
 public class FakeEventRepository extends EventRepository {
 
     private final Map<String, Event> events = new HashMap<>();
+    private Runnable dataLoadedCallback;
+    private CountingIdlingResource idlingResource;
 
     public FakeEventRepository() {
+        // Initialize IdlingResource for Espresso
+        this.idlingResource = new CountingIdlingResource("FakeEventRepository");
         // Prepopulate with 2 test events
         // Event 1: Has entrant@test.com in waitlist
         Event eventWithEntrant = createTestEvent("event1", "Test Event With Entrant", "organizer@test.com");
@@ -33,6 +38,17 @@ public class FakeEventRepository extends EventRepository {
         // Event 2: Does not have entrant@test.com
         Event eventWithoutEntrant = createTestEvent("event2", "Test Event Without Entrant", "organizer@test.com");
         events.put(eventWithoutEntrant.getId(), eventWithoutEntrant);
+    }
+    // Add this method for the test to call
+    public void setDataLoadedCallback(Runnable callback) {
+        this.dataLoadedCallback = callback;
+    }
+
+    // Helper method to notify when data is loaded
+    private void notifyDataLoaded() {
+        if (dataLoadedCallback != null) {
+            dataLoadedCallback.run();
+        }
     }
 
     /**
@@ -134,6 +150,8 @@ public class FakeEventRepository extends EventRepository {
 
     @Override
     public void getEventsByEntrant(String entrantEmail, EventsCallback callback) {
+
+        idlingResource.increment(); // Start counting
         try {
             ArrayList<Event> entrantEvents = new ArrayList<>();
             for (Event event : events.values()) {
@@ -162,8 +180,11 @@ public class FakeEventRepository extends EventRepository {
                 }
             }
             callback.onSuccess(entrantEvents);
+            notifyDataLoaded();
         } catch (Exception e) {
             callback.onFailure(e);
+        } finally {
+            idlingResource.decrement(); // Stop counting
         }
     }
 

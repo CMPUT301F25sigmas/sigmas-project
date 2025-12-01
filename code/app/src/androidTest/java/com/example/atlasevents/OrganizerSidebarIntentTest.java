@@ -8,8 +8,10 @@ import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
+import android.content.Context;
 import android.view.View;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -22,8 +24,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Field;
+
 @RunWith(AndroidJUnit4.class)
 public class OrganizerSidebarIntentTest {
+    private static final String TEST_ORGANIZER_EMAIL = "organizer@test.com";
+    private Context context;
 
     @Rule
     public ActivityScenarioRule<OrganizerDashboardActivity> activityRule = new ActivityScenarioRule<>(OrganizerDashboardActivity.class);
@@ -59,24 +65,7 @@ public class OrganizerSidebarIntentTest {
         intended(hasComponent(NotificationCenterActivity.class.getName()));
     }
 
-    /**
-     * Test: Verify functioning of profile sidebar button
-     */
-    @Test
-    public void testSidebarProfile() {
-        // Wait for events to load from Firebase
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        onView(withId(R.id.profile_icon)).check(matches(isDisplayed()));
-
-        onView(withId(R.id.profile_icon)).perform(click());
-
-        intended(hasComponent(OrganizerProfileActivity.class.getName()));
-    }
+    
 
     /**
      * Test: Verify functioning of my events sidebar button

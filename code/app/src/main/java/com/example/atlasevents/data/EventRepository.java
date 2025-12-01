@@ -195,6 +195,14 @@ public class EventRepository {
      * @param callback     The {@link EventsCallback} to handle success or failure.
      */
     public void getEventsByEntrant(String entrantEmail, EventsCallback callback) {
+
+        // Adding null check for entrantEmail
+        if (entrantEmail == null || entrantEmail.isEmpty()) {
+            Log.w("EventRepository", "entrantEmail is null or empty");
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+
         Log.d("EventRepository", "Looking for events by entrant: " + entrantEmail);
 
         db.collection("events")

@@ -827,34 +827,34 @@ public class LotteryService {
                                             }
                                         });
 
-                                // Check if entrant is still in invite list (hasn't responded)
-                                getEventWithAllLists(eventId).addOnCompleteListener(task -> {
-                                    if (task.isSuccessful() && task.getResult() != null) {
-                                        Event event = task.getResult();
-                                        EntrantList inviteList = event.getInviteList();
+            // Check if entrant is still in invite list (hasn't responded)
+            getEventWithAllLists(eventId).addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    Event event = task.getResult();
+                    EntrantList inviteList = event.getInviteList();
 
-                                        if (inviteList != null && inviteList.containsEntrant(entrantEmail)) {
-                                            // Auto-decline if still in invite list
-                                            Log.d(TAG, "Auto-declining invitation for: " + entrantEmail);
-                                            handleInvitationResponse(eventId, entrantEmail, false, new InvitationResponseCallback() {
-                                                @Override
-                                                public void onResponseSuccess(boolean accepted) {
-                                                    Log.d(TAG, "Auto-decline successful for: " + entrantEmail);
-                                                }
+                    if (inviteList != null && inviteList.containsEntrant(entrantEmail)) {
+                        // Auto-decline if still in invite list
+                        Log.d(TAG, "Auto-declining invitation for: " + entrantEmail);
+                        handleInvitationResponse(eventId, entrantEmail, false, new InvitationResponseCallback() {
+                            @Override
+                            public void onResponseSuccess(boolean accepted) {
+                                Log.d(TAG, "Auto-decline successful for: " + entrantEmail);
+                            }
 
-                                                @Override
-                                                public void onResponseFailed(Exception exception) {
-                                                    Log.e(TAG, "Auto-decline failed for: " + entrantEmail, exception);
-                                                }
-                                            });
+                            @Override
+                            public void onResponseFailed(Exception exception) {
+                                Log.e(TAG, "Auto-decline failed for: " + entrantEmail, exception);
+                            }
+                        });
 
-                                            // Send auto-decline notification
-                                            sendAutoDeclineNotification(event, entrantEmail);
-                                        } else {
-                                            Log.d(TAG, "Entrant already responded: " + entrantEmail);
-                                        }
-                                    } else {
-                                        Log.e(TAG, "Failed to check invite list status for auto-decline", task.getException());
+                        // Send auto-decline notification
+                        sendAutoDeclineNotification(event, entrantEmail);
+                    } else {
+                        Log.d(TAG, "Entrant already responded: " + entrantEmail);
+                    }
+                } else {
+                    Log.e(TAG, "Failed to check invite list status for auto-decline", task.getException());
                                     }
                                 });
                             } else {
@@ -862,8 +862,8 @@ public class LotteryService {
                             }
                         } else {
                             Log.d(TAG, "Invite not found or already removed: " + entrantEmail);
-                        }
-                    });
+                }
+            });
         }, delay);
     }
 
@@ -1158,15 +1158,17 @@ public class LotteryService {
 
     /**
      * Sends confirmation notification to entrant
+     * Uses "Confirmation" groupType to ensure it displays as a regular text notification, not an invitation
      */
     private void sendConfirmationNotification(Event event, Entrant entrant, boolean accepted) {
         String status = accepted ? "accepted" : "declined";
         String title = "Invitation " + status + ": " + event.getEventName();
         String message = "You have " + status + " the invitation for " + event.getEventName();
 
+        // Use "Confirmation" groupType instead of "InvitationResponse" to ensure it displays as a regular notification
         Notification confirmationNotification = new Notification(
                 title, message, event.getId(),
-                event.getOrganizer().getEmail(), event.getEventName(), "InvitationResponse"
+                event.getOrganizer().getEmail(), event.getEventName(), "Confirmation"
         );
 
         List<String> emails = Collections.singletonList(entrant.getEmail());

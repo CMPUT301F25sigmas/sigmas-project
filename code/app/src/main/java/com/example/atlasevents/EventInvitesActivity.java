@@ -82,7 +82,7 @@ public class EventInvitesActivity extends AppCompatActivity {
         // Load invitations
         loadEventInvites();
     }
-    
+
     /**
      * Temporary debug method to check what's in Firestore
      */
@@ -94,14 +94,14 @@ public class EventInvitesActivity extends AppCompatActivity {
         // Uncomment to add button to UI for debugging
         invitesContainer.addView(debugButton);
     }
-    
+
     /**
      * Debug method to check what invites exist in Firestore
      */
     private void debugFirestoreInvites() {
         String userEmail = session.getUserEmail();
         Log.d(TAG, "=== DEBUG: Checking Firestore invites for: " + userEmail);
-        
+
         // Check all invites for this user
         db.collection("invites")
                 .whereEqualTo("recipientEmail", userEmail)
@@ -116,7 +116,7 @@ public class EventInvitesActivity extends AppCompatActivity {
                         Log.d(TAG, "  Created At: " + doc.get("createdAt"));
                         Log.d(TAG, "  Expiration Time: " + doc.get("expirationTime"));
                     }
-                    Toast.makeText(this, 
+                    Toast.makeText(this,
                             "DEBUG: Found " + queryDocumentSnapshots.size() + " invites. Check Logcat.",
                             Toast.LENGTH_LONG).show();
                 })
@@ -190,11 +190,11 @@ public class EventInvitesActivity extends AppCompatActivity {
         eventRepository.getEventById(invite.getEventId(), new EventRepository.EventCallback() {
             @Override
             public void onSuccess(Event event) {
-                if (event != null) {
+                        if (event != null) {
                     event.setId(invite.getEventId()); // Ensure event ID is set
                     addInvitationCard(event, invite);
-                }
-            }
+                        }
+                    }
 
             @Override
             public void onFailure(Exception e) {
@@ -202,7 +202,7 @@ public class EventInvitesActivity extends AppCompatActivity {
                 // Still show the invite even if event loading fails
                 addInvitationCardFromInvite(invite);
             }
-        });
+                });
     }
 
 
@@ -219,6 +219,7 @@ public class EventInvitesActivity extends AppCompatActivity {
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
         TextView organizerTextView = cardView.findViewById(R.id.notificationOrganizer);
         TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
+        TextView responseDeadline = cardView.findViewById(R.id.responseDeadline);
         Button acceptButton = cardView.findViewById(R.id.acceptButton);
         Button declineButton = cardView.findViewById(R.id.declineButton);
 
@@ -230,6 +231,20 @@ public class EventInvitesActivity extends AppCompatActivity {
         organizerTextView.setText("Organized by: " + invite.getOrganizerEmail());
         messageTextView.setText(invite.getMessage() != null ? invite.getMessage() : 
                 "You have been invited to this event from the waitlist!");
+
+        // Set initial response deadline text
+        if (invite.getExpirationTime() > 0) {
+            long timeRemaining = invite.getExpirationTime() - System.currentTimeMillis();
+            if (timeRemaining > 0) {
+                responseDeadline.setText("⏰ Please respond within " + formatTimeRemaining(timeRemaining));
+            } else {
+                responseDeadline.setText("⏰ Response time expired");
+                acceptButton.setEnabled(false);
+                declineButton.setEnabled(false);
+            }
+        } else {
+            responseDeadline.setText("⏰ Please respond within 24 hours");
+        }
 
         // Set up button listeners
         acceptButton.setOnClickListener(v -> {
@@ -256,6 +271,7 @@ public class EventInvitesActivity extends AppCompatActivity {
         TextView eventNameTextView = cardView.findViewById(R.id.notificationEventName);
         TextView organizerTextView = cardView.findViewById(R.id.notificationOrganizer);
         TextView messageTextView = cardView.findViewById(R.id.notificationMessage);
+        TextView responseDeadline = cardView.findViewById(R.id.responseDeadline);
         Button acceptButton = cardView.findViewById(R.id.acceptButton);
         Button declineButton = cardView.findViewById(R.id.declineButton);
 
@@ -267,6 +283,20 @@ public class EventInvitesActivity extends AppCompatActivity {
         organizerTextView.setText("Organized by: " + invite.getOrganizerEmail());
         messageTextView.setText(invite.getMessage() != null ? invite.getMessage() : 
                 "You have been invited to this event from the waitlist!");
+
+        // Set initial response deadline text
+        if (invite.getExpirationTime() > 0) {
+            long timeRemaining = invite.getExpirationTime() - System.currentTimeMillis();
+            if (timeRemaining > 0) {
+                responseDeadline.setText("⏰ Please respond within " + formatTimeRemaining(timeRemaining));
+            } else {
+                responseDeadline.setText("⏰ Response time expired");
+                acceptButton.setEnabled(false);
+                declineButton.setEnabled(false);
+            }
+        } else {
+            responseDeadline.setText("⏰ Please respond within 24 hours");
+        }
 
         // Set up button listeners
         acceptButton.setOnClickListener(v -> {
@@ -287,22 +317,29 @@ public class EventInvitesActivity extends AppCompatActivity {
         // Disable buttons immediately
         Button acceptButton = cardView.findViewById(R.id.acceptButton);
         Button declineButton = cardView.findViewById(R.id.declineButton);
+        TextView responseDeadline = cardView.findViewById(R.id.responseDeadline);
 
         acceptButton.setEnabled(false);
         declineButton.setEnabled(false);
+        
+        // Update response deadline to show "Processing..."
+        responseDeadline.setText("⏳ Processing...");
+        responseDeadline.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark));
 
         lotteryService.handleInvitationResponse(eventId, userEmail, accepted,
                 new LotteryService.InvitationResponseCallback() {
                     @Override
                     public void onResponseSuccess(boolean accepted) {
                         runOnUiThread(() -> {
-                            String status = accepted ? "✓ Invitation Accepted" : "✗ Invitation Declined";
+                            // Update to "Processed"
+                            responseDeadline.setText("✓ Processed");
+                            responseDeadline.setTextColor(ContextCompat.getColor(EventInvitesActivity.this, 
+                                    android.R.color.holo_green_dark));
 
-
-                            // Reload invites to refresh the list
+                            // Reload invites to refresh the list after a short delay
                             new Handler().postDelayed(() -> {
                                 loadEventInvites();
-                            }, 1000);
+                            }, 1500);
                         });
                     }
 
@@ -311,9 +348,26 @@ public class EventInvitesActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             acceptButton.setEnabled(true);
                             declineButton.setEnabled(true);
+                            responseDeadline.setText("❌ Error - please try again");
+                            responseDeadline.setTextColor(ContextCompat.getColor(EventInvitesActivity.this, 
+                                    android.R.color.holo_red_dark));
                         });
                     }
                 });
+    }
+    
+    /**
+     * Formats time remaining into human-readable format
+     */
+    private String formatTimeRemaining(long millis) {
+        long hours = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(millis);
+        long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
+
+        if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        } else {
+            return minutes + " minutes";
+        }
     }
     /**
      * Disables buttons and updates status after response

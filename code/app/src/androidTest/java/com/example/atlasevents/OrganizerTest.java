@@ -1,12 +1,12 @@
 package com.example.atlasevents;
 
-import static org.mockito.Mockito.mock;
+//import static org.mockito.Mockito.mock; //I commented this out because it was blocking me from running Entrant tests
 
 import com.example.atlasevents.data.NotificationRepository;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
+//import org.mockito.Mockito;
 
 public class OrganizerTest {
     private Organizer organizer;

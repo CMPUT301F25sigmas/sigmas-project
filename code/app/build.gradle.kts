@@ -70,6 +70,8 @@ dependencies {
     // Keep a single Places dependency version to avoid API mismatches
     implementation(libs.firebase.sessions)
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))

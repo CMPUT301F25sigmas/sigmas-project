@@ -13,3 +13,7 @@ This Project used the following Third-Party resources:
  ZXing: A Barcode Scanning Library
    [Link to the Github Page](https://github.com/zxing/zxing)
    Licence: Apache 2.0
+Mockitio: A mocking framework for testing
+   [Link to Github page](https://github.com/mockito/mockito.git)
+   [Link to Mockito](https://site.mockito.org/)
+   License: MIT

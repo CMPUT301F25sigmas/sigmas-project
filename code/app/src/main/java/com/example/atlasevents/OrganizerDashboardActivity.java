@@ -221,7 +221,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
 
             ImageView eventImage = eventCard.findViewById(R.id.event_image);
             TextView eventName = eventCard.findViewById(R.id.event_name);
-            Button eventEditButton = eventCard.findViewById(R.id.edit_button);
+            ImageView eventEditButton = eventCard.findViewById(R.id.edit_button);
 
             if(!event.getImageUrl().isEmpty()){
                 Glide.with(this).load(event.getImageUrl()).into(eventImage);

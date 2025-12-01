@@ -219,10 +219,26 @@ public class NotificationHistoryHelper {
      * Creates and adds a notification card for entrants
      */
     private void addEntrantNotificationCard(Notification notification, MarkAsReadCallback markAsReadCallback) {
+        // Exclude confirmation notifications - they should always display as regular notifications
+        if ("Confirmation".equals(notification.getGroupType())) {
+            addRegularNotificationCard(
+                    notification.getGroupType(),
+                    notification.getEventName(),
+                    formatTimestamp(notification.getCreatedAt()),
+                    notification.getMessage(),
+                    notification.getRecipientCount() + (notification.getRecipientCount() == 1 ? " recipient" : " recipients"),
+                    markAsReadCallback,
+                    notification
+            );
+            return;
+        }
+        
         // Check if this is an invitation notification
         boolean isInvitation = "Invitation".equals(notification.getType()) ||
                 "Invitation".equals(notification.getGroupType()) ||
-                (notification.getTitle() != null && notification.getTitle().contains("Invitation")) ||
+                (notification.getTitle() != null && notification.getTitle().contains("Invitation") && 
+                 !notification.getTitle().contains("Invitation accepted") && 
+                 !notification.getTitle().contains("Invitation declined")) ||
                 (notification.getMessage() != null && notification.getMessage().contains("selected from the waitlist"));
 
         if (isInvitation) {

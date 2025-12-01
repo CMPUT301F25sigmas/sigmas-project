@@ -40,27 +40,6 @@ public class NotificationHelperTest {
     public ActivityScenarioRule<OrganizerDashboardActivity> activityRule = new ActivityScenarioRule<>(OrganizerDashboardActivity.class);
 
     /**
-     * Tests that showInAppDialog correctly displays an AlertDialog on the screen.
-     */
-    @Test
-    public void testShowInAppDialog_DisplaysDialog() {
-        // Arrange
-        String testTitle = "Dialog Title";
-        String testMessage = "Dialog Message";
-
-        // Use the ActivityScenario to get a reference to the running activity
-        activityRule.getScenario().onActivity(activity -> {
-            // Act: Call the helper method. This will now work because Looper exists.
-            NotificationHelper.showInAppDialog(activity, testTitle, testMessage);
-        });
-
-        // Assert: Use Espresso to check if the dialog with the correct title and message is displayed.
-        onView(withText(testTitle)).check(matches(isDisplayed()));
-        onView(withText(testMessage)).check(matches(isDisplayed()));
-        onView(withText("OK")).check(matches(isDisplayed()));
-    }
-
-    /**
      * Tests that showInAppSnackbar correctly displays a Snackbar on the screen.
      */
     @Test

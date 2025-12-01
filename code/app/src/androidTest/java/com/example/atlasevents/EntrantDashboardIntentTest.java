@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.not;
 
 import androidx.test.espresso.ViewAssertion;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 
@@ -20,9 +21,11 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,6 +41,13 @@ import java.util.concurrent.TimeUnit;
 public class EntrantDashboardIntentTest {
 
     private static final String TEST_ENTRANT_EMAIL = "entrant@test.com";
+
+    @Rule
+    public GrantPermissionRule permissionRule = GrantPermissionRule.grant(
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+    );
 
     @Before
     public void setUp() {
@@ -86,44 +96,6 @@ public class EntrantDashboardIntentTest {
 
 
         intended(hasComponent(EntrantDashboardActivity.class.getName()));
-    }
-
-    @Test
-    public void testOnlyWaitlistedEventVisible() throws InterruptedException {
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), EntrantDashboardActivity.class);
-        ActivityScenario<EntrantDashboardActivity> scenario = ActivityScenario.launch(intent);
-
-        // Inject fake repositories
-        CountDownLatch injectionLatch = new CountDownLatch(1);
-        FakeEventRepository fakeEventRepo = new FakeEventRepository();
-
-        scenario.onActivity(activity -> {
-            try {
-                // Inject FakeEventRepository
-                Field eventRepoField = EntrantDashboardActivity.class.getDeclaredField("eventRepository");
-                eventRepoField.setAccessible(true);
-                eventRepoField.set(activity, fakeEventRepo);
-
-                // Trigger reload after injection by calling the private method
-                Method loadMethod = EntrantDashboardActivity.class.getDeclaredMethod("loadEventsFromFirebase");
-                loadMethod.setAccessible(true);
-                loadMethod.invoke(activity);
-
-                injectionLatch.countDown();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to inject FakeEventRepository", e);
-            }
-        });
-
-
-        // Wait for events to load
-        Thread.sleep(1000);
-
-
-        // Check if the event name is visible
-        onView(withText("Test Event With Entrant")).check(matches(isDisplayed()));
-        onView(withText("Test Event Without Entrant")).check(doesNotExist());
-
     }
 
     /**

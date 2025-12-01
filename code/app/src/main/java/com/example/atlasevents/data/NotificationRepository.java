@@ -67,6 +67,11 @@ public class NotificationRepository {
 
     // send to a single user (if they haven't opted out)
     public Task<Void> sendToUser(@NonNull String userEmail, @NonNull Notification notification) {
+        return sendToUserInternal(userEmail, notification, true);
+    }
+
+    // Internal helper so bulk sends can skip per-recipient logging
+    private Task<Void> sendToUserInternal(@NonNull String userEmail, @NonNull Notification notification, boolean logIndividually) {
         DocumentReference userRef = db.collection("users").document(userEmail);
 
         return userRef.get().continueWithTask(task -> {
@@ -76,7 +81,10 @@ public class NotificationRepository {
             Boolean enabled = userDoc.getBoolean("notificationsEnabled");
             if (enabled != null && !enabled) {
                 // user has opted out; still write log for admin but don't push notification into their subcollection
-                return logNotification(userEmail, notification, "OPTED_OUT");
+                if (logIndividually) {
+                    return logNotification(userEmail, notification, "OPTED_OUT");
+                }
+                return Tasks.forResult(null);
             }
             // create notification doc under users/{email}/notifications
             CollectionReference notifCol = userRef.collection("notifications");
@@ -98,7 +106,10 @@ public class NotificationRepository {
             // perform write and then log
             return notifDoc.set(data).continueWithTask(setTask -> {
                 if (!setTask.isSuccessful()) throw setTask.getException();
-                return logNotification(userEmail, notification, "SENT");
+                if (logIndividually) {
+                    return logNotification(userEmail, notification, "SENT");
+                }
+                return Tasks.forResult(null);
             });
         }).addOnFailureListener(e -> Log.w(TAG, "sendToUser failure", e));
     }
@@ -119,9 +130,22 @@ public class NotificationRepository {
         notification.setRecipientCount(userEmails.size()); // Set recipient count
         for (String email : userEmails) {
             Notification copy = new Notification(notification.getTitle(), notification.getMessage(), notification.getEventId(), notification.getFromOrganizeremail(), notification.getEventName(), notification.getGroupType(), notification.getRecipientCount());
-            tasks.add(sendToUser(email, copy));
+            tasks.add(sendToUserInternal(email, copy, false));
         }
-        return Tasks.whenAll(tasks).continueWith(t -> tasks);
+        return Tasks.whenAll(tasks).continueWithTask(t -> {
+            String organizerEmail = notification.getFromOrganizeremail();
+            String status = t.isSuccessful() ? "SENT" : "FAILED";
+            return logBatchNotification(organizerEmail, notification, userEmails, status)
+                    .continueWith(logTask -> {
+                        if (!logTask.isSuccessful()) {
+                            throw logTask.getException();
+                        }
+                        if (!t.isSuccessful()) {
+                            throw t.getException();
+                        }
+                        return tasks;
+                    });
+        });
     }
 
     // helper: log notification for admin reviews
@@ -159,6 +183,29 @@ public class NotificationRepository {
                 .set(log);
     }
 
+    // aggregate log for bulk sends so organizer history shows one entry
+    private Task<Void> logBatchNotification(String organizerEmail, Notification notification, List<String> recipients, String status) {
+        Map<String,Object> log = new HashMap<>();
+        log.put("recipient", recipients.size() == 1 ? recipients.get(0) : "Batch");
+        log.put("recipients", new ArrayList<>(recipients));
+        log.put("title", notification.getTitle());
+        log.put("message", notification.getMessage());
+        log.put("eventId", notification.getEventId());
+        log.put("fromOrganizer", organizerEmail != null && !organizerEmail.isEmpty() ? organizerEmail : "unknown_sender");
+        log.put("status", status);
+        log.put("createdAt", FieldValue.serverTimestamp());
+        log.put("groupType", notification.getGroupType());
+        log.put("eventName", notification.getEventName());
+        log.put("recipientCount", notification.getRecipientCount());
+
+        String organizerDoc = organizerEmail == null || organizerEmail.isEmpty() ? "unknown_sender" : organizerEmail;
+        return db.collection("notification_logs")
+                .document(organizerDoc)
+                .collection("logs")
+                .document()
+                .set(log);
+    }
+
     // Organizer convenience methods (these gather emails from event lists then call sendToUsers)
     // send to waitlist
     /**
@@ -191,6 +238,42 @@ public class NotificationRepository {
      * @see #sendToUsers(List, Notification)
      * @see #extractEmailsFromEntrantList(EntrantList)
      */
+
+//    public Task<Void> sendEventInvitations(List<String> userEmails, Notification invitation) {
+//        Log.d(TAG, "Sending event invitations to " + userEmails.size() + " users");
+//
+//        List<Task<Void>> tasks = new ArrayList<>();
+//
+//        for (String userEmail : userEmails) {
+//            // Bypass opt-out check for event invitations
+//            Task<Void> task = sendNotificationToUser(userEmail, invitation, true);
+//            tasks.add(task);
+//        }
+//
+//        return Tasks.whenAll(tasks);
+//    }
+
+//    /**
+//     * Enhanced send notification method with bypass option
+//     */
+//    private Task<Void> sendNotificationToUser(String userEmail, Notification notification, boolean bypassOptOut) {
+//        if (!bypassOptOut) {
+//            // Check if user has opted out of notifications from this organizer
+//            return isOrganizerBlocked(userEmail, notification.getFromOrganizeremail())
+//                    .continueWithTask(isBlockedTask -> {
+//                        boolean isBlocked = Boolean.TRUE.equals(isBlockedTask.getResult());
+//                        if (isBlocked) {
+//                            Log.d(TAG, "User " + userEmail + " has blocked notifications from " + notification.getFromOrganizeremail());
+//                            return Tasks.forResult(null); // Skip sending
+//                        }
+//                        return storeNotificationForUser(userEmail, notification);
+//                    });
+//        } else {
+//            // Bypass opt-out check (for event invitations)
+//            Log.d(TAG, "Bypassing opt-out for event invitation to: " + userEmail);
+//            return storeNotificationForUser(userEmail, notification);
+//        }
+//    }
     public Task<List<Task<Void>>> sendToInvited(@NonNull Event event, @NonNull String title, @NonNull String message) {
         List<String> emails = extractEmailsFromEntrantList(event.getInviteList());
         String groupType = "Chosen Entrants";

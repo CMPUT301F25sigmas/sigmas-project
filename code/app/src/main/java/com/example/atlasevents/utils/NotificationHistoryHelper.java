@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author CMPUT301F25sigmas
  * @version 2.0
- * @see notificationhistoryactivity
+ * @see NotificationHistoryActivity
  * @see NotificationRepository
  * @see LotteryService
  */
@@ -96,8 +96,7 @@ public class NotificationHistoryHelper {
      * @param callback Callback for success/failure handling
      * @param markAsReadCallback Callback for mark-as-read actions
      */
-    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback,
-                                                 MarkAsReadCallback markAsReadCallback) {
+    public void loadEntrantReceivedNotifications(String userEmail, NotificationLoadCallback callback, MarkAsReadCallback markAsReadCallback) {
         fetchBlockedOrganizers(userEmail, blockedEmails -> db.collection("users")
                 .document(userEmail)
                 .collection("notifications")
@@ -117,6 +116,10 @@ public class NotificationHistoryHelper {
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Notification notification = document.toObject(Notification.class);
                         notification.setNotificationId(document.getId());
+                        // Skip event invitations here since they should not show in history
+                        if ("EventInvitation".equals(notification.getType())) {
+                            continue;
+                        }
                         String organizerEmail = notification.getFromOrganizeremail();
                         if (organizerEmail != null && blockedEmails.contains(organizerEmail)) {
                             continue;
@@ -216,10 +219,26 @@ public class NotificationHistoryHelper {
      * Creates and adds a notification card for entrants
      */
     private void addEntrantNotificationCard(Notification notification, MarkAsReadCallback markAsReadCallback) {
+        // Exclude confirmation notifications - they should always display as regular notifications
+        if ("Confirmation".equals(notification.getGroupType())) {
+            addRegularNotificationCard(
+                    notification.getGroupType(),
+                    notification.getEventName(),
+                    formatTimestamp(notification.getCreatedAt()),
+                    notification.getMessage(),
+                    notification.getRecipientCount() + (notification.getRecipientCount() == 1 ? " recipient" : " recipients"),
+                    markAsReadCallback,
+                    notification
+            );
+            return;
+        }
+        
         // Check if this is an invitation notification
         boolean isInvitation = "Invitation".equals(notification.getType()) ||
                 "Invitation".equals(notification.getGroupType()) ||
-                (notification.getTitle() != null && notification.getTitle().contains("Invitation")) ||
+                (notification.getTitle() != null && notification.getTitle().contains("Invitation") && 
+                 !notification.getTitle().contains("Invitation accepted") && 
+                 !notification.getTitle().contains("Invitation declined")) ||
                 (notification.getMessage() != null && notification.getMessage().contains("selected from the waitlist"));
 
         if (isInvitation) {

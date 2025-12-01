@@ -10,8 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.atlasevents.data.NotificationRepository;
 import com.example.atlasevents.data.model.Notification;
-import com.example.atlasevents.Session;
-import com.example.atlasevents.R;
+//import com.example.atlasevents.Session;
+//import com.example.atlasevents.R;
 import java.util.Arrays;
 import java.util.List;
 

@@ -1,12 +1,20 @@
 package com.example.atlasevents;
 
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -23,7 +31,13 @@ import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
+import com.example.atlasevents.utils.InputValidator;
 import com.example.atlasevents.utils.TimePickerHelper;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Activity for editing existing event details.
@@ -130,6 +144,11 @@ public class EditEventActivity extends AppCompatActivity {
     private EditText slotsEditText;
 
     /**
+     * Container for displaying tag chips.
+     */
+    private LinearLayout tagContainer;
+
+    /**
      * Button to save and update the event.
      */
     private Button updateButton;
@@ -155,6 +174,8 @@ public class EditEventActivity extends AppCompatActivity {
      * Empty string if the event had no image.
      */
     private String oldImageURL = "";
+
+    private final List<String> tags = new ArrayList<>();
 
     /**
      * The date picker to pick the start date of the event
@@ -234,6 +255,10 @@ public class EditEventActivity extends AppCompatActivity {
         entrantLimitEditText = findViewById(R.id.maxEntrantsEditText);
         slotsEditText = findViewById(R.id.slotsEditText);
         updateButton = findViewById(R.id.publishEventButton);
+        tagContainer = findViewById(R.id.tagContainer);
+        Button editTagsButton = findViewById(R.id.editTagsButton);
+        editTagsButton.setOnClickListener(v -> showTagEditor());
+        renderTags();
         updateButton.setText("Update Event");
 
         entrantLimitEditText.setVisibility(View.GONE);
@@ -351,6 +376,10 @@ public class EditEventActivity extends AppCompatActivity {
                     loadImage(oldImageURL);
                     imageDeleteButton.setVisibility(View.VISIBLE);
                 }
+
+                tags.clear();
+                tags.addAll(parseTags(TextUtils.join(", ", event.getTags())));
+                renderTags();
             }
 
             @Override
@@ -372,7 +401,7 @@ public class EditEventActivity extends AppCompatActivity {
      * </p>
      */
     private void updateEvent() {
-        if (!inputsValid(nameEditText.getText().toString(), slotsEditText.getText().toString())) {
+        if(!inputsValid(nameEditText,slotsEditText,limitEntrantsSwitch.isChecked(), entrantLimitEditText.getText().toString())) {
             return;
         }
 
@@ -385,6 +414,7 @@ public class EditEventActivity extends AppCompatActivity {
         currentEvent.setDescription(descriptionEditText.getText().toString());
         currentEvent.setRequireGeolocation(requireGeoLocationSwitch.isChecked());
         currentEvent.setSlots(Integer.parseInt(slotsEditText.getText().toString()));
+        currentEvent.setTags(tags);
 
         if (limitEntrantsSwitch.isChecked()) {
             String limit = entrantLimitEditText.getText().toString();
@@ -433,16 +463,208 @@ public class EditEventActivity extends AppCompatActivity {
         Glide.with(this).load(imageURL).into(poster);
     }
 
-    public boolean inputsValid(String name, String slots) {
+    /**
+     *
+     * @param name name of the event
+     * @param slots number of accepted participants
+     * @param limitEntrants boolean to check limit waitlist status
+     * @param limit actual limit set on waitlist
+     * @return boolean valid
+     */
+    public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants, String limit) {
         boolean valid = true;
-        if (name.isEmpty()) {
-            Toast.makeText(this, "Event must have name", Toast.LENGTH_SHORT).show();
-            valid = false;
-        } else if (slots.isEmpty()) {
-            Toast.makeText(this, "Number of participants can not be empty", Toast.LENGTH_SHORT).show();
+
+        // Get references to the date/time input fields
+        EditText dateEditText = findViewById(R.id.dateEditText);
+        EditText timeEditText = findViewById(R.id.timeEditText);
+        EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+
+        // Clear previous errors
+        name.setError(null);
+        slots.setError(null);
+        dateEditText.setError(null);
+        timeEditText.setError(null);
+        regDateRangeEditText.setError(null);
+
+        // Validate event name
+        InputValidator.ValidationResult nameRes = InputValidator.validateEventName(name.getText().toString());
+        if (!nameRes.isValid()) {
+            name.setError(nameRes.errorMessage());
             valid = false;
         }
+
+        // Validate slots
+        InputValidator.ValidationResult slotRes = InputValidator.validateSlots(slots.getText().toString());
+        if (!slotRes.isValid()) {
+            slots.setError(slotRes.errorMessage());
+            valid = false;
+        }
+        // Only check entrant limit if slots are valid
+        else if (limitEntrants && Integer.parseInt(slots.getText().toString()) > Integer.parseInt(limit)) {
+            slots.setError("Waitlist limit cannot be smaller than number of participants");
+            valid = false;
+        }
+
+        // Validate event date
+        InputValidator.ValidationResult dateResult = InputValidator.validateDateSelected(
+                startDatePicker.getStartDate(), "Event date");
+        if (!dateResult.isValid()) {
+            dateEditText.setError(dateResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate event time
+        InputValidator.ValidationResult timeResult = InputValidator.validateTimeSelected(
+                timePicker.hour, timePicker.minute, "Event time");
+        if (!timeResult.isValid()) {
+            timeEditText.setError(timeResult.errorMessage());
+            valid = false;
+        }
+
+        // Validate registration period
+        InputValidator.ValidationResult regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getStartDate(), "Registration start date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        regDateResult = InputValidator.validateDateSelected(
+                registrationPeriodPicker.getEndDate(), "Registration end date");
+        if (!regDateResult.isValid()) {
+            regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }
+
+        // Only validate date relationships if individual dates are valid
+        if (valid) {
+            // Validate registration period is valid (end after start)
+            InputValidator.ValidationResult regPeriodResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getStartDate(),
+                    registrationPeriodPicker.getEndDate(),
+                    "Registration start date",
+                    "Registration end date"
+            );
+            if (!regPeriodResult.isValid()) {
+                regDateRangeEditText.setError(regPeriodResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event date is after registration period
+            InputValidator.ValidationResult eventDateResult = InputValidator.validateEndDateAfterStartDate(
+                    registrationPeriodPicker.getEndDate(),
+                    startDatePicker.getStartDate(),
+                    "Registration end date",
+                    "Event date"
+            );
+            if (!eventDateResult.isValid()) {
+                dateEditText.setError(eventDateResult.errorMessage());
+                valid = false;
+            }
+
+            // Validate event time is in the future
+            InputValidator.ValidationResult futureTimeResult = InputValidator.validateFutureTime(
+                    startDatePicker.getStartDate(),
+                    timePicker.hour,
+                    timePicker.minute,
+                    "Event time"
+            );
+            if (!futureTimeResult.isValid()) {
+                timeEditText.setError(futureTimeResult.errorMessage());
+                valid = false;
+            }
+        }
+
         return valid;
+    }
+
+    /**
+     * Opens a dialog that lets organizers enter comma-separated tags for the event.
+     */
+    private void showTagEditor() {
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("Enter tags separated by commas");
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(75) });
+        if (!tags.isEmpty()) {
+            input.setText(TextUtils.join(", ", tags));
+            input.setSelection(input.getText().length());
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit tags")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    List<String> parsed = parseTags(input.getText().toString());
+                    tags.clear();
+                    tags.addAll(parsed);
+                    renderTags();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Renders chip-style labels for each tag or shows a placeholder if none exist.
+     */
+    private void renderTags() {
+        if (tagContainer == null) {
+            return;
+        }
+        tagContainer.removeAllViews();
+        if (tags.isEmpty()) {
+            TextView placeholder = new TextView(this);
+            placeholder.setText("No tags added");
+            placeholder.setTextColor(Color.parseColor("#494949"));
+            tagContainer.addView(placeholder);
+            return;
+        }
+
+        int horizontalPadding = toPx(12);
+        int verticalPadding = toPx(6);
+        int chipRadius = toPx(18);
+
+        for (String tag : tags) {
+            TextView chip = new TextView(this);
+            chip.setText(tag);
+            chip.setTextColor(Color.parseColor("#494949"));
+            chip.setPadding(horizontalPadding * 2, verticalPadding, horizontalPadding * 2, verticalPadding);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.parseColor("#E8DEF8"));
+            background.setCornerRadius(chipRadius);
+            chip.setBackground(background);
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, toPx(8), 0);
+            chip.setLayoutParams(params);
+
+            tagContainer.addView(chip);
+        }
+    }
+
+    /**
+     * Normalizes comma-separated tags into a unique, lowercase list for storage/search.
+     */
+    private List<String> parseTags(String raw) {
+        LinkedHashSet<String> parsed = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] pieces = raw.split(",");
+            for (String piece : pieces) {
+                String cleaned = piece.trim().toLowerCase(Locale.ROOT);
+                if (!cleaned.isEmpty()) {
+                    parsed.add(cleaned);
+                }
+            }
+        }
+        return new ArrayList<>(parsed);
+    }
+
+    private int toPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     /**

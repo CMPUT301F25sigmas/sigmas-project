@@ -6,7 +6,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.example.atlasevents.data.NotificationRepository;
+import com.example.atlasevents.data.InviteRepository;
 import com.example.atlasevents.data.model.Notification;
+import com.example.atlasevents.data.model.Invite;
 import com.example.atlasevents.EntrantList;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -35,6 +37,7 @@ import java.util.concurrent.TimeUnit;
  * Includes registration date validation for lottery availability.
  * and cooldown for lottery re-run checking if accepted list is below entrant limit
  *
+ * version 1.2 : removing cooldown logic and opting for manual re-sampling
  * @see Event
  * @see NotificationRepository
  * @see Entrant
@@ -43,12 +46,13 @@ public class LotteryService {
     private static final String TAG = "LotteryService";
     private final FirebaseFirestore db;
     private final NotificationRepository notificationRepo;
-    private static final long LOTTERY_COOLDOWN_HOURS = 24; // 24-hour cooldown
-    private static final long MILLIS_IN_HOUR = 60 * 60 * 1000;
+    private final InviteRepository inviteRepo;
+
 
     public LotteryService() {
         this.db = FirebaseFirestore.getInstance();
         this.notificationRepo = new NotificationRepository();
+        this.inviteRepo = new InviteRepository();
     }
 
     /**
@@ -56,10 +60,12 @@ public class LotteryService {
      *
      * @param db Firebase Firestore instance
      * @param notificationRepo Notification repository instance
+     * @param inviteRepo Invite repository instance
      */
-    public LotteryService(FirebaseFirestore db, NotificationRepository notificationRepo) {
+    public LotteryService(FirebaseFirestore db, NotificationRepository notificationRepo, InviteRepository inviteRepo) {
         this.db = db;
         this.notificationRepo = notificationRepo;
+        this.inviteRepo = inviteRepo;
     }
 
     /**
@@ -103,6 +109,8 @@ public class LotteryService {
                 callback.onLotteryFailed(new Exception("Event not found"));
                 return;
             }
+            // ADD DEBUGGING HERE
+            debugEventLists(event, "BEFORE LOTTERY DRAW");
             Log.d(TAG, "Event loaded: " + event.getEventName());
             Log.d(TAG, "Waitlist size from event object: " + (event.getWaitlist() != null ? event.getWaitlist().size() : "null"));
             // Step 2: Validate registration end date
@@ -140,11 +148,7 @@ public class LotteryService {
                 callback.onLotteryCompleted(0, "No entrants selected from waitlist");
                 return;
             }
-
-            // Step 6: Update lottery run timestamp
-            updateLotteryRunTimestamp(eventId);
-
-            // Step 7: Move selected entrants to invited list and send notifications
+            // Step 6: Move selected entrants to invited list and send notifications
             moveToInvitedAndNotify(event, selectedEntrants, callback);
         });
     }
@@ -179,13 +183,6 @@ public class LotteryService {
         // Check if registration period has ended
         if (!isLotteryAvailable(event)) {
             return new LotteryAvailability(false, "Lottery not available - registration period has not ended");
-        }
-
-        // Check cooldown period
-        if (isInCooldownPeriod(event)) {
-            long hoursRemaining = getCooldownHoursRemaining(event);
-            return new LotteryAvailability(false,
-                    String.format("Lottery can be run again in %d hours", hoursRemaining));
         }
 
         // Check available slots
@@ -239,72 +236,8 @@ public class LotteryService {
         return available;
     }
 
-    /**
-     * Checks if the event is in cooldown period (24 hours after last lottery run)
-     *
-     * @param event The event to check
-     * @return true if in cooldown period, false otherwise
-     */
-    public boolean isInCooldownPeriod(@NonNull Event event) {
-        if (event.getLastLotteryRun() == null) {
-            return false; // No lottery has been run yet
-        }
 
-        Date lastRun = event.getLastLotteryRun();
-        Date now = new Date();
 
-        long timeSinceLastRun = now.getTime() - lastRun.getTime();
-        long cooldownMillis = LOTTERY_COOLDOWN_HOURS * MILLIS_IN_HOUR;
-
-        boolean inCooldown = timeSinceLastRun < cooldownMillis;
-
-        Log.d(TAG, String.format("Cooldown check - Last run: %s, Time since: %d hours, In cooldown: %b",
-                lastRun, TimeUnit.MILLISECONDS.toHours(timeSinceLastRun), inCooldown));
-
-        return inCooldown;
-    }
-
-    /**
-     * Gets the number of hours remaining in the cooldown period
-     *
-     * @param event The event to check
-     * @return Hours remaining in cooldown, or 0 if not in cooldown
-     */
-    public long getCooldownHoursRemaining(@NonNull Event event) {
-        if (event.getLastLotteryRun() == null) {
-            return 0;
-        }
-
-        Date lastRun = event.getLastLotteryRun();
-        Date now = new Date();
-
-        long timeSinceLastRun = now.getTime() - lastRun.getTime();
-        long cooldownMillis = LOTTERY_COOLDOWN_HOURS * MILLIS_IN_HOUR;
-        long remainingMillis = cooldownMillis - timeSinceLastRun;
-
-        if (remainingMillis <= 0) {
-            return 0;
-        }
-
-        return TimeUnit.MILLISECONDS.toHours(remainingMillis) + 1; // Round up
-    }
-
-    /**
-     * Updates the event with the current timestamp when lottery is run
-     */
-    private void updateLotteryRunTimestamp(String eventId) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("lastLotteryRun", new Date());
-
-        db.collection("events").document(eventId)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Updated lastLotteryRun timestamp for event: " + eventId);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to update lastLotteryRun timestamp", e);
-                });
-    }
 
     /**
      * Calculates the time remaining until lottery becomes available.
@@ -367,6 +300,8 @@ public class LotteryService {
     private Event parseEventDocument(DocumentSnapshot doc) {
 
         debugFirestoreDocument(doc);
+        debugFirestoreStructure(doc, "waitlist");
+        debugFirestoreStructure(doc, "inviteList");
 
         Log.d(TAG, "=== STARTING EVENT PARSING ===");
 
@@ -448,38 +383,43 @@ public class LotteryService {
             return entrantList;
         }
 
-        Log.d(TAG, "Processing " + listData.size() + " entries in inviteList");
+        Log.d(TAG, "Processing " + listData.size() + " entries in list data");
 
-        for (Map.Entry<String, Object> entry : listData.entrySet()) {
-            String email = entry.getKey();
-            Object value = entry.getValue();
+        // Check if this is the array-based structure (with allEntrants and waitList arrays)
+        if (listData.containsKey("allEntrants") || listData.containsKey("waitList")) {
+            Log.d(TAG, "Found array-based list structure");
 
-            Log.d(TAG, "Processing entry - Key: " + email + ", Value type: " +
-                    (value != null ? value.getClass().getSimpleName() : "null"));
+            // Try to parse from waitList array first, fall back to allEntrants
+            List<Map<String, Object>> entrantArray = null;
+            if (listData.containsKey("waitList") && listData.get("waitList") instanceof List) {
+                entrantArray = (List<Map<String, Object>>) listData.get("waitList");
+            } else if (listData.containsKey("allEntrants") && listData.get("allEntrants") instanceof List) {
+                entrantArray = (List<Map<String, Object>>) listData.get("allEntrants");
+            }
 
-            if (value instanceof Map) {
-                Map<String, Object> entrantData = (Map<String, Object>) value;
-                Log.d(TAG, "Entrant data for " + email + ": " + entrantData);
-
-                Entrant entrant = new Entrant();
-                entrant.setEmail(email);
-
-                // Set fields with null checks
-                if (entrantData.containsKey("name")) {
-                    entrant.setName((String) entrantData.get("name"));
+            if (entrantArray != null) {
+                Log.d(TAG, "Processing " + entrantArray.size() + " entrants from array");
+                for (Map<String, Object> entrantData : entrantArray) {
+                    Entrant entrant = createEntrantFromMap(entrantData);
+                    if (entrant != null && entrant.getEmail() != null) {
+                        entrantList.addEntrant(entrant);
+                    }
                 }
-                if (entrantData.containsKey("phoneNumber")) {
-                    entrant.setPhoneNumber((String) entrantData.get("phoneNumber"));
-                }
-                if (entrantData.containsKey("userType")) {
-                    entrant.setUserType((String) entrantData.get("userType"));
-                }
+            }
+        } else {
+            // This is the simple map structure (email -> entrant data)
+            Log.d(TAG, "Found simple map structure");
+            for (Map.Entry<String, Object> entry : listData.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
 
-                Log.d(TAG, "Created entrant: " + entrant.getEmail() + " - " + entrant.getName());
-                entrantList.addEntrant(entrant);
-            } else {
-                Log.w(TAG, "Unexpected value type for key " + email + ": " +
-                        (value != null ? value.getClass().getSimpleName() : "null"));
+                if (value instanceof Map) {
+                    Map<String, Object> entrantData = (Map<String, Object>) value;
+                    Entrant entrant = createEntrantFromMap(entrantData);
+                    if (entrant != null && entrant.getEmail() != null) {
+                        entrantList.addEntrant(entrant);
+                    }
+                }
             }
         }
 
@@ -487,6 +427,26 @@ public class LotteryService {
         return entrantList;
     }
 
+    /**
+     * Helper method to create Entrant from map data
+     */
+    private Entrant createEntrantFromMap(Map<String, Object> entrantData) {
+        if (entrantData == null) return null;
+
+        Entrant entrant = new Entrant();
+        entrant.setEmail((String) entrantData.get("email"));
+        entrant.setName((String) entrantData.get("name"));
+        entrant.setPhoneNumber((String) entrantData.get("phoneNumber"));
+        entrant.setUserType((String) entrantData.get("userType"));
+
+        // Handle password field if present
+        if (entrantData.containsKey("password")) {
+            // If your Entrant class has a password field, set it here
+            // entrant.setPassword((String) entrantData.get("password"));
+        }
+
+        return entrant;
+    }
     /**
      * Loads all entrant lists (waitlist, invited, accepted, declined) for the event.
      *
@@ -671,6 +631,11 @@ public class LotteryService {
      */
     private Map<String, Object> convertEntrantListToMap(EntrantList entrantList) {
         Map<String, Object> map = new HashMap<>();
+
+
+        List<Map<String, Object>> allEntrantsArray = new ArrayList<>();
+        List<Map<String, Object>> waitListArray = new ArrayList<>();
+
         for (int i = 0; i < entrantList.size(); i++) {
             Entrant entrant = entrantList.getEntrant(i);
             if (entrant != null && entrant.getEmail() != null) {
@@ -679,11 +644,24 @@ public class LotteryService {
                 entrantMap.put("email", entrant.getEmail());
                 entrantMap.put("phoneNumber", entrant.getPhoneNumber());
                 entrantMap.put("userType", entrant.getUserType());
-                // Add other entrant fields as needed
+                // Add password field if it exists in your Entrant class
+                if (entrant.getPassword() != null) {
+                    entrantMap.put("password", entrant.getPassword());
+                }
 
-                map.put(entrant.getEmail(), entrantMap);
+                // Add to both arrays (based on your Firestore structure)
+                allEntrantsArray.add(entrantMap);
+                waitListArray.add(entrantMap);
             }
         }
+
+        // Build the final map structure
+        map.put("allEntrants", allEntrantsArray);
+        map.put("waitList", waitListArray);
+
+        Log.d(TAG, "Converted entrant list to map structure - allEntrants: " +
+                allEntrantsArray.size() + ", waitList: " + waitListArray.size());
+
         return map;
     }
 
@@ -706,6 +684,7 @@ public class LotteryService {
 
     /**
      * Sends invitation notifications to selected entrants.
+     * Creates invites in the separate invites collection instead of using notifications.
      *
      * @param event The event
      * @param selectedEntrants List of selected entrants
@@ -717,43 +696,103 @@ public class LotteryService {
             String organizerEmail = event.getOrganizer() != null ?
                     event.getOrganizer().getEmail() : "Unknown Organizer";
 
-            String title = "Event Invitation: " + eventName;
-            String message = "Congratulations! You have been selected from the waitlist for " +
-                    eventName + ". Please accept or decline this invitation within 24 hours.";
-
-            // Create notification with action type
-            Notification invitationNotification = new Notification(
-                    title, message, event.getId(), organizerEmail, eventName, "Invitation"
-            );
-
             // Set expiration time (24 hours from now)
             long expirationTime = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
-            invitationNotification.setExpirationTime(expirationTime);
 
-            List<String> selectedEmails = new ArrayList<>();
+            // Create invites for each selected entrant
+            List<Invite> invites = new ArrayList<>();
             for (Entrant entrant : selectedEntrants) {
                 if (entrant.getEmail() != null) {
-                    selectedEmails.add(entrant.getEmail());
+                    Invite invite = new Invite(
+                            event.getId(),
+                            entrant.getEmail(),
+                            eventName,
+                            organizerEmail,
+                            expirationTime
+                    );
+                    invites.add(invite);
 
                     // Schedule auto-decline for each entrant
                     scheduleAutoDecline(event.getId(), entrant.getEmail(), expirationTime);
                 }
             }
 
-            // Send notifications
-            notificationRepo.sendToUsers(selectedEmails, invitationNotification)
-                    .addOnCompleteListener(notificationTask -> {
-                        if (notificationTask.isSuccessful()) {
-                            Log.d(TAG, "Successfully sent invitations to " + selectedEmails.size() + " entrants");
-                            callback.onLotteryCompleted(selectedEmails.size(),
-                                    "Lottery completed. " + selectedEmails.size() + " entrants notified.");
+            // Create invites in Firestore
+            inviteRepo.createInvites(invites)
+                    .addOnCompleteListener(inviteTask -> {
+                        if (inviteTask.isSuccessful()) {
+                            Log.d(TAG, "Successfully created invites for " + invites.size() + " entrants");
+                            callback.onLotteryCompleted(invites.size(),
+                                    "Lottery completed. " + invites.size() + " entrants invited.");
                         } else {
-                            Log.e(TAG, "Failed to send invitation notifications", notificationTask.getException());
-                            callback.onLotteryCompleted(selectedEmails.size(),
-                                    "Lottery completed but some notifications failed.");
+                            Log.e(TAG, "Failed to create invites", inviteTask.getException());
+                            callback.onLotteryCompleted(invites.size(),
+                                    "Lottery completed but some invites failed.");
                         }
                     });
         }
+
+    /**
+     * Automatically resamples from waitlist when an entrant declines an invitation
+     *
+     * @param eventId The event ID
+     * @param declinedEntrantEmail The email of the entrant who declined
+     * @param callback Callback for result handling
+     */
+    public void autoResampleForDecline(String eventId, String declinedEntrantEmail, LotteryCallback callback) {
+        Log.d(TAG, "Auto-resampling for declined invitation: " + declinedEntrantEmail);
+
+        getEventWithAllLists(eventId).addOnCompleteListener(task -> {
+            if (!task.isSuccessful() || task.getResult() == null) {
+                Log.e(TAG, "Failed to get event for auto-resample", task.getException());
+                callback.onLotteryFailed(task.getException());
+                return;
+            }
+
+            Event event = task.getResult();
+            int availableSlots = calculateAvailableSlots(event);
+
+            if (availableSlots <= 0) {
+                Log.d(TAG, "No available slots for auto-resample");
+                callback.onLotteryCompleted(0, "No available slots for auto-resample");
+                return;
+            }
+
+            // Get eligible waitlist (excluding already invited/accepted/declined)
+            EntrantList waitlist = event.getWaitlist();
+            List<Entrant> eligibleWaitlist = filterEligibleEntrants(waitlist, event);
+
+            if (eligibleWaitlist.isEmpty()) {
+                Log.d(TAG, "No eligible entrants for auto-resample");
+                callback.onLotteryCompleted(0, "No eligible entrants available for auto-resample");
+                return;
+            }
+
+            // Select one new entrant
+            List<Entrant> selectedEntrants = selectRandomEntrants(eligibleWaitlist, 1);
+
+            if (selectedEntrants.isEmpty()) {
+                callback.onLotteryCompleted(0, "No entrants selected for auto-resample");
+                return;
+            }
+
+            // Add the new entrant to invite list and send notification
+            moveToInvitedAndNotify(event, selectedEntrants, new LotteryCallback() {
+                @Override
+                public void onLotteryCompleted(int entrantsSelected, String message) {
+                    Log.d(TAG, "Auto-resample completed: " + message);
+                    callback.onLotteryCompleted(entrantsSelected,
+                            "Replaced declined invitation with new entrant: " + selectedEntrants.get(0).getEmail());
+                }
+
+                @Override
+                public void onLotteryFailed(Exception exception) {
+                    Log.e(TAG, "Auto-resample failed", exception);
+                    callback.onLotteryFailed(exception);
+                }
+            });
+        });
+    }
     /**
      * Schedules automatic decline for unanswered invitations
      */
@@ -772,6 +811,22 @@ public class LotteryService {
         Log.d(TAG, "Scheduling auto-decline for " + entrantEmail + " in " + delay + "ms");
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            // Check if invite is still pending in the invites collection
+            inviteRepo.getInviteByEventAndRecipient(eventId, entrantEmail)
+                    .addOnCompleteListener(inviteTask -> {
+                        if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                            Invite invite = inviteTask.getResult();
+                            if ("pending".equals(invite.getStatus())) {
+                                // Update invite status to expired
+                                inviteRepo.updateInviteStatus(invite.getInviteId(), "expired")
+                                        .addOnCompleteListener(updateTask -> {
+                                            if (updateTask.isSuccessful()) {
+                                                Log.d(TAG, "Auto-expired invite for: " + entrantEmail);
+                                            } else {
+                                                Log.e(TAG, "Failed to expire invite", updateTask.getException());
+                                            }
+                                        });
+
             // Check if entrant is still in invite list (hasn't responded)
             getEventWithAllLists(eventId).addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
@@ -800,6 +855,13 @@ public class LotteryService {
                     }
                 } else {
                     Log.e(TAG, "Failed to check invite list status for auto-decline", task.getException());
+                                    }
+                                });
+                            } else {
+                                Log.d(TAG, "Invite already responded: " + entrantEmail);
+                            }
+                        } else {
+                            Log.d(TAG, "Invite not found or already removed: " + entrantEmail);
                 }
             });
         }, delay);
@@ -838,6 +900,25 @@ public class LotteryService {
     public void handleInvitationResponse(String eventId, String entrantEmail, boolean accepted, InvitationResponseCallback callback) {
         Log.d(TAG, "Handling invitation response: " + entrantEmail + " accepted: " + accepted);
 
+        // First, update the invite status in the invites collection
+        String inviteStatus = accepted ? "accepted" : "declined";
+        inviteRepo.getInviteByEventAndRecipient(eventId, entrantEmail)
+                .addOnCompleteListener(inviteTask -> {
+                    if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                        Invite invite = inviteTask.getResult();
+                        inviteRepo.updateInviteStatus(invite.getInviteId(), inviteStatus)
+                                .addOnCompleteListener(updateTask -> {
+                                    if (updateTask.isSuccessful()) {
+                                        Log.d(TAG, "Invite status updated to: " + inviteStatus);
+                                    } else {
+                                        Log.e(TAG, "Failed to update invite status", updateTask.getException());
+                                    }
+                                });
+                    } else {
+                        Log.w(TAG, "Invite not found in invites collection for event: " + eventId + ", user: " + entrantEmail);
+                    }
+                });
+
         // Get event details
         getEventWithAllLists(eventId).addOnCompleteListener(task -> {
             if (!task.isSuccessful() || task.getResult() == null) {
@@ -874,23 +955,183 @@ public class LotteryService {
             if (accepted) {
                 acceptedList.addEntrant(respondingEntrant);
                 sendConfirmationNotification(event, respondingEntrant, true);
-            } else {
+
+                updateEventLists(event, new InvitationResponseCallback() {
+                    @Override
+                    public void onResponseSuccess(boolean accepted) {
+                        callback.onResponseSuccess(accepted);
+                    }
+
+                    @Override
+                    public void onResponseFailed(Exception exception) {
+                        callback.onResponseFailed(exception);
+                    }
+                });
+            }else {
+                // DECLINED: Add to declined list AND auto-resample
                 declinedList.addEntrant(respondingEntrant);
                 sendConfirmationNotification(event, respondingEntrant, false);
+
+                // First update the event lists
+                updateEventLists(event, new InvitationResponseCallback(){
+                    @Override
+                    public void onResponseSuccess(boolean accepted) {
+                        // Then auto-resample for the declined spot
+                        autoResampleForDecline(eventId, entrantEmail, new LotteryCallback() {
+                            @Override
+                            public void onLotteryCompleted(int entrantsSelected, String message) {
+                                Log.d(TAG, "Auto-resample completed after decline");
+                                callback.onResponseSuccess(false); // false = declined
+                            }
+
+                            @Override
+                            public void onLotteryFailed(Exception exception) {
+                                Log.e(TAG, "Auto-resample failed after decline", exception);
+                                // Still consider the decline successful even if resample fails
+                                callback.onResponseSuccess(false);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onResponseFailed(Exception exception) {
+                        callback.onResponseFailed(exception);
+                    }
+                });
+            }
+        });
+    }
+    /**
+     * Re-samples the lottery, replacing pending invites with new selections
+     *
+     * @param eventId The event ID
+     * @param callback Callback for result handling
+     */
+    public void resampleLottery(@NonNull String eventId, @NonNull LotteryCallback callback) {
+        Log.d(TAG, "Re-sampling lottery for event: " + eventId);
+
+        getEventWithAllLists(eventId).addOnCompleteListener(eventTask -> {
+            if (!eventTask.isSuccessful() || eventTask.getResult() == null) {
+                Log.e(TAG, "Failed to get event details for re-sample", eventTask.getException());
+                callback.onLotteryFailed(eventTask.getException());
+                return;
             }
 
-            updateEventLists(event, new InvitationResponseCallback() {
-                @Override
-                public void onResponseSuccess(boolean accepted) {
-                    callback.onResponseSuccess(accepted);
-                }
+            Event event = eventTask.getResult();
 
-                @Override
-                public void onResponseFailed(Exception exception) {
-                    callback.onResponseFailed(exception);
+            // Calculate how many slots need to be filled (available slots + pending invites)
+            int availableSlots = calculateAvailableSlots(event);
+            int pendingInvites = event.getInviteList() != null ? event.getInviteList().size() : 0;
+            int totalSlotsToFill = availableSlots + pendingInvites;
+
+            Log.d(TAG, String.format("Re-sample: Available slots: %d, Pending invites: %d, Total to fill: %d",
+                    availableSlots, pendingInvites, totalSlotsToFill));
+
+            if (totalSlotsToFill <= 0) {
+                callback.onLotteryCompleted(0, "No slots available for re-sampling");
+                return;
+            }
+
+            // Get eligible waitlist (excluding accepted and declined, but including current invitees who will be replaced)
+            EntrantList waitlist = event.getWaitlist();
+            List<Entrant> eligibleWaitlist = filterEligibleEntrantsForResample(waitlist, event);
+
+            if (eligibleWaitlist.isEmpty()) {
+                callback.onLotteryCompleted(0, "No eligible entrants available for re-sampling");
+                return;
+            }
+
+            // Select new entrants
+            List<Entrant> selectedEntrants = selectRandomEntrants(eligibleWaitlist, totalSlotsToFill);
+
+            if (selectedEntrants.isEmpty()) {
+                callback.onLotteryCompleted(0, "No entrants selected for re-sampling");
+                return;
+            }
+
+            // Expire old pending invites for this event before creating new ones
+            EntrantList oldInviteList = event.getInviteList();
+            if (oldInviteList != null && oldInviteList.size() > 0) {
+                List<Task<Void>> expireTasks = new ArrayList<>();
+                for (int i = 0; i < oldInviteList.size(); i++) {
+                    Entrant entrant = oldInviteList.getEntrant(i);
+                    if (entrant != null && entrant.getEmail() != null) {
+                        inviteRepo.getInviteByEventAndRecipient(eventId, entrant.getEmail())
+                                .addOnCompleteListener(inviteTask -> {
+                                    if (inviteTask.isSuccessful() && inviteTask.getResult() != null) {
+                                        Invite oldInvite = inviteTask.getResult();
+                                        if ("pending".equals(oldInvite.getStatus())) {
+                                            inviteRepo.updateInviteStatus(oldInvite.getInviteId(), "expired");
+                                        }
+                                    }
+                                });
+                    }
                 }
-            });
+            }
+
+            // Clear current invite list and add new selections
+            event.setInviteList(new EntrantList());
+            for (Entrant entrant : selectedEntrants) {
+                event.getInviteList().addEntrant(entrant);
+            }
+
+            // Update event in Firestore and send notifications
+            updateEventWithNewInvites(event, selectedEntrants, callback);
         });
+    }
+
+    /**
+     * Filters eligible entrants for re-sampling (includes current invitees since they'll be replaced)
+     */
+    private List<Entrant> filterEligibleEntrantsForResample(EntrantList waitlist, Event event) {
+        List<Entrant> eligible = new ArrayList<>();
+
+        // Get emails from accepted and declined lists only
+        Set<String> acceptedEmails = getEmailSet(event.getAcceptedList());
+        Set<String> declinedEmails = getEmailSet(event.getDeclinedList());
+
+        // Combine excluded emails (don't exclude current invitees since we're replacing them)
+        Set<String> excludedEmails = new HashSet<>();
+        excludedEmails.addAll(acceptedEmails);
+        excludedEmails.addAll(declinedEmails);
+
+        // Filter waitlist
+        for (int i = 0; i < waitlist.size(); i++) {
+            Entrant entrant = waitlist.getEntrant(i);
+            if (entrant != null && entrant.getEmail() != null) {
+                String email = entrant.getEmail();
+                if (!excludedEmails.contains(email)) {
+                    eligible.add(entrant);
+                }
+            }
+        }
+
+        Log.d(TAG, "Eligible entrants for re-sample: " + eligible.size() + " out of " + waitlist.size());
+        return eligible;
+    }
+
+    /**
+     * Updates event with new invite list and sends notifications
+     */
+    private void updateEventWithNewInvites(Event event, List<Entrant> selectedEntrants, LotteryCallback callback) {
+        String eventId = event.getId();
+
+        // Update the invite list in Firestore
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("inviteList", convertEntrantListToMap(event.getInviteList()));
+
+        db.collection("events").document(eventId)
+                .update(updates)
+                .addOnCompleteListener(dbTask -> {
+                    if (!dbTask.isSuccessful()) {
+                        Log.e(TAG, "Failed to update invite list for re-sample", dbTask.getException());
+                        callback.onLotteryFailed(dbTask.getException());
+                        return;
+                    }
+
+                    // Send notifications to newly selected entrants
+                    sendInvitationNotifications(event, selectedEntrants, callback);
+                });
     }
 
     /**
@@ -917,15 +1158,17 @@ public class LotteryService {
 
     /**
      * Sends confirmation notification to entrant
+     * Uses "Confirmation" groupType to ensure it displays as a regular text notification, not an invitation
      */
     private void sendConfirmationNotification(Event event, Entrant entrant, boolean accepted) {
         String status = accepted ? "accepted" : "declined";
         String title = "Invitation " + status + ": " + event.getEventName();
         String message = "You have " + status + " the invitation for " + event.getEventName();
 
+        // Use "Confirmation" groupType instead of "InvitationResponse" to ensure it displays as a regular notification
         Notification confirmationNotification = new Notification(
                 title, message, event.getId(),
-                event.getOrganizer().getEmail(), event.getEventName(), "InvitationResponse"
+                event.getOrganizer().getEmail(), event.getEventName(), "Confirmation"
         );
 
         List<String> emails = Collections.singletonList(entrant.getEmail());
@@ -995,6 +1238,49 @@ public class LotteryService {
             Log.d(TAG, "Document data is null");
         }
         Log.d(TAG, "=== END FIRESTORE DEBUG ===");
+    }
+    private void debugEventLists(Event event, String source) {
+        Log.d(TAG, "=== " + source + " ===");
+        Log.d(TAG, "Waitlist: " + (event.getWaitlist() != null ? event.getWaitlist().size() : "null"));
+        if (event.getWaitlist() != null) {
+            for (int i = 0; i < event.getWaitlist().size(); i++) {
+                Entrant e = event.getWaitlist().getEntrant(i);
+                if (e != null) {
+                    Log.d(TAG, "  Waitlist entrant: " + e.getEmail());
+                }
+            }
+        }
+        Log.d(TAG, "InviteList: " + (event.getInviteList() != null ? event.getInviteList().size() : "null"));
+        Log.d(TAG, "AcceptedList: " + (event.getAcceptedList() != null ? event.getAcceptedList().size() : "null"));
+        Log.d(TAG, "DeclinedList: " + (event.getDeclinedList() != null ? event.getDeclinedList().size() : "null"));
+        Log.d(TAG, "=== END " + source + " ===");
+    }
+    private void debugFirestoreStructure(DocumentSnapshot doc, String listName) {
+        Log.d(TAG, "=== DEBUGGING " + listName.toUpperCase() + " STRUCTURE ===");
+
+        Object listData = doc.get(listName);
+        if (listData == null) {
+            Log.d(TAG, listName + " is null");
+        } else if (listData instanceof Map) {
+            Map<String, Object> mapData = (Map<String, Object>) listData;
+            Log.d(TAG, listName + " is a Map with " + mapData.size() + " entries");
+            for (Map.Entry<String, Object> entry : mapData.entrySet()) {
+                Log.d(TAG, "Key: " + entry.getKey() + ", Value type: " +
+                        entry.getValue().getClass().getSimpleName());
+                if (entry.getValue() instanceof Map) {
+                    Log.d(TAG, "  Value: " + entry.getValue());
+                }
+            }
+        } else if (listData instanceof List) {
+            List<Object> listArray = (List<Object>) listData;
+            Log.d(TAG, listName + " is a List with " + listArray.size() + " entries");
+            for (Object item : listArray) {
+                Log.d(TAG, "Item type: " + item.getClass().getSimpleName() + ", Value: " + item);
+            }
+        } else {
+            Log.d(TAG, listName + " is of unknown type: " + listData.getClass().getSimpleName());
+        }
+        Log.d(TAG, "=== END DEBUGGING " + listName.toUpperCase() + " ===");
     }
     /**
      * Callback interface for lottery operations.

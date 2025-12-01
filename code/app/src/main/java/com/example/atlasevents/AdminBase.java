@@ -65,7 +65,6 @@ public abstract class AdminBase extends AppCompatActivity {
         findViewById(R.id.notifications_icon).setOnClickListener(v -> openNotifications());
         findViewById(R.id.events_icon).setOnClickListener(v -> openEvents());
         findViewById(R.id.images_icon).setOnClickListener(v -> openImages());
-        findViewById(R.id.organizers_icon).setOnClickListener(v -> openOrganizers());
         findViewById(R.id.profiles_icon).setOnClickListener(v -> openEntrants());
         findViewById(R.id.logout_icon).setOnClickListener(v -> session.logoutAndRedirect(this));
     }
@@ -76,7 +75,6 @@ public abstract class AdminBase extends AppCompatActivity {
     protected void setActiveNavItem(int iconCardId) {
         ((MaterialCardView) findViewById(R.id.events_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
         ((MaterialCardView) findViewById(R.id.images_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
-        ((MaterialCardView) findViewById(R.id.organizers_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
         ((MaterialCardView) findViewById(R.id.profiles_icon_card)).setCardBackgroundColor(Color.TRANSPARENT);
 
         ((MaterialCardView) findViewById(iconCardId)).setCardBackgroundColor(Color.parseColor("#E8DEF8"));
@@ -100,15 +98,6 @@ public abstract class AdminBase extends AppCompatActivity {
     /** Opens the images management screen. */
     protected void openImages() {
         Intent intent = new Intent(this, AdminImagesActivity.class);
-        startActivity(intent);
-        finish();
-        overridePendingTransition(0, 0);
-    }
-
-    /** Opens the organizers management screen. */
-    protected void openOrganizers() {
-        Intent intent = new Intent(this, AdminProfilesActivity.class);
-        intent.putExtra("userType", "Organizer");
         startActivity(intent);
         finish();
         overridePendingTransition(0, 0);

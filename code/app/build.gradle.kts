@@ -1,6 +1,16 @@
+
+import java.util.Properties
+
 plugins {
+    alias(libs.plugins.secrets.gradle.plugin)
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file(".env")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -14,6 +24,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {
@@ -49,25 +60,23 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.runtime)
     implementation(libs.room.external.antlr)
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.zxing:core:3.5.3")
     implementation("androidx.tracing:tracing:1.2.0")
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.libraries.places:places:3.5.0")
     implementation(libs.fragment)
+    // Keep a single Places dependency version to avoid API mismatches
+    implementation(libs.firebase.sessions)
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
     implementation("com.google.firebase:firebase-firestore")
     // Corrected line in build.gradle.kts
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("androidx.test:core:1.5.0")
-    // for local unit tests (src/test/java)
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito:mockito-inline:5.2.0")
-    // For Android instrumented tests (in src/androidTest/java)
-    //androidTestImplementation("org.mockito:mockito-inline:5.2.0")
-    androidTestImplementation("org.mockito:mockito-android:5.11.0")
-
     androidTestImplementation ("androidx.test:runner:1.5.2")
     androidTestImplementation ("androidx.test:rules:1.5.0")
     androidTestImplementation ("androidx.test.ext:junit:1.1.5")

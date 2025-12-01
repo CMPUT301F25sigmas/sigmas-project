@@ -19,6 +19,7 @@ This Project used the following Third-Party resources:
    [Link to Github page](https://github.com/mockito/mockito.git)
    [Link to Mockito](https://site.mockito.org/)
    License: MIT
+   <br>
 **Google Maps SDK for Android**: Provides mapping and location services for this application.  
 [Link to the Documentation](https://developers.google.com/maps/documentation/android-sdk)  
 License: Google Maps Platform Terms of Service  

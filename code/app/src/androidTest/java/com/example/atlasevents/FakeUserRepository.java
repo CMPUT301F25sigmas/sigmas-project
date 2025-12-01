@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This is a mock UserRepository class for intent tests
+ */
 public class FakeUserRepository extends UserRepository {
 
     private final Map<String, User> users = new HashMap<>();

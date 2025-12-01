@@ -33,8 +33,10 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.example.atlasevents.data.UserRepository;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -311,17 +313,137 @@ public class NotificationRepository {
     }
 
     public void getNotificationLogs(@NonNull NotificationLogsCallback callback) {
+        Log.d(TAG, "Fetching ALL notification logs with index fallback");
+
+        // Try the indexed query first
         db.collectionGroup("logs")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(qs -> {
+                    Log.d(TAG, "Indexed query successful. Found " + qs.size() + " documents");
+
                     List<Map<String,Object>> logs = new ArrayList<>();
                     for (DocumentSnapshot doc : qs.getDocuments()) {
                         logs.add(doc.getData());
                     }
                     callback.onSuccess(logs);
                 })
-                .addOnFailureListener(e -> callback.onFailure(e));
+                .addOnFailureListener(e -> {
+                    // Check if it's an index error
+                    if (e.getMessage() != null && e.getMessage().contains("index")) {
+                        Log.w(TAG, "Index missing, using fallback method");
+                        // Use the index-safe version as fallback
+                        getNotificationLogsIndexSafe(callback);
+                    } else {
+                        Log.e(TAG, "Error fetching notification logs: " + e.getMessage(), e);
+                        callback.onFailure(e);
+                    }
+                });
+    }
+
+    /**
+     * Index-safe version that queries each organizer separately
+     */
+    private void getNotificationLogsIndexSafe(@NonNull NotificationLogsCallback callback) {
+        Log.d(TAG, "Fetching ALL notification logs (index-safe version)");
+
+        // Get all organizer documents first
+        db.collection("notification_logs")
+                .get()
+                .addOnSuccessListener(organizerSnapshot -> {
+                    Log.d(TAG, "Found " + organizerSnapshot.size() + " organizer documents");
+
+                    if (organizerSnapshot.isEmpty()) {
+                        callback.onSuccess(new ArrayList<>());
+                        return;
+                    }
+
+                    // Create a list to hold all log data
+                    List<Map<String, Object>> allLogs = new ArrayList<>();
+                    List<Task<QuerySnapshot>> tasks = new ArrayList<>();
+
+                    // Query each organizer's logs subcollection
+                    for (DocumentSnapshot organizerDoc : organizerSnapshot.getDocuments()) {
+                        String organizerEmail = organizerDoc.getId();
+
+                        // Query WITHOUT orderBy to avoid index requirement
+                        Task<QuerySnapshot> task = organizerDoc.getReference()
+                                .collection("logs")
+                                .get()  // No orderBy - this avoids the index requirement
+                                .addOnSuccessListener(logsSnapshot -> {
+                                    Log.d(TAG, "Found " + logsSnapshot.size() + " logs for organizer: " + organizerEmail);
+
+                                    for (DocumentSnapshot logDoc : logsSnapshot.getDocuments()) {
+                                        Map<String, Object> logData = logDoc.getData();
+                                        if (logData != null) {
+                                            // Add organizer email for reference
+                                            logData.put("_organizerEmail", organizerEmail);
+                                            allLogs.add(logData);
+                                        }
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error fetching logs for organizer: " + organizerEmail, e);
+                                });
+
+                        tasks.add(task);
+                    }
+
+                    // Wait for all queries to complete
+                    Tasks.whenAllComplete(tasks)
+                            .addOnSuccessListener(allTasks -> {
+                                // Sort by createdAt manually (descending)
+                                allLogs.sort((a, b) -> {
+                                    try {
+                                        Object dateA = a.get("createdAt");
+                                        Object dateB = b.get("createdAt");
+
+                                        if (dateA == null && dateB == null) return 0;
+                                        if (dateA == null) return 1; // nulls last
+                                        if (dateB == null) return -1; // nulls last
+
+                                        // Handle Firebase Timestamp and Date objects
+                                        long timeA = convertToMillis(dateA);
+                                        long timeB = convertToMillis(dateB);
+
+                                        return Long.compare(timeB, timeA); // Descending order
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error sorting logs", e);
+                                        return 0;
+                                    }
+                                });
+
+                                Log.d(TAG, "Total logs collected: " + allLogs.size());
+                                callback.onSuccess(allLogs);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error collecting logs from all organizers", e);
+                                callback.onFailure(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching organizer documents", e);
+                    callback.onFailure(e);
+                });
+    }
+    /**
+     * Convert Firebase Timestamp or Date to milliseconds
+     */
+    private long convertToMillis(Object timestamp) {
+        if (timestamp == null) {
+            return 0;
+        }
+
+        if (timestamp instanceof com.google.firebase.Timestamp) {
+            return ((com.google.firebase.Timestamp) timestamp).toDate().getTime();
+        } else if (timestamp instanceof Date) {
+            return ((Date) timestamp).getTime();
+        } else if (timestamp instanceof Long) {
+            return (Long) timestamp;
+        } else {
+            Log.w(TAG, "Unknown timestamp type: " + timestamp.getClass().getName());
+            return 0;
+        }
     }
 
     public interface NotificationLogsCallback {

@@ -22,6 +22,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.atlasevents.data.EventRepository;
 import com.example.atlasevents.data.UserRepository;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
@@ -46,9 +52,10 @@ import java.util.Date;
  *
  * @see Event
  */
-public class EventDetailsActivity extends AppCompatActivity {
+public class EventDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final String MAP_VIEW_BUNDLE_KEY = "EventDetailsMapViewBundleKey";
 
     /**
      * Key used to pass the Event object through Intent extras.
@@ -65,6 +72,8 @@ public class EventDetailsActivity extends AppCompatActivity {
     private Event currentEvent;
     private Entrant currentEntrant;
     private boolean pendingLocationPermissionForJoin;
+    private GoogleMap eventMap;
+    private LatLng eventLatLng;
 
 
     private TextView eventNameTextView, organizerNameTextView, descriptionTextView,
@@ -72,6 +81,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private ImageView eventImageView, qrImageView, backArrow, guidelinesButton;
     private Button joinWaitlistButton, leaveWaitlistButton;
     private CheckBox optOutCheckBox;
+    private MapView eventMapView;
 
     /**
      * Called when the activity is first created.
@@ -125,7 +135,9 @@ public class EventDetailsActivity extends AppCompatActivity {
         eventImageView = findViewById(R.id.eventImage);
         qrImageView = findViewById(R.id.qrImage);
         optOutCheckBox = findViewById(R.id.optOutCheckBox);
+        eventMapView = findViewById(R.id.eventMapLocationView);
 
+        initMap(savedInstanceState);
         loadData();
         setupListeners();
     }
@@ -208,6 +220,14 @@ public class EventDetailsActivity extends AppCompatActivity {
         locationTextView.setText(event.getAddress());
         dateTextView.setText(event.getDateFormatted());
         timeTextView.setText(event.getTime());
+        GeoPoint eventLocation = event.getLocation();
+        if (eventLocation != null) {
+            eventLatLng = new LatLng(eventLocation.getLatitude(), eventLocation.getLongitude());
+            eventMapView.setVisibility(View.VISIBLE);
+            renderEventLocation();
+        } else {
+            eventMapView.setVisibility(View.GONE);
+        }
 
         waitlistCountTextView.setText(String.valueOf(
                 event.getWaitlist() != null ? event.getWaitlist().size() : 0));
@@ -443,6 +463,95 @@ public class EventDetailsActivity extends AppCompatActivity {
                     optOutCheckBox.setChecked(true);
                 }
             });
+        }
+    }
+
+    private void initMap(Bundle savedInstanceState) {
+        if (eventMapView == null) {
+            return;
+        }
+        Bundle mapViewBundle = null;
+        if (savedInstanceState != null) {
+            mapViewBundle = savedInstanceState.getBundle(MAP_VIEW_BUNDLE_KEY);
+        }
+        eventMapView.onCreate(mapViewBundle);
+        eventMapView.getMapAsync(this);
+    }
+
+    private void renderEventLocation() {
+        if (eventMap == null || eventLatLng == null) {
+            return;
+        }
+        eventMap.clear();
+        eventMap.addMarker(new MarkerOptions().position(eventLatLng).title(currentEvent != null ? currentEvent.getEventName() : "Event Location"));
+        eventMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eventLatLng, 14f));
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        eventMap = googleMap;
+        eventMap.getUiSettings().setZoomControlsEnabled(true);
+        renderEventLocation();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (eventMapView != null) {
+            Bundle mapViewBundle = outState.getBundle(MAP_VIEW_BUNDLE_KEY);
+            if (mapViewBundle == null) {
+                mapViewBundle = new Bundle();
+                outState.putBundle(MAP_VIEW_BUNDLE_KEY, mapViewBundle);
+            }
+            eventMapView.onSaveInstanceState(mapViewBundle);
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (eventMapView != null) {
+            eventMapView.onStart();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (eventMapView != null) {
+            eventMapView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (eventMapView != null) {
+            eventMapView.onPause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (eventMapView != null) {
+            eventMapView.onStop();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (eventMapView != null) {
+            eventMapView.onDestroy();
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (eventMapView != null) {
+            eventMapView.onLowMemory();
         }
     }
 

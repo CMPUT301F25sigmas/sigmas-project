@@ -103,8 +103,10 @@
                     android:layout_height="wrap_content"
                     android:drawableStart="@drawable/location"
                     android:drawablePadding="8dp"
-                    android:hint="Enter event location"
+                    android:hint="Search event location"
                     android:layout_marginBottom="8dp"
+                    android:focusable="false"
+                    android:clickable="true"
                     android:textColor="@color/black"
                     android:textColorHint="@color/black"/>
 

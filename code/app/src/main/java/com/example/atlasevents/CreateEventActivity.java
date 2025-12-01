@@ -1,5 +1,11 @@
 package com.example.atlasevents;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -34,6 +40,19 @@ import com.example.atlasevents.utils.DatePickerHelper;
 import com.example.atlasevents.utils.ImageUploader;
 import com.example.atlasevents.utils.InputValidator;
 import com.example.atlasevents.utils.TimePickerHelper;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteActivity;
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
+import com.google.firebase.firestore.GeoPoint;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -61,7 +80,10 @@ public class CreateEventActivity extends AppCompatActivity {
     ImageUploader uploader;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
+    private ActivityResultLauncher<Intent> placesAutocompleteLauncher;
     String imageURL = "";
+    private LatLng selectedLatLng;
+    private String resolvedAddress;
     private final List<String> tags = new ArrayList<>();
     private LinearLayout tagContainer;
 
@@ -97,6 +119,8 @@ public class CreateEventActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        initializePlacesSdk();
 
         startDatePicker = new DatePickerHelper();
         registrationPeriodPicker = new DatePickerHelper(Boolean.TRUE);
@@ -136,6 +160,23 @@ public class CreateEventActivity extends AppCompatActivity {
                     }
                 });
 
+        placesAutocompleteLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Place place = Autocomplete.getPlaceFromIntent(result.getData());
+                        selectedLatLng = place.getLatLng();
+                        resolvedAddress = resolveAddressFromPlace(place);
+                        EditText locationField = findViewById(R.id.locEditText);
+                        locationField.setText(resolvedAddress);
+                    } else if (result.getResultCode() == AutocompleteActivity.RESULT_ERROR && result.getData() != null) {
+                        Status status = Autocomplete.getStatusFromIntent(result.getData());
+                        Log.e("CreateEventActivity", "Autocomplete error: " + status.getStatusMessage());
+                        Toast.makeText(this, "Location selection failed", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
         //get email to access organizer
         session = new Session(this);
         String username = session.getUserEmail();
@@ -172,6 +213,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
         EditText description = findViewById(R.id.descrEditText);
         EditText location = findViewById(R.id.locEditText);
+        location.setFocusable(false);
+        location.setOnClickListener(v -> launchPlaceAutocomplete());
 
         SwitchCompat limitEntrants = findViewById(R.id.limitEntrantsSwitch);
         SwitchCompat requireGeoLocation = findViewById(R.id.requireGeoLocationSwitch);
@@ -227,7 +270,10 @@ public class CreateEventActivity extends AppCompatActivity {
                                 event.setTime(timePicker.getFormattedTime());
                                 event.setRegStartDate(registrationPeriodPicker.getStartDate());
                                 event.setRegEndDate(registrationPeriodPicker.getEndDate());
-                                event.setAddress(location.getText().toString());
+                                event.setAddress(resolvedAddress != null ? resolvedAddress : location.getText().toString());
+                                if (selectedLatLng != null) {
+                                    event.setLocation(new GeoPoint(selectedLatLng.latitude, selectedLatLng.longitude));
+                                }
                                 event.setDescription(description.getText().toString());
                                 event.setRequireGeolocation(requireGeoLocation.isChecked());
                                 if (limitEntrants.isChecked()) {
@@ -375,6 +421,8 @@ public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants,
         EditText dateEditText = findViewById(R.id.dateEditText);
         EditText timeEditText = findViewById(R.id.timeEditText);
         EditText regDateRangeEditText = findViewById(R.id.regDateEditText);
+        EditText locationEditText = findViewById(R.id.locEditText);
+        String address = locationEditText.getText().toString().trim();
 
         // Clear previous errors
         name.setError(null);
@@ -423,6 +471,12 @@ public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants,
                 registrationPeriodPicker.getStartDate(), "Registration start date");
         if (!regDateResult.isValid()) {
             regDateRangeEditText.setError(regDateResult.errorMessage());
+            valid = false;
+        }else if (address.isEmpty() || selectedLatLng == null) {
+            Toast.makeText(this, "Select a location", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }else if (limitEntrants && limit.isEmpty()){
+            Toast.makeText(this,"Enter a waitlist limit", Toast.LENGTH_LONG).show();
             valid = false;
         }
 
@@ -473,6 +527,68 @@ public boolean inputsValid(EditText name, EditText slots, boolean limitEntrants,
         }
 
         return valid;
+    }
+
+    private void launchPlaceAutocomplete() {
+        List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
+        Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).build(this);
+        placesAutocompleteLauncher.launch(intent);
+    }
+
+    private void initializePlacesSdk() {
+        String apiKey = getPlacesApiKey();
+        if (apiKey == null || apiKey.isEmpty()) {
+            Log.e("CreateEventActivity", "Places API key missing");
+            return;
+        }
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), apiKey);
+        }
+    }
+
+    private String getPlacesApiKey() {
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+            if (appInfo.metaData != null) {
+                return appInfo.metaData.getString("com.google.android.geo.API_KEY");
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("CreateEventActivity", "Failed to read API key", e);
+        }
+        return "";
+    }
+
+    private String resolveAddressFromPlace(Place place) {
+        if (place == null) {
+            return "";
+        }
+        if (place.getAddress() != null && !place.getAddress().isEmpty()) {
+            return place.getAddress();
+        }
+        if (place.getLatLng() != null) {
+            return reverseGeocode(place.getLatLng());
+        }
+        return place.getName() != null ? place.getName() : "";
+    }
+
+    private String reverseGeocode(LatLng latLng) {
+        try {
+            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                StringBuilder builder = new StringBuilder();
+                if (address.getFeatureName() != null) builder.append(address.getFeatureName());
+                if (address.getThoroughfare() != null) builder.append(", ").append(address.getThoroughfare());
+                if (address.getLocality() != null) builder.append(", ").append(address.getLocality());
+                if (address.getAdminArea() != null) builder.append(", ").append(address.getAdminArea());
+                if (address.getCountryName() != null) builder.append(", ").append(address.getCountryName());
+                return builder.toString();
+            }
+        } catch (IOException e) {
+            Log.e("CreateEventActivity", "Reverse geocoding failed", e);
+        }
+        return "";
     }
 
     /**

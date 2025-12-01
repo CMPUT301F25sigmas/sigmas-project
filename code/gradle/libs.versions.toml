@@ -21,6 +21,8 @@ kotlin = "2.2.21"
 googleServices = "4.4.4"
 secrets = "2.0.1"
 playServicesMaps = "18.2.0"
+places = "5.1.1"
+firebaseSessions = "3.0.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -41,6 +43,8 @@ runtime = { group = "androidx.xr.runtime", name = "runtime", version.ref = "runt
 room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
 fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps"}
+places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
+firebase-sessions = { group = "com.google.firebase", name = "firebase-sessions", version.ref = "firebaseSessions" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

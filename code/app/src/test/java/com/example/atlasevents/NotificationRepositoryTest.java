@@ -55,7 +55,7 @@ public class NotificationRepositoryTest {
         // --- Object Creation ---
         notificationRepository = new NotificationRepository();
 
-   
+
         // 1. Users collection chain
         when(mockDb.collection("users")).thenReturn(mockUsersCollection);
         when(mockUsersCollection.document(anyString())).thenReturn(mockUserDocRef);

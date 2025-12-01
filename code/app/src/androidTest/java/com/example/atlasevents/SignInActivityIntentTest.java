@@ -93,7 +93,7 @@ public class SignInActivityIntentTest {
         CountDownLatch injectionLatch = new CountDownLatch(1);
         FakeUserRepository fakeRepo = new FakeUserRepository();
 
-        // Inject FakeUserRepository using reflection
+        // Inject FakeUserRepository
         scenario.onActivity(activity -> {
             try {
                 Field userRepoField = SignInActivity.class.getDeclaredField("userRepo");
@@ -105,14 +105,13 @@ public class SignInActivityIntentTest {
             }
         });
 
-        // Fill in all required fields
+        // Fill in fields
         onView(withId(R.id.emailOrPhone)).perform(typeText("entrant@test.com"));
         onView(withId(R.id.password)).perform(typeText("password"));
 
         // Click sign in button
         onView(withId(R.id.signInButton)).perform(click());
 
-        // Wait for async operation to complete
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
@@ -134,11 +133,10 @@ public class SignInActivityIntentTest {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SignInActivity.class);
         ActivityScenario<SignInActivity> scenario = ActivityScenario.launch(intent);
 
-        // Use CountDownLatch to ensure injection completes synchronously
         CountDownLatch injectionLatch = new CountDownLatch(1);
         FakeUserRepository fakeRepo = new FakeUserRepository();
 
-        // Inject FakeUserRepository using reflection
+        // Inject FakeUserRepository
         scenario.onActivity(activity -> {
             try {
                 Field userRepoField = SignInActivity.class.getDeclaredField("userRepo");
@@ -150,7 +148,7 @@ public class SignInActivityIntentTest {
             }
         });
 
-        // Fill in all required fields
+        // Fill in fields
         onView(withId(R.id.emailOrPhone)).perform(typeText("entrant@test.com"));
         onView(withId(R.id.password)).perform(typeText("wrongpassword"));
 
@@ -180,7 +178,6 @@ public class SignInActivityIntentTest {
         CountDownLatch injectionLatch = new CountDownLatch(1);
         FakeUserRepository fakeRepo = new FakeUserRepository();
         
-        // Store decor view for alternative approach
         final View[] decorView = new View[1];
         
         scenario.onActivity(activity -> {

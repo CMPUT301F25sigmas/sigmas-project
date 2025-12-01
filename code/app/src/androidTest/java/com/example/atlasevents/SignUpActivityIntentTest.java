@@ -41,6 +41,9 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+/**
+ * Intent test for SignUpActivity
+ */
 @RunWith(AndroidJUnit4.class)
 public class SignUpActivityIntentTest {
 

@@ -177,21 +177,17 @@ public class EntrantSearchActivity extends EntrantBase {
         return filtered;
     }
 
-    // Keep only events not organized by the user and whose registration window hasn't ended
+    // Keep only events not organized by the user and whose registration window is currently open
     private ArrayList<Event> filterEligibleEvents(ArrayList<Event> events) {
         ArrayList<Event> organizerFiltered = filterOutCurrentUserEvents(events);
         ArrayList<Event> eligible = new ArrayList<>();
-        long now = System.currentTimeMillis();
 
         for (Event event : organizerFiltered) {
             if (event == null) {
                 continue;
             }
-            // If reg end is missing, skip to avoid showing stale events
-            if (event.getRegEndDate() == null) {
-                continue;
-            }
-            if (event.getRegEndDate().getTime() >= now) {
+            // Waitlist can only be joined during the registration window
+            if (event.isRegistrationOpen()) {
                 eligible.add(event);
             }
         }

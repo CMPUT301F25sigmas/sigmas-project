@@ -92,6 +92,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      * Layout displayed when the organizer has no events.
      */
     LinearLayout emptyState;
+    LinearLayout emptyStateFiltered;
 
     private ArrayList<Event> allEvents = new ArrayList<>();
     private Button allButton, activeButton, ongoingButton, closedButton;
@@ -134,8 +135,10 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         eventRepository = new EventRepository();
         eventsScrollView = findViewById(R.id.events_scroll_view);
         emptyState = findViewById(R.id.empty_state);
+        emptyStateFiltered = findViewById(R.id.empty_state_filtered);
 
         emptyState.setVisibility(View.GONE);
+        emptyStateFiltered.setVisibility(View.GONE);
         eventsScrollView.setVisibility(View.GONE);
 
         createEventButton.setOnClickListener(view -> {
@@ -221,7 +224,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
 
             ImageView eventImage = eventCard.findViewById(R.id.event_image);
             TextView eventName = eventCard.findViewById(R.id.event_name);
-            Button eventEditButton = eventCard.findViewById(R.id.edit_button);
+            ImageView eventEditButton = eventCard.findViewById(R.id.edit_button);
 
             if(!event.getImageUrl().isEmpty()){
                 Glide.with(this).load(event.getImageUrl()).into(eventImage);
@@ -242,6 +245,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
 
 
     void filterEvents(FilterType filterType) {
+        emptyStateFiltered.setVisibility(View.GONE);
         ArrayList<Event> filtered = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
 
@@ -312,7 +316,7 @@ public class OrganizerDashboardActivity extends OrganizerBase {
         }
 
         if (filtered.isEmpty()) {
-            showEmptyState();
+            showEmptyStateFiltered();
         } else {
             displayEvents(filtered);
         }
@@ -333,6 +337,15 @@ public class OrganizerDashboardActivity extends OrganizerBase {
      */
     void showEmptyState() {
         emptyState.setVisibility(View.VISIBLE);
+        eventsScrollView.setVisibility(View.GONE);
+    }
+
+    /**
+     * Shows the empty state layout for filtered events.
+     * Hides the events scroll view.
+     */
+    void showEmptyStateFiltered() {
+        emptyStateFiltered.setVisibility(View.VISIBLE);
         eventsScrollView.setVisibility(View.GONE);
     }
     /**

@@ -254,6 +254,28 @@
                 android:drawableLeft="@drawable/leave"
                 android:text="Leave Waitlist"
                 android:textColor="@color/light_purple" />
+
+            <Button
+                android:visibility="gone"
+                android:id="@+id/acceptedWaitlistButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:backgroundTint="#EEE6FB"
+                android:text="You have joined the event"
+                android:enabled="false"
+                android:textColor="@color/light_purple" />
+
+            <Button
+                android:visibility="gone"
+                android:id="@+id/invitedWaitlistButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:backgroundTint="#EEE6FB"
+                android:text="You have been invited"
+                android:enabled="false"
+                android:textColor="@color/light_purple" />
         </LinearLayout>
 
         <LinearLayout

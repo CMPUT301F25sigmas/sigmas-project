@@ -3,6 +3,7 @@ package com.example.atlasevents;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -36,6 +37,7 @@ import com.example.atlasevents.utils.InputValidator;
  */
 public class SignUpActivity extends AppCompatActivity {
 
+    private static final String ADMIN_KEY = "123456";
     private Session session;
 
     UserRepository userRepo = new UserRepository();
@@ -73,8 +75,19 @@ public class SignUpActivity extends AppCompatActivity {
         EditText email = findViewById(R.id.email);
         EditText phone = findViewById(R.id.phone);
         EditText password = findViewById(R.id.newPassword);
+        EditText adminKey = findViewById(R.id.adminPassword);
 
         CheckBox adminCheck = findViewById(R.id.adminCheckBox);
+
+        adminCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                adminKey.setText("");
+                adminKey.setVisibility(View.VISIBLE);
+            } else {
+                adminKey.setText("");
+                adminKey.setVisibility(View.GONE);
+            }
+        });
 
 
         cancelButton.setOnClickListener(view ->{finish();});
@@ -99,25 +112,31 @@ public class SignUpActivity extends AppCompatActivity {
 
 
             if(adminCheck.isChecked()) {
-                Admin newUser = new Admin(userName, userEmail, userPassword, userPhone);
-                userRepo.addUser(newUser, status -> {
-                    if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
-                        Log.d("Firestore", "User added successfully");
-                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignUpActivity.this, AdminDashboardActivity.class);
-                        session.setUserEmail(newUser.getEmail());
-                        Bundle bundle = new Bundle();
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                        finish();
-                    } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
-                        Log.e("Firestore", "Email already exists");
-                        Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.e("Firestore", "Failed to add user");
-                        Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if(adminKey.getText().toString().trim().equals(ADMIN_KEY)){
+                    Admin newUser = new Admin(userName, userEmail, userPassword, userPhone);
+                    userRepo.addUser(newUser, status -> {
+                        if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.SUCCESS) {
+                            Log.d("Firestore", "User added successfully");
+                            Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(SignUpActivity.this, AdminDashboardActivity.class);
+                            session.setUserEmail(newUser.getEmail());
+                            Bundle bundle = new Bundle();
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+                            finish();
+                        } else if (status == UserRepository.OnUserUpdatedListener.UpdateStatus.EMAIL_ALREADY_USED) {
+                            Log.e("Firestore", "Email already exists");
+                            Toast.makeText(this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.e("Firestore", "Failed to add user");
+                            Toast.makeText(this, "Failed to add user. Please try again.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else if(adminKey.getText().toString().isEmpty()) {
+                    Toast.makeText(this, "Admin key is required.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Incorrect admin key.", Toast.LENGTH_SHORT).show();
+                }
             }
             else {
                 Entrant newUser = new Entrant(userName, userEmail, userPassword, userPhone);

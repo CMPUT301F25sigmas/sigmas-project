@@ -77,6 +77,21 @@
         android:inputType="text|textPassword"
         android:padding="16dp" />
 
+    <EditText
+        android:id="@+id/adminPassword"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        android:background="@drawable/edit_text_background"
+        android:hint="Admin Key"
+        android:inputType="numberPassword"
+        android:padding="16dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -113,29 +128,13 @@
         android:layout_marginEnd="16dp"
         android:orientation="horizontal"
         android:layout_gravity="center" >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-            android:text="Account type"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:textStyle="bold" />
-
         <CheckBox
             android:id="@+id/adminCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:textColor="@color/black"
-            android:text="Admin (staff only)" />
+            android:text="Admin Mode" />
 
     </LinearLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="179dp">
-
-    </RelativeLayout>
-
 </LinearLayout>
